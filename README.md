@@ -1,5 +1,5 @@
 # simulated-bifurcation-algorithm
-Python implementation of a Simulated Bifurcation algorithm in order to appromize the optimal assets allocation for a portfolio.
+Python implementation of a Simulated Bifurcation algorithm in order to approximize the optimal assets allocation for a portfolio.
 
 ## Install required packages
 This algorithm relies on several Python packages. To install them all, execute the following command : ```python -m pip install -r requirements.txt```.
