@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+import plotly.express as px
+from plotly.offline import iplot
+import plotly.graph_objs as go
 from models.Ising import Ising
 
 class Markowitz():
@@ -20,7 +23,7 @@ class Markowitz():
         self.risk_coefficient = risk_coefficient
         self.date = date,
         self.assets_list = assets_list
-        self.portfolio = []
+        self.portfolio = None
 
         try:
 
@@ -100,10 +103,42 @@ class Markowitz():
 
         ising = self.to_Ising()  
         ising.optimize(hamiltonian, parameters)
-        
+
+        optimized_portfolio = ((self.spin_matrix()).T @ ((ising.ground_state + 1)/2)).T[0]
+        assets_to_purchase = [self.assets_list[ind] for ind in range(len(self.assets_list)) if optimized_portfolio[ind] > 0]
+        stocks_to_purchase = [optimized_portfolio[ind] for ind in range(len(optimized_portfolio)) if optimized_portfolio[ind] > 0]
+        total_stocks = sum(stocks_to_purchase)
+
         self.portfolio = pd.DataFrame(
             {
-                'assets': self.assets_list,
-                'stocks': ((self.spin_matrix()).T @ ((ising.ground_state + 1)/2)).T[0] 
+                'assets': assets_to_purchase,
+                'stocks': stocks_to_purchase,
+                'ratios': [round(stock/total_stocks*10000)/100 for stock in stocks_to_purchase]
             }
-        )
+        ).sort_values(by=['assets'])
+
+    ############################
+    # Graphical representation #
+    ############################
+
+    def pie(self):
+
+        if self.portfolio is not None:
+
+            fig = px.pie(self.portfolio, values='stocks', names='assets', title='Optimal portfolio')
+            fig.show()
+
+    def table(self):
+
+        if self.portfolio is not None:
+
+            trace = go.Table(
+            header=dict(values=["Assets","Stocks to purchase",'Percentage of capital invested'],
+                        fill = dict(color='#C2D4FF'),
+                        align = ['left'] * 5),
+            cells=dict(values=[self.portfolio.assets,self.portfolio.stocks,self.portfolio.ratios],
+                    fill = dict(color='#F5F8FF'),
+                    align = ['left'] * 5))
+
+            data = [trace]
+            iplot(data, filename = 'pandas_table')  

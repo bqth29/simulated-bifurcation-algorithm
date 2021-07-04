@@ -9,7 +9,10 @@ from data.assets import assets
 hamiltonian = Hamiltonian(1, 1, lambda t: 0.01 * t)
 parameters = Simulation(0.01, 600, 2)
 
-markowitz = Markowitz(assets_list = assets[:], number_of_bits=3)
+markowitz = Markowitz(assets_list = assets[:25], number_of_bits=8)
 markowitz.from_csv("./data/cov.csv", "./data/mu.csv")
 markowitz.optimize(hamiltonian,parameters)
 print(markowitz.portfolio)
+
+markowitz.pie()
+markowitz.table()
