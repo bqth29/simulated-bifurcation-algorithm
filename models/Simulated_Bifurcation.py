@@ -42,7 +42,6 @@ class Simulated_Bifurcation():
         self.Hamiltonian = Hamiltonian(
             kerr_constant,
             detuning_frequency,
-            risk_coefficient,
             pressure
             )
 

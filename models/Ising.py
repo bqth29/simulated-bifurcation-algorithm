@@ -4,65 +4,49 @@ from statistics import stdev
 
 class Ising():
 
-    def __init__(self):
-
-        self.J = None
-        self.h = None
-        self.dimension = None
-        self.ground_state = None
-        self.matrix = None
-        self.ready = False 
-
-    def from_Markowitz(self, Markowitz_model):
-
-        # Basis shift matrix
-
-        matrix = np.zeros((Markowitz_model.number_of_assets * Markowitz_model.number_of_bits, Markowitz_model.number_of_assets))
-
-        for a in range(Markowitz_model.number_of_assets):
-
-            for b in range(Markowitz_model.number_of_bits):
-
-                matrix[a*Markowitz_model.number_of_bits+b][a] = 2**b
-
-        self.matrix = matrix 
-
-        # Spin basis matrix
-
-        sigma_hat = np.block(
-            [
-                [2**(i+j)*Markowitz_model.covariance for i in range(Markowitz_model.number_of_bits)] for j in range(Markowitz_model.number_of_bits)
-            ]
-        )
-
-        mu_hat = self.matrix @ Markowitz_model.expected_return
-
-        self.J = -Markowitz_model.risk_coefficient/2 * sigma_hat
-        self.h = Markowitz_model.risk_coefficient/2 * sigma_hat @ np.ones((Markowitz_model.number_of_assets * Markowitz_model.number_of_bits, 1)) - mu_hat
-        self.dimension = Markowitz_model.number_of_assets * Markowitz_model.number_of_bits
-
-    def assess_ready(self):
+    def __init__(self, J, h):
 
         """
-        Checks if the Ising model can be computed.
+        Class constructor. Checks if the arguments provided match the requirement of an Ising problem.
         """
 
-        if self.J is not None and self.h is not None:
+        # J and h must be numpy arrays
 
-            try:
+        if type(J) != np.ndarray:
 
-                J_x, J_y = np.shape(self.J)
-                h_x, h_y = np.shape(self.h)
+            raise TypeError(f"J must be a numpy array. Instead its class is {type(J)}.")
 
-                self.ready = (J_x == J_y) and (J_x == h_x) and (h_y == 1)
+        elif type(h) != np.ndarray:
 
-            except:
+            raise TypeError(f"h must be a numpy array. Instead its class is {type(h)}.")  
 
-                self.ready = False    
+        # J must be definite symetric positive    
+
+        elif not np.all(abs(J - J.T) < 10**-12):
+
+            raise ValueError("J must be symetric.")  
+
+        # elif min(np.linalg.eigvals(J)) <= 0 and max(np.linalg.eigvals(J)) >= 0:
+
+        #     raise ValueError("J must be positive definite.")
+
+        # h must be a column vector    
+
+        elif np.shape(h)[1] != 1:
+
+            raise ValueError(f"h must be a column vector, i.e. its dimensions must fit the following pattern: (n,1). Instead, its dimensions are {np.shape(h)}.")
+
+        # J and h dimensions must fit
+        
+        elif np.shape(J)[0] != np.shape(h)[0]:
+
+            raise ValueError(f"J and h dimensions must fit. However, J is a square matrix of size {np.shape(J)[0]} and h is a column vector of size {np.shape(h)[0]}.")   
 
         else:
 
-            self.ready = False    
+            self.J = J
+            self.h = h
+            self.ground_state = None
     
     def optimize(self, Hamiltonian, parameters):
 
@@ -70,22 +54,22 @@ class Ising():
         Finds the optimal ground state with a symplectic Euler's scheme.
         """  
 
-        self.assess_ready()  
+        if self.ground_state is None:
 
-        if self.ready:
+            dimension = np.shape(self.J)[0]
 
             # Initialization of the oscillators
 
-            X = np.zeros((self.dimension,1)) 
-            Y = np.zeros((self.dimension,1)) 
+            X = np.zeros((dimension,1)) 
+            Y = np.zeros((dimension,1)) 
 
             # Introduction of other parameters
 
             dt = parameters.time_step / parameters.symplectic_parameter # Symplectic timestep
             number_of_steps = int(parameters.simulation_time / parameters.time_step)
-            xi0 = 0.7 * Hamiltonian.detuning_frequency / (stdev([self.J[i][j] for i in range(self.dimension) for j in range(self.dimension) if i != j]) * (self.dimension)**(1/2))
+            xi0 = 0.7 * Hamiltonian.detuning_frequency / (stdev([self.J[i][j] for i in range(dimension) for j in range(dimension) if i != j]) * (dimension)**(1/2))
 
-            unit_column = np.ones((self.dimension, 1))
+            unit_column = np.ones((dimension, 1))
             diag_J_column = np.array([np.diag(self.J)]).T
 
             def A(t):
@@ -126,8 +110,5 @@ class Ising():
 
             print(f"Run in {parameters.simulation_time} seconds.")
 
-            self.ground_state = X
+            self.ground_state = np.sign(X)
 
-        else:
-
-            raise Exception("The Ising model is not well defined. Please verify its definition.")
