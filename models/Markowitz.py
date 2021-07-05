@@ -5,7 +5,14 @@ from plotly.offline import iplot
 import plotly.graph_objs as go
 from models.Ising import Ising
 
+from data.data import assets, dates
+from models.Hamiltionian import Hamiltonian
+
 class Markowitz():
+
+    """
+    Implementation of Markowitz model.
+    """
 
     def __init__(
         self, 
@@ -13,67 +20,72 @@ class Markowitz():
         expected_return = None, 
         risk_coefficient = 1, 
         number_of_bits = 1,
-        date = '2021-03-01',
-        assets_list = []
+        date = dates[-1],
+        assets_list = assets[:]
     ):
-
+        
         self.covariance = covariance
         self.expected_return = expected_return
         self.number_of_bits = number_of_bits
         self.risk_coefficient = risk_coefficient
-        self.date = date,
+        self.date = date
         self.assets_list = assets_list
+        self.number_of_assets = len(assets_list)
         self.portfolio = None
 
-        try:
+    def __repr__(self) -> str:
+        
+        message = f"Markowitz portfolio: {self.number_of_assets} {self.number_of_bits}-bits encoded S&P500 assets (updated {self.date}) with risk aversion of {self.risk_coefficient}: {self.assets_list}."
 
-            self.number_of_assets = np.shape(self.covariance)[0]
+        if self.portfolio is not None:
 
-        except:
+            message += f"\nOptimal portfolio:\n{self.portfolio}"    
 
-            pass    
+        return message    
 
+    @classmethod
     def from_csv(
-        self,
-        covariance_filename,
-        expected_return_filename
+        cls,
+        risk_coefficient = 1, 
+        number_of_bits = 1,
+        date = dates[-1],
+        assets_list = assets[:]
     ):
 
         """
         Retrieves the data for the Markowitz model from .csv files.
         """
+        
+        covariance_filename = "./data/cov.csv"
+        expected_return_filename = "./data/mu.csv"
 
-        if not self.assets_list:
+        complete_monthly_returns = pd.read_csv(expected_return_filename)
+        complete_monthly_returns.set_index('Date', inplace = True)
 
-            complete_monthly_returns = pd.read_csv(expected_return_filename)
-            complete_monthly_returns.set_index('Date', inplace = True)
+        cov = pd.read_csv(covariance_filename)
+        cov.set_index('Unnamed: 0', inplace = True)
 
-            cov = pd.read_csv(covariance_filename)
-            cov.set_index('Unnamed: 0', inplace = True)
+        mu = np.expand_dims(complete_monthly_returns[assets_list].loc[date].to_numpy(),1)
+        sigma = cov[assets_list].loc[assets_list].to_numpy()
 
-            mu = np.expand_dims(complete_monthly_returns.loc[self.date].to_numpy(),1)
-            sigma = cov.to_numpy()
+        covariance = sigma
+        expected_return = mu
 
-            self.covariance = sigma
-            self.expected_return = mu
-            self.number_of_assets = np.shape(self.covariance)[0]
-
-        else:
-
-            complete_monthly_returns = pd.read_csv(expected_return_filename)
-            complete_monthly_returns.set_index('Date', inplace = True)
-
-            cov = pd.read_csv(covariance_filename)
-            cov.set_index('Unnamed: 0', inplace = True)
-
-            mu = np.expand_dims(complete_monthly_returns[self.assets_list].loc[self.date].to_numpy(),1)
-            sigma = cov[self.assets_list].loc[self.assets_list].to_numpy()
-
-            self.covariance = sigma
-            self.expected_return = mu
-            self.number_of_assets = np.shape(self.covariance)[0]
+        return Markowitz(
+            covariance = covariance,
+            expected_return = expected_return,
+            risk_coefficient = risk_coefficient,
+            number_of_bits = number_of_bits,
+            date = date,
+            assets_list = assets_list
+        )    
 
     def spin_matrix(self):
+
+        """
+        Generates the matrix that transform integers vectors to spin vector
+        following the number of bits and assets of the Markowitz model.
+        """
 
         matrix = np.zeros((self.number_of_assets * self.number_of_bits, self.number_of_assets))
 
@@ -85,6 +97,10 @@ class Markowitz():
         return matrix   
 
     def to_Ising(self):
+
+        """
+        Generates the equivalent Ising model.
+        """
 
         sigma = np.block(
             [
@@ -99,12 +115,17 @@ class Markowitz():
 
         return Ising(J, h)
 
-    def optimize(self, hamiltonian, parameters):
+    def optimize(self, hamiltonian = Hamiltonian()):
+
+        """
+        Computes the optimal portfolio for this Markowitz model.
+        """
 
         ising = self.to_Ising()  
-        ising.optimize(hamiltonian, parameters)
+        ising.optimize(hamiltonian)
 
         optimized_portfolio = ((self.spin_matrix()).T @ ((ising.ground_state + 1)/2)).T[0]
+
         assets_to_purchase = [self.assets_list[ind] for ind in range(len(self.assets_list)) if optimized_portfolio[ind] > 0]
         stocks_to_purchase = [optimized_portfolio[ind] for ind in range(len(optimized_portfolio)) if optimized_portfolio[ind] > 0]
         total_stocks = sum(stocks_to_purchase)

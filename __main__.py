@@ -1,15 +1,11 @@
-import numpy as np
-from sklearn.datasets import make_spd_matrix
-from models.Ising import Ising
 from models.Hamiltionian import Hamiltonian
-from models.Simulation import Simulation
 from models.Markowitz import Markowitz
-from data.assets import assets
+from data.data import assets, dates
 
-hamiltonian = Hamiltonian(1, 1, lambda t: 0.01 * t)
-parameters = Simulation(0.01, 600, 2)
+markowitz = Markowitz.from_csv(assets_list = assets[:2], number_of_bits = 8, date = dates[-1])
+markowitz.optimize(Hamiltonian())
 
-markowitz = Markowitz(assets_list = assets[:], number_of_bits=3)
-markowitz.from_csv("./data/cov.csv", "./data/mu.csv")
-markowitz.optimize(hamiltonian,parameters)
-print(markowitz.portfolio)
+print(markowitz)
+
+markowitz.pie()
+markowitz.table()

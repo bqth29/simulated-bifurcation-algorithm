@@ -1,8 +1,13 @@
 import numpy as np
 from time import time
 from statistics import stdev
+from models.Hamiltionian import Hamiltonian
 
 class Ising():
+
+    """
+    Implementation of Ising problems.
+    """
 
     def __init__(self, J, h):
 
@@ -46,9 +51,9 @@ class Ising():
 
             self.J = J
             self.h = h
-            self.ground_state = None
+            self.ground_state = None       
     
-    def optimize(self, Hamiltonian, parameters):
+    def optimize(self, Hamiltonian = Hamiltonian()):
 
         """
         Finds the optimal ground state with a symplectic Euler's scheme.
@@ -65,8 +70,8 @@ class Ising():
 
             # Introduction of other parameters
 
-            dt = parameters.time_step / parameters.symplectic_parameter # Symplectic timestep
-            number_of_steps = int(parameters.simulation_time / parameters.time_step)
+            dt = Hamiltonian.time_step / Hamiltonian.symplectic_parameter # Symplectic timestep
+            number_of_steps = int(Hamiltonian.simulation_time / Hamiltonian.time_step)
             xi0 = 0.7 * Hamiltonian.detuning_frequency / (stdev([self.J[i][j] for i in range(dimension) for j in range(dimension) if i != j]) * (dimension)**(1/2))
 
             unit_column = np.ones((dimension, 1))
@@ -90,25 +95,25 @@ class Ising():
 
             for step in range(number_of_steps):
 
-                current_time = step * parameters.time_step
+                current_time = step * Hamiltonian.time_step
                 current_pressure = Hamiltonian.pressure(current_time)
 
                 # Symplectic loops
 
-                for _ in range(parameters.symplectic_parameter):
+                for _ in range(Hamiltonian.symplectic_parameter):
 
                     X += dt * (((Hamiltonian.detuning_frequency + current_pressure) * unit_column - xi0 * diag_J_column) * Y)
                     Y -= dt * (X**3 + (Hamiltonian.detuning_frequency - current_pressure) * X)  
 
-                Y += xi0 * (self.J @ X - 2 * A(current_time) * self.h) * parameters.time_step
+                Y += xi0 * (self.J @ X - 2 * A(current_time) * self.h) * Hamiltonian.time_step
 
             end_time = time()
 
             # End of simulation
 
-            parameters.simulation_time = end_time - start_time    
+            simulation_time = end_time - start_time    
 
-            print(f"Run in {parameters.simulation_time} seconds.")
+            print(f"Run in {simulation_time} seconds.")
 
             self.ground_state = np.sign(X)
 
