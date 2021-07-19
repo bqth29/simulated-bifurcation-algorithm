@@ -9,7 +9,7 @@ class Ising():
     Implementation of Ising problems.
     """
 
-    def __init__(self, J, h):
+    def __init__(self, J:np.ndarray, h:np.ndarray):
 
         """
         Class constructor. Checks if the arguments provided match the requirement of an Ising problem.
