@@ -1,13 +1,23 @@
 # simulated-bifurcation-algorithm
-Python implementation of a Simulated Bifurcation algorithm in order to approximize the optimal assets allocation for a portfolio.
+Python implementation of a _Simulated Bifurcation_ algorithm in order to approximize the optimal assets allocation for a portfolio of _S&P 500_ assets.
 
 ## Install required packages
 This algorithm relies on several Python packages. To install them all, execute the following command : ```python -m pip install -r requirements.txt```.
+
+## Scientific background
+
+_Simulated bifurcation_ is an all new calculation method based on quantum physics used to approximize very accurately and quickly the optimal solution of Ising problems. 
 
 ## Run a simulation
 To run a simulaton, you simply need to run the ```__main__.py``` file.
 
 ### How does it work ?
+
+This package relies on different Python objects:
+
+#### Ising models
+
+Ising models are represented by the ```Ising``` class. It posess a method called ```optimize``` that uses a _symplectic Euler's scheme_ (i.e. a Euler's scheme that better suits the Hamiltonian mechanics equations) to find an approximation of the optimal _ground state_ of the Ising problem. Our multiple tests revealed its accuracy is around 99%.
 
 #### Object
 For every simulation, we create a ```Simulated_Bifurcation``` object which contains all the necessary data to optimize the portfolio. All the parameters are set by default but you can choose your own ones. These parameters are : 

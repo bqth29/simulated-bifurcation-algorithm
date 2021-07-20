@@ -83,7 +83,7 @@ class Markowitz():
     def spin_matrix(self) -> np.ndarray:
 
         """
-        Generates the matrix that transform integers vectors to spin vector
+        Generates the matrix that transforms integers vectors to spin vector
         following the number of bits and assets of the Markowitz model.
         """
 
