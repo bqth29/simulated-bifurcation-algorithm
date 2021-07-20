@@ -16,13 +16,13 @@ class Markowitz():
 
     def __init__(
         self, 
-        covariance = None, 
-        expected_return = None, 
-        risk_coefficient = 1, 
-        number_of_bits = 1,
-        date = dates[-1],
-        assets_list = assets[:]
-    ):
+        covariance : np.ndarray, 
+        expected_return : np.ndarray, 
+        risk_coefficient : float = 1, 
+        number_of_bits : int = 1,
+        date : str = dates[-1],
+        assets_list : list = assets[:]
+    ) -> None:
         
         self.covariance = covariance
         self.expected_return = expected_return
@@ -46,11 +46,11 @@ class Markowitz():
     @classmethod
     def from_csv(
         cls,
-        risk_coefficient = 1, 
-        number_of_bits = 1,
-        date = dates[-1],
-        assets_list = assets[:]
-    ):
+        risk_coefficient : float = 1, 
+        number_of_bits : int = 1,
+        date : str = dates[-1],
+        assets_list : list = assets[:]
+    ) -> None:
 
         """
         Retrieves the data for the Markowitz model from .csv files.
@@ -72,15 +72,15 @@ class Markowitz():
         expected_return = mu
 
         return Markowitz(
-            covariance = covariance,
-            expected_return = expected_return,
+            covariance,
+            expected_return,
             risk_coefficient = risk_coefficient,
             number_of_bits = number_of_bits,
             date = date,
             assets_list = assets_list
         )    
 
-    def spin_matrix(self):
+    def spin_matrix(self) -> np.ndarray:
 
         """
         Generates the matrix that transform integers vectors to spin vector
@@ -96,7 +96,7 @@ class Markowitz():
 
         return matrix   
 
-    def to_Ising(self):
+    def to_Ising(self) -> Ising:
 
         """
         Generates the equivalent Ising model.
@@ -115,7 +115,7 @@ class Markowitz():
 
         return Ising(J, h)
 
-    def optimize(self, hamiltonian = Hamiltonian()):
+    def optimize(self, hamiltonian : Hamiltonian = Hamiltonian()) -> None:
 
         """
         Computes the optimal portfolio for this Markowitz model.
@@ -142,14 +142,14 @@ class Markowitz():
     # Graphical representation #
     ############################
 
-    def pie(self):
+    def pie(self) -> None:
 
         if self.portfolio is not None:
 
             fig = px.pie(self.portfolio, values='stocks', names='assets', title='Optimal portfolio')
             fig.show()
 
-    def table(self):
+    def table(self) -> None:
 
         if self.portfolio is not None:
 

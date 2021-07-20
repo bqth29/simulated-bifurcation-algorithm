@@ -9,7 +9,7 @@ class Ising():
     Implementation of Ising problems.
     """
 
-    def __init__(self, J:np.ndarray, h:np.ndarray):
+    def __init__(self, J : np.ndarray, h : np.ndarray) -> None:
 
         """
         Class constructor. Checks if the arguments provided match the requirement of an Ising problem.
@@ -17,11 +17,11 @@ class Ising():
 
         # J and h must be numpy arrays
 
-        if type(J) != np.ndarray:
+        if not isinstance(J, np.ndarray):
 
             raise TypeError(f"J must be a numpy array. Instead its class is {type(J)}.")
 
-        elif type(h) != np.ndarray:
+        elif not isinstance(h, np.ndarray):
 
             raise TypeError(f"h must be a numpy array. Instead its class is {type(h)}.")  
 
@@ -53,7 +53,7 @@ class Ising():
             self.h = h
             self.ground_state = None       
     
-    def optimize(self, Hamiltonian = Hamiltonian()):
+    def optimize(self, Hamiltonian : Hamiltonian = Hamiltonian()) -> None:
 
         """
         Finds the optimal ground state with a symplectic Euler's scheme.
@@ -116,4 +116,3 @@ class Ising():
             print(f"Run in {simulation_time} seconds.")
 
             self.ground_state = np.sign(X)
-

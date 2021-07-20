@@ -7,12 +7,12 @@ class Hamiltonian():
 
     def __init__(
         self,
-        kerr_constant = 1,
-        detuning_frequency = 1,
+        kerr_constant : float = 1,
+        detuning_frequency : float = 1,
         pressure = lambda t: 0.01 * t,
-        time_step = 0.01,
-        simulation_time = 600,
-        symplectic_parameter = 2
+        time_step : float = 0.01,
+        simulation_time : int = 600,
+        symplectic_parameter : int = 2
     ):
 
         self.kerr_constant = kerr_constant
@@ -20,4 +20,4 @@ class Hamiltonian():
         self.pressure = pressure
         self.time_step = time_step
         self.simulation_time = simulation_time
-        self.symplectic_parameter = symplectic_parameter 
+        self.symplectic_parameter = symplectic_parameter
