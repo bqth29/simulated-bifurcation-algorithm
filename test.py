@@ -1,9 +1,11 @@
-from models.Hamiltionian import Hamiltonian
+from models.SymplecticEulerScheme import SymplecticEulerScheme
 from models.Markowitz import Markowitz
-from data.data import assets, dates
+from models.Ising import Ising
 
-markowitz = Markowitz.from_csv(assets_list = assets[:20], number_of_bits = 2, date = dates[-10])
-markowitz.optimize()
+markowitz = Markowitz.from_csv()
+ising = markowitz.to_Ising()
 
-markowitz.pie()
-markowitz.table()
+euler = SymplecticEulerScheme(ising.J, ising.h)
+result = euler.run()
+
+print(result)

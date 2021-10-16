@@ -1,4 +1,3 @@
-from models.Hamiltionian import Hamiltonian
 from models.Markowitz import Markowitz
 from data.data import assets, dates
 

@@ -6,7 +6,6 @@ import plotly.graph_objs as go
 from models.Ising import Ising
 
 from data.data import assets, dates
-from models.Hamiltionian import Hamiltonian
 
 class Markowitz():
 
@@ -115,14 +114,29 @@ class Markowitz():
 
         return Ising(J, h)
 
-    def optimize(self, hamiltonian : Hamiltonian = Hamiltonian()) -> None:
+    def optimize(
+        self,
+        kerr_constant : float = 1,
+        detuning_frequency : float = 1,
+        pressure = lambda t : 0.01 * t,
+        time_step : float = 0.01,
+        simulation_time : int = 600,
+        symplectic_parameter : int = 2
+    ) -> None:
 
         """
         Computes the optimal portfolio for this Markowitz model.
         """
 
         ising = self.to_Ising()  
-        ising.optimize(hamiltonian)
+        ising.optimize(
+            kerr_constant = kerr_constant,
+            detuning_frequency = detuning_frequency,
+            pressure = pressure,
+            time_step = time_step,
+            simulation_time = simulation_time,
+            symplectic_parameter = symplectic_parameter
+        )
 
         optimized_portfolio = ((self.spin_matrix()).T @ ((ising.ground_state + 1)/2)).T[0]
 
