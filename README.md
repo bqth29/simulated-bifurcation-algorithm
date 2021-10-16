@@ -1,10 +1,44 @@
 # simulated-bifurcation-algorithm
-A Python implementation of a Simulated Bifurcation algorithm in order to approximize the optimal assets allocation for a portfolio.
+Python implementation of a _Simulated Bifurcation_ algorithm in order to approximize the optimal assets allocation for a portfolio of _S&P 500_ assets.
 
-## Requirements
-You will need some Python packages to run the _Similated Bifurcation_ algorithm. They are: ```numpy```, ```pandas```, ```plotly```, ```statistics``` and ```time```. To add a package to your Python environment, simply execute the following command: ```pip install [package_name]```.
+## Install required packages
+This algorithm relies on several Python packages. To install them all, execute the following command : ```python -m pip install -r requirements.txt```.
 
-## Simulation
-To run a simulation, you must execute the ```__main__.py``` file. By default, the whole asset list will be considered. If you want to only select some assets, just add ```assets_list = [list_of_your_assets]``` in the arguments of the ```simulated_bifurcation``` function, still in ```__main__.py```.
+## Scientific background
 
-Besides, the value of the different parameters id defined by default but can also be set manually as arguments of the same ```simulated_bifurcation``` function.
+_Simulated bifurcation_ is an all new calculation method based on quantum physics used to approximize very accurately and quickly the optimal solution of Ising problems. 
+
+## Run a simulation
+To run a simulaton, you simply need to run the ```__main__.py``` file.
+
+### How does it work ?
+
+This package relies on different Python objects:
+
+#### Ising models
+
+Ising models are represented by the ```Ising``` class. It posess a method called ```optimize``` that uses a _symplectic Euler's scheme_ (i.e. a Euler's scheme that better suits the Hamiltonian mechanics equations) to find an approximation of the optimal _ground state_ of the Ising problem. Our multiple tests revealed its accuracy is around 99%.
+
+#### Object
+For every simulation, we create a ```Simulated_Bifurcation``` object which contains all the necessary data to optimize the portfolio. All the parameters are set by default but you can choose your own ones. These parameters are : 
+
+*Data*
+
+- ```covariance_filename``` (```str```): the filename of the .csv file containing the covariance data. 
+- ```expected_return_filename``` (```str```): the filename of the .csv file containing the exected return vector data. 
+- ```risk_coefficient``` (```int / float```, default: ```1```): the risk aversion coefficient of the user with respect to the volatility of its portfolio. 
+- ```number_of_bits``` (```int```, default: ```1```): the number of bits with which the value of every single asset can be written. This number of bits is set by default to one as it has the best accuracy (over 99%) in comparison with the real optimal portfolio. This very situation represents an evenly spread sub-portfolio.
+- ```date``` (```str```,  default: ```2021-03-01```): the date of the last *S&P500* data update. To be sure that the date you provide works, verify it appears in the first columns of the ```mu.csv``` file in the ```data``` folder.
+- ```assets_list``` (```str list```): the list of the *S&P500* assets taken in account for the simulation. You can see which ones exist by checking the ```assets.py``` file in the ```data``` folder.
+
+*Simulation and Hamiltonian* (the following parameters were chosen as a very good trade-off between the time of the simulation and its efficiency so you should *not* change them to keep these performances)
+
+- ```time_step``` (```float```, default: ```0.01```): the time (in seconds) of a time step of the time-discretized Hamiltonian problem. 
+- ```simulation_time``` (```int```, default: ```600```): the time span (in seconds) of time-discretized Hamiltonian problem simulation. 
+- ```kerr_constant``` (```int / float```, default: ```1```): the Kerr constant of the Hamiltonian. 
+- ```detuning_frequency``` (```int / float```, default: ```1```): the detuning frequency constant of the Hamiltonian. 
+- ```pressure``` (```(float -> float) function```, default: ```lambda t: 0.01 * t```): the pumping function with respect to time. It must use a very slow evolution.
+- ```symplectic_parameter``` (```int```, default: ```2```): the symplectic parameter used for the Euler's scheme. It is recommanded to keep its value between 2 and 5.
+
+#### Data
+The data used comes from the latest update of the *S&P500*. 
