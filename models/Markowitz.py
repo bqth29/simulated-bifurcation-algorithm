@@ -155,7 +155,7 @@ class Markowitz():
 
     def gain(self):
         if self.portfolio_vector is not None:
-            gain = -0.5 * np.dot(self.portfolio_vector.T, self.covariance @ self.portfolio_vector) + np.dot(self.expected_return.T, self.portfolio_vector)
+            gain = -self.risk_coefficient/2 * np.dot(self.portfolio_vector.T, self.covariance @ self.portfolio_vector) + np.dot(self.expected_return.T, self.portfolio_vector)
             return gain[0][0]
 
     ############################
