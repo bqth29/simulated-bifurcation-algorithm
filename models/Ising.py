@@ -1,5 +1,5 @@
 import numpy as np
-from models.SymplecticEulerScheme import SymplecticEulerScheme
+from models.SymplecticEulerSchemeStop import SymplecticEulerScheme
 
 class Ising():
 
@@ -57,7 +57,6 @@ class Ising():
         detuning_frequency : float = 1,
         pressure = lambda t : 0.01 * t,
         time_step : float = 0.01,
-        simulation_time : int = 600,
         symplectic_parameter : int = 2
     ) -> None:
 
@@ -74,7 +73,6 @@ class Ising():
                 detuning_frequency = detuning_frequency,
                 pressure = pressure,
                 time_step = time_step,
-                simulation_time = simulation_time,
                 symplectic_parameter = symplectic_parameter
             )
             self.ground_state = euler.run()
