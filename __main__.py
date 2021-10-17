@@ -8,3 +8,5 @@ print(markowitz)
 
 markowitz.pie()
 markowitz.table()
+
+print(markowitz.gain())

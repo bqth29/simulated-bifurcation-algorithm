@@ -31,6 +31,7 @@ class Markowitz():
         self.assets_list = assets_list
         self.number_of_assets = len(assets_list)
         self.portfolio = None
+        self.portfolio_vector = None
 
     def __repr__(self) -> str:
         
@@ -138,7 +139,8 @@ class Markowitz():
             symplectic_parameter = symplectic_parameter
         )
 
-        optimized_portfolio = ((self.spin_matrix()).T @ ((ising.ground_state + 1)/2)).T[0]
+        self.portfolio_vector = (self.spin_matrix()).T @ ((ising.ground_state + 1)/2)
+        optimized_portfolio = self.portfolio_vector.T[0]
 
         assets_to_purchase = [self.assets_list[ind] for ind in range(len(self.assets_list)) if optimized_portfolio[ind] > 0]
         stocks_to_purchase = [optimized_portfolio[ind] for ind in range(len(optimized_portfolio)) if optimized_portfolio[ind] > 0]
@@ -151,6 +153,11 @@ class Markowitz():
                 'ratios': [round(stock/total_stocks*10000)/100 for stock in stocks_to_purchase]
             }
         ).sort_values(by=['assets'])
+
+    def gain(self):
+        if self.portfolio_vector is not None:
+            gain = -self.risk_coefficient/2 * np.dot(self.portfolio_vector.T, self.covariance @ self.portfolio_vector) + np.dot(self.expected_return.T, self.portfolio_vector)
+            return gain[0][0]
 
     ############################
     # Graphical representation #
