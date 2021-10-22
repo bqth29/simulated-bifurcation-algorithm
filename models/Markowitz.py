@@ -23,6 +23,7 @@ class Markowitz():
         assets_list : list = assets[:]
     ) -> None:
         
+        # Data
         self.covariance = covariance
         self.expected_return = expected_return
         self.number_of_bits = number_of_bits
@@ -30,8 +31,40 @@ class Markowitz():
         self.date = date
         self.assets_list = assets_list
         self.number_of_assets = len(assets_list)
-        self.portfolio = None
-        self.portfolio_vector = None
+
+        # Parameters to optimize
+        self.portfolio = {
+            'dataframe' : None,
+            'array' : None,
+        }
+
+        # Conversion matrices
+
+            ## Vector conversion
+
+        int_to_spin_vector = np.zeros(
+            (self.number_of_assets * self.number_of_bits, self.number_of_assets),
+            dtype = np.float64
+        )
+
+        for a in range(self.number_of_assets):
+            for b in range(self.number_of_bits):
+
+                int_to_spin_vector[a*self.number_of_bits+b][a] = 2.0**b
+
+            ## Matrix conversion
+
+        int_to_spin_matrix = np.block(
+            [
+                [2.0**b * np.eye(self.number_of_assets)] 
+                for b in range(self.number_of_bits)
+            ]
+        )
+
+        self.conversion_matrix = {
+            'vector': int_to_spin_vector,
+            'matrix': int_to_spin_matrix,
+        }         
 
     def __repr__(self) -> str:
         
@@ -39,7 +72,7 @@ class Markowitz():
 
         if self.portfolio is not None:
 
-            message += f"\nOptimal portfolio:\n{self.portfolio}"    
+            message += f"\nOptimal portfolio:\n{self.portfolio['dataframe']}"    
 
         return message    
 
@@ -80,39 +113,18 @@ class Markowitz():
             assets_list = assets_list
         )    
 
-    def spin_matrix(self) -> np.ndarray:
-
-        """
-        Generates the matrix that transforms integers vectors to spin vector
-        following the number of bits and assets of the Markowitz model.
-        """
-
-        matrix = np.zeros((self.number_of_assets * self.number_of_bits, self.number_of_assets))
-
-        for a in range(self.number_of_assets):
-            for b in range(self.number_of_bits):
-
-                matrix[a*self.number_of_bits+b][a] = 2**b
-
-        return matrix   
-
     def to_Ising(self) -> Ising:
 
         """
         Generates the equivalent Ising model.
         """
 
-        sigma = np.block(
-            [
-                [2**(i+j)*self.covariance for i in range(self.number_of_bits)] for j in range(self.number_of_bits)
-            ]
-        )
-
-        mu = self.spin_matrix() @ self.expected_return
+        sigma = self.conversion_matrix['matrix'] @ self.covariance @ self.conversion_matrix['matrix'].T
+        mu = self.conversion_matrix['vector'] @ self.expected_return
 
         J = -self.risk_coefficient/2 * sigma
         h = self.risk_coefficient/2 * sigma @ np.ones((self.number_of_assets * self.number_of_bits, 1)) - mu 
-
+        
         return Ising(J, h)
 
     def optimize(
@@ -122,7 +134,10 @@ class Markowitz():
         pressure = lambda t : 0.01 * t,
         time_step : float = 0.01,
         simulation_time : int = 600,
-        symplectic_parameter : int = 2
+        symplectic_parameter : int = 2,
+        window_size = 50,
+        stop_criterion = True,
+        check_frequency : int = 1000,
     ) -> None:
 
         """
@@ -135,28 +150,27 @@ class Markowitz():
             detuning_frequency = detuning_frequency,
             pressure = pressure,
             time_step = time_step,
-            symplectic_parameter = symplectic_parameter
+            symplectic_parameter = symplectic_parameter,
+            simulation_time = simulation_time,
+            window_size = window_size,
+            stop_criterion = stop_criterion,
+            check_frequency = check_frequency
         )
-
-        self.portfolio_vector = (self.spin_matrix()).T @ ((ising.ground_state + 1)/2)
-        optimized_portfolio = self.portfolio_vector.T[0]
+        print(ising.energy)
+        self.portfolio['array'] = (self.conversion_matrix['vector']).T @ ((ising.ground_state + 1)/2)
+        optimized_portfolio = self.portfolio['array'].T[0]
 
         assets_to_purchase = [self.assets_list[ind] for ind in range(len(self.assets_list)) if optimized_portfolio[ind] > 0]
         stocks_to_purchase = [optimized_portfolio[ind] for ind in range(len(optimized_portfolio)) if optimized_portfolio[ind] > 0]
         total_stocks = sum(stocks_to_purchase)
 
-        self.portfolio = pd.DataFrame(
+        self.portfolio['dataframe'] = pd.DataFrame(
             {
                 'assets': assets_to_purchase,
                 'stocks': stocks_to_purchase,
-                'ratios': [round(stock/total_stocks*10000)/100 for stock in stocks_to_purchase]
+                'ratios': [round(100 * stock/total_stocks, 3) for stock in stocks_to_purchase]
             }
         ).sort_values(by=['assets'])
-
-    def gain(self):
-        if self.portfolio_vector is not None:
-            gain = -self.risk_coefficient/2 * np.dot(self.portfolio_vector.T, self.covariance @ self.portfolio_vector) + np.dot(self.expected_return.T, self.portfolio_vector)
-            return gain[0][0]
 
     ############################
     # Graphical representation #
@@ -164,22 +178,39 @@ class Markowitz():
 
     def pie(self) -> None:
 
-        if self.portfolio is not None:
+        if self.portfolio['dataframe'] is not None:
 
-            fig = px.pie(self.portfolio, values='stocks', names='assets', title='Optimal portfolio')
+            fig = px.pie(
+                self.portfolio['dataframe'],
+                values = 'stocks',
+                names = 'assets',
+                title = 'Optimal portfolio'
+            )
             fig.show()
 
     def table(self) -> None:
 
-        if self.portfolio is not None:
+        if self.portfolio['dataframe'] is not None:
 
             trace = go.Table(
-            header=dict(values=["Assets","Stocks to purchase",'Percentage of capital invested'],
-                        fill = dict(color='#C2D4FF'),
-                        align = ['left'] * 5),
-            cells=dict(values=[self.portfolio.assets,self.portfolio.stocks,self.portfolio.ratios],
-                    fill = dict(color='#F5F8FF'),
-                    align = ['left'] * 5))
+            header = dict(
+                values = [
+                    "Assets",
+                    "Stocks to purchase",
+                    'Percentage of capital invested'
+                ],
+                fill = dict(color='#C2D4FF'),
+                align = ['left'] * 5
+            ),
+            cells = dict(
+                values = [
+                    self.portfolio['dataframe'].assets,
+                    self.portfolio['dataframe'].stocks,
+                    self.portfolio['dataframe'].ratios
+                ],
+                fill = dict(color='#F5F8FF'),
+                align = ['left'] * 5)
+            )
 
             data = [trace]
             iplot(data, filename = 'pandas_table')  
