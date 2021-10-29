@@ -133,11 +133,10 @@ class Markowitz():
         detuning_frequency : float = 1,
         pressure = lambda t : 0.01 * t,
         time_step : float = 0.01,
-        simulation_time : int = 600,
         symplectic_parameter : int = 2,
         window_size = 50,
-        stop_criterion = True,
-        check_frequency : int = 1000,
+        sample_frequency : int = 1000,
+        display_time : bool = True,
     ) -> None:
 
         """
@@ -151,10 +150,9 @@ class Markowitz():
             pressure = pressure,
             time_step = time_step,
             symplectic_parameter = symplectic_parameter,
-            simulation_time = simulation_time,
             window_size = window_size,
-            stop_criterion = stop_criterion,
-            check_frequency = check_frequency
+            sample_frequency = sample_frequency,
+            display_time = display_time
         )
         print(ising.energy)
         self.portfolio['array'] = (self.conversion_matrix['vector']).T @ ((ising.ground_state + 1)/2)
