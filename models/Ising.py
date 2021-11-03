@@ -1,5 +1,5 @@
 import numpy as np
-from models.SymplecticEulerScheme import SymplecticEulerScheme
+from time import time
 
 class Ising():
 
@@ -10,55 +10,38 @@ class Ising():
     def __init__(self, J : np.ndarray, h : np.ndarray) -> None:
 
         """
-        Class constructor. Checks if the arguments provided match the requirement of an Ising problem.
+        Class constructor.
         """
 
-        # J and h must be numpy arrays
+        # Checking types
+        assert isinstance(J, np.ndarray), f"The type of J must be a numpy array, instead got {type(J)}"
+        assert isinstance(h, np.ndarray), f"The type of h must be a numpy array, instead got {type(h)}"
 
-        if not isinstance(J, np.ndarray):
+        # Checking dimensions
+        assert J.shape[0] == J.shape[1], f"J must be a square matrix, instead got {J.shape}"
+        assert h.shape[0] == J.shape[0], f"The dimension of h must fits J's, instead of {J.shape[0]} got {h.shape[0]}"
+        assert h.shape[1] == 1, f"h must be a column vector with dimensions of this pattern: (n,1), instead got {h.shape}"
 
-            raise TypeError(f"J must be a numpy array. Instead its class is {type(J)}.")
+        # Checking J's properties
+        assert np.allclose(J, J.T), "J must be symmetric"
+        assert not np.any(J == np.zeros(J.shape)), "J must not have null elements"
 
-        elif not isinstance(h, np.ndarray):
+        self.J = J
+        self.h = h
+        self.dimension = J.shape[0]
+        self.ground_state = None
+        self.energy = None   
 
-            raise TypeError(f"h must be a numpy array. Instead its class is {type(h)}.")  
-
-        # J must be definite symetric positive    
-
-        elif not np.all(abs(J - J.T) < 10**-12):
-
-            raise ValueError("J must be symetric.")  
-
-        # elif min(np.linalg.eigvals(J)) <= 0 and max(np.linalg.eigvals(J)) >= 0:
-
-        #     raise ValueError("J must be positive definite.")
-
-        # h must be a column vector    
-
-        elif np.shape(h)[1] != 1:
-
-            raise ValueError(f"h must be a column vector, i.e. its dimensions must fit the following pattern: (n,1). Instead, its dimensions are {np.shape(h)}.")
-
-        # J and h dimensions must fit
-        
-        elif np.shape(J)[0] != np.shape(h)[0]:
-
-            raise ValueError(f"J and h dimensions must fit. However, J is a square matrix of size {np.shape(J)[0]} and h is a column vector of size {np.shape(h)[0]}.")   
-
-        else:
-
-            self.J = J
-            self.h = h
-            self.ground_state = None       
-    
     def optimize(
         self,
         kerr_constant : float = 1,
         detuning_frequency : float = 1,
         pressure = lambda t : 0.01 * t,
         time_step : float = 0.01,
-        simulation_time : int = 600,
-        symplectic_parameter : int = 2
+        symplectic_parameter : int = 2,
+        window_size = 50,
+        sample_frequency : int = 50,
+        display_time : bool = True,
     ) -> None:
 
         """
@@ -67,14 +50,67 @@ class Ising():
 
         if self.ground_state is None:
 
-            euler = SymplecticEulerScheme(
-                self.J,
-                self.h,
-                kerr_constant = kerr_constant,
-                detuning_frequency = detuning_frequency,
-                pressure = pressure,
-                time_step = time_step,
-                simulation_time = simulation_time,
-                symplectic_parameter = symplectic_parameter
-            )
-            self.ground_state = euler.run()
+            # Symplectic parameter
+
+            symplectic_time_step = time_step / symplectic_parameter
+
+            # Parameters calculated from matrix
+            
+            xi0 = 0.7 * detuning_frequency / (np.std(self.J - np.diag(np.diag(self.J))) * (self.dimension)**(1/2))
+
+            # Initialization of the oscillators
+
+            X = np.zeros((self.dimension,1)) 
+            Y = np.zeros((self.dimension,1)) 
+
+            # Definition of the window
+
+            window = np.zeros((self.dimension, window_size), dtype=np.float64)
+            zeros = np.zeros((self.dimension,))
+            zeros_matrix = np.zeros((self.dimension, window_size), dtype=np.float64)
+
+            # Begining of simulation
+
+            run = True
+            step = 0
+
+            start_time = time()
+
+            while run:
+
+                factor = pressure(step * time_step) - detuning_frequency
+
+                if factor > 0:
+
+                    for _ in range(symplectic_parameter):
+
+                        X += symplectic_time_step * detuning_frequency * Y
+                        Y -= symplectic_time_step * (X**3 - factor * X)  
+
+                    Y += xi0 * (self.J @ X - 2 * pow(factor / kerr_constant, .5) * self.h) * time_step
+
+                    # Check the stop criterion
+
+                    if step % sample_frequency == 0:
+
+                        window = np.roll(window, -1, axis = 1)
+                        window[:, -1] = np.sign(X).T[0]
+                        variance = np.var(window, axis = 1)
+
+                        run = not np.allclose(variance, zeros, rtol = 1e-8, atol = 1e-8) or np.any(np.isclose(window, zeros_matrix))
+
+                step += 1         
+
+            end_time = time()
+
+            # End of simulation
+
+            simulation_time = round(end_time - start_time, 3)
+
+            if display_time:    
+
+                print(f"Run in {round(simulation_time,3)} seconds.")
+
+            self.ground_state = np.sign(X)    
+            energy = -0.5 * self.ground_state.T @ self.J @ self.ground_state + self.ground_state.T @ self.h
+            self.energy = energy[0][0]    
