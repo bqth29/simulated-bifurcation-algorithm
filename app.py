@@ -14,7 +14,9 @@ def format_date(date):
 
     return date
 
-void = dbc.Row(html.P(" "))   
+void = dbc.Row(html.P(" ")) 
+dates.sort()
+dates.reverse()  
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])    
 app.layout = dbc.Container(
@@ -109,6 +111,19 @@ app.layout = dbc.Container(
 )
 
 @app.callback(
+    Output('assets-dropdown', 'value'),
+    Input('assets-dropdown', 'search_value'),
+    State('assets-dropdown', 'value')
+)
+
+def load_all_assets(input, value):
+    if input == '*':
+        return assets
+    else:
+        return value    
+
+
+@app.callback(
     Output('pie-chart', 'figure'),
     Output('table', 'data'),
     Input('go-optimization', 'n_clicks'),
@@ -131,7 +146,7 @@ def plot_data(n_clicks, date, assets_list, bits):
 
             markowitz.optimize()
             
-            return px.pie(markowitz.portfolio, values='stocks', names='assets'), markowitz.portfolio.to_dict('records')
+            return px.pie(markowitz.portfolio['dataframe'], values='stocks', names='assets'), markowitz.portfolio['dataframe'].to_dict('records')
 
     
     default = pd.DataFrame( 

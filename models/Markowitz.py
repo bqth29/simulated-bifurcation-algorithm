@@ -155,7 +155,8 @@ class Markowitz():
             display_time = display_time
         )
         print(ising.energy)
-        self.portfolio['array'] = (self.conversion_matrix['vector']).T @ ((ising.ground_state + 1)/2)
+        print(ising.ground_state)
+        self.portfolio['array'] = .5 * self.conversion_matrix['vector'].T @ (ising.ground_state + np.ones((self.number_of_assets * self.number_of_bits, 1))) 
         optimized_portfolio = self.portfolio['array'].T[0]
 
         assets_to_purchase = [self.assets_list[ind] for ind in range(len(self.assets_list)) if optimized_portfolio[ind] > 0]
