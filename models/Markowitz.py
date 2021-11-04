@@ -51,11 +51,9 @@ class Markowitz():
             'array' : None,
         }
 
-        # Conversion matrices
+        # Conversion matrix
 
-            ## Vector conversion
-
-        int_to_spin_vector = np.zeros(
+        matrix = np.zeros(
             (self.number_of_assets * self.number_of_bits, self.number_of_assets),
             dtype = np.float64
         )
@@ -63,21 +61,9 @@ class Markowitz():
         for a in range(self.number_of_assets):
             for b in range(self.number_of_bits):
 
-                int_to_spin_vector[a*self.number_of_bits+b][a] = 2.0**b
+                matrix[a*self.number_of_bits+b][a] = 2.0**b
 
-            ## Matrix conversion
-
-        int_to_spin_matrix = np.block(
-            [
-                [2.0**b * np.eye(self.number_of_assets)] 
-                for b in range(self.number_of_bits)
-            ]
-        )
-
-        self.conversion_matrix = {
-            'vector': int_to_spin_vector,
-            'matrix': int_to_spin_matrix,
-        }         
+        self.matrix = matrix         
 
     def __repr__(self) -> str:
         
@@ -132,8 +118,8 @@ class Markowitz():
         Generates the equivalent Ising model.
         """
 
-        sigma = self.conversion_matrix['matrix'] @ self.covariance @ self.conversion_matrix['matrix'].T
-        mu = self.conversion_matrix['vector'] @ self.expected_return
+        sigma = self.matrix @ self.covariance @ self.matrix.T
+        mu = self.matrix @ self.expected_return
 
         J = - .5 * self.risk_coefficient * sigma
         h = .5 * self.risk_coefficient * sigma @ np.ones((self.number_of_assets * self.number_of_bits, 1)) - mu 
@@ -168,7 +154,7 @@ class Markowitz():
             display_time = display_time
         )
         
-        self.portfolio['array'] = .5 * self.conversion_matrix['vector'].T @ (ising.ground_state + np.ones((self.number_of_assets * self.number_of_bits, 1))) 
+        self.portfolio['array'] = .5 * self.matrix.T @ (ising.ground_state + np.ones((self.number_of_assets * self.number_of_bits, 1))) 
         optimized_portfolio = self.portfolio['array'].T[0]
 
         assets_to_purchase = [self.assets_list[ind] for ind in range(len(self.assets_list)) if optimized_portfolio[ind] > 0]
