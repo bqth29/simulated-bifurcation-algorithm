@@ -135,8 +135,8 @@ class Markowitz():
         sigma = self.conversion_matrix['matrix'] @ self.covariance @ self.conversion_matrix['matrix'].T
         mu = self.conversion_matrix['vector'] @ self.expected_return
 
-        J = -self.risk_coefficient/2 * sigma
-        h = self.risk_coefficient/2 * sigma @ np.ones((self.number_of_assets * self.number_of_bits, 1)) - mu 
+        J = - .5 * self.risk_coefficient * sigma
+        h = .5 * self.risk_coefficient * sigma @ np.ones((self.number_of_assets * self.number_of_bits, 1)) - mu 
         
         return Ising(J, h)
 

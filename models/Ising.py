@@ -114,4 +114,3 @@ class Ising():
             self.ground_state = np.sign(X)    
             energy = -0.5 * self.ground_state.T @ self.J @ self.ground_state + self.ground_state.T @ self.h
             self.energy = energy[0][0]   
-            print(f'SB: {self.energy}') 
