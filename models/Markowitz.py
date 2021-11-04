@@ -22,6 +22,19 @@ class Markowitz():
         date : str = dates[-1],
         assets_list : list = assets[:]
     ) -> None:
+
+        # Checking types
+        assert isinstance(covariance, np.ndarray), f"The type of the covariance matrix must be a numpy array, instead got {type(covariance)}"
+        assert isinstance(expected_return, np.ndarray), f"The type of h must be a numpy array, instead got {type(expected_return)}"
+
+        # Checking dimensions
+        assert covariance.shape[0] == covariance.shape[1], f" the covariance matrixmust be a square matrix, instead got {covariance.shape}"
+        assert expected_return.shape[0] == expected_return.shape[0], f"The dimension of h must fits the covariance matrix's, instead of {covariance.shape[0]} got {expected_return.shape[0]}"
+        assert expected_return.shape[1] == 1, f"h must be a column vector with dimensions of this pattern: (n,1), instead got {expected_return.shape}"
+
+        # Checking covariance matrix's properties
+        assert np.allclose(covariance, covariance.T), "The covariance matrix must be symmetric"
+        assert min(np.linalg.eig(covariance)[0]) > 0, "The covariance matrix must be postive definite"
         
         # Data
         self.covariance = covariance
@@ -170,9 +183,9 @@ class Markowitz():
             }
         ).sort_values(by=['assets'])
 
-    def gain(self):
-        if self.portfolio_vector is not None:
-            gain = -self.risk_coefficient/2 * np.dot(self.portfolio_vector.T, self.covariance @ self.portfolio_vector) + np.dot(self.expected_return.T, self.portfolio_vector)
+    def gain(self) -> float:
+        if self.portfolio['array'] is not None:
+            gain = - .5 * self.risk_coefficient * self.portfolio['array'].T @ self.covariance @ self.portfolio['array'] + self.expected_return.T @ self.portfolio['array']
             return gain[0][0]
 
     ############################
