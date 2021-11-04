@@ -56,7 +56,7 @@ class Ising():
 
             # Parameters calculated from matrix
             
-            xi0 = 0.7 * detuning_frequency / (np.std(self.J - np.diag(np.diag(self.J))) * (self.dimension)**(1/2))
+            xi0 = 0.7 * detuning_frequency / (np.std(self.J[~np.eye(self.J.shape[0],dtype=bool)].reshape(self.J.shape[0],-1)) * (self.dimension)**(1/2))
 
             # Initialization of the oscillators
 
@@ -113,4 +113,5 @@ class Ising():
 
             self.ground_state = np.sign(X)    
             energy = -0.5 * self.ground_state.T @ self.J @ self.ground_state + self.ground_state.T @ self.h
-            self.energy = energy[0][0]    
+            self.energy = energy[0][0]   
+            print(f'SB: {self.energy}') 
