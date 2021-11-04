@@ -36,11 +36,11 @@ class Ising():
         self,
         kerr_constant : float = 1,
         detuning_frequency : float = 1,
-        pressure = lambda t : 0.01 * t,
+        pressure = lambda t : 0.0088 * t,
         time_step : float = 0.01,
         symplectic_parameter : int = 2,
-        window_size = 50,
-        sample_frequency : int = 50,
+        window_size = 35,
+        sample_frequency : int = 60,
         display_time : bool = True,
     ) -> None:
 
