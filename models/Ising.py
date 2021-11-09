@@ -40,7 +40,7 @@ class Ising():
         time_step : float = 0.01,
         symplectic_parameter : int = 2,
         window_size = 35,
-        sample_frequency : int = 60,
+        sampling_period : int = 60,
         display_time : bool = True,
     ) -> None:
 
@@ -91,7 +91,7 @@ class Ising():
 
                     # Check the stop criterion
 
-                    if step % sample_frequency == 0:
+                    if step % sampling_period == 0:
 
                         window = np.roll(window, -1, axis = 1)
                         window[:, -1] = np.sign(X).T[0]

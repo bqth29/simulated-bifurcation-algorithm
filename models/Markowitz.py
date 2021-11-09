@@ -43,7 +43,7 @@ class Markowitz():
         self.risk_coefficient = risk_coefficient
         self.date = date
         self.assets_list = assets_list
-        self.number_of_assets = len(assets_list)
+        self.number_of_assets = covariance.shape[0]
 
         # Parameters to optimize
         self.portfolio = {
@@ -134,7 +134,7 @@ class Markowitz():
         time_step : float = 0.01,
         symplectic_parameter : int = 2,
         window_size = 50,
-        sample_frequency : int = 1000,
+        sampling_period : int = 1000,
         display_time : bool = True,
     ) -> None:
 
@@ -150,7 +150,7 @@ class Markowitz():
             time_step = time_step,
             symplectic_parameter = symplectic_parameter,
             window_size = window_size,
-            sample_frequency = sample_frequency,
+            sampling_period = sampling_period,
             display_time = display_time
         )
         
