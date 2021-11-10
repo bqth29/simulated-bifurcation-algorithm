@@ -85,7 +85,7 @@ class Ising():
                     for _ in range(symplectic_parameter):
 
                         X += symplectic_time_step * detuning_frequency * Y
-                        Y -= symplectic_time_step * (X**3 - factor * X)  
+                        Y -= symplectic_time_step * (kerr_constant * X**3 - factor * X)  
 
                     Y += xi0 * (self.J @ X - 2 * pow(factor / kerr_constant, .5) * self.h) * time_step
 
