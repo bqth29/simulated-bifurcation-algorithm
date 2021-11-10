@@ -63,7 +63,9 @@ class Markowitz():
 
                 matrix[a*self.number_of_bits+b][a] = 2.0**b
 
-        self.matrix = matrix         
+        self.matrix = matrix   
+
+        self.run_in = 0      
 
     def __repr__(self) -> str:
         
@@ -78,7 +80,7 @@ class Markowitz():
     @classmethod
     def from_csv(
         cls,
-        risk_coefficient : float = 1, 
+        risk_coefficient : float = 1., 
         number_of_bits : int = 1,
         date : str = dates[-1],
         assets_list : list = assets[:]
@@ -128,8 +130,8 @@ class Markowitz():
 
     def optimize(
         self,
-        kerr_constant : float = 1,
-        detuning_frequency : float = 1,
+        kerr_constant : float = 1.,
+        detuning_frequency : float = 1.,
         pressure = lambda t : 0.01 * t,
         time_step : float = 0.01,
         symplectic_parameter : int = 2,
@@ -153,7 +155,8 @@ class Markowitz():
             sampling_period = sampling_period,
             display_time = display_time
         )
-        
+        self.run_in = ising.run_in 
+
         self.portfolio['array'] = .5 * self.matrix.T @ (ising.ground_state + np.ones((self.number_of_assets * self.number_of_bits, 1))) 
         optimized_portfolio = self.portfolio['array'].T[0]
 
