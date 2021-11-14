@@ -51,7 +51,7 @@ class Markowitz():
             'array' : None,
         }
 
-        # Conversion matrix
+        # Conversion matrix and vector
 
         matrix = np.zeros(
             (self.number_of_assets * self.number_of_bits, self.number_of_assets),
@@ -63,7 +63,8 @@ class Markowitz():
 
                 matrix[a*self.number_of_bits+b][a] = 2.0**b
 
-        self.matrix = matrix         
+        self.M = matrix         
+        self.U = np.ones((self.number_of_assets * self.number_of_bits, 1), dtype = np.float64)
 
     def __repr__(self) -> str:
         
@@ -118,11 +119,11 @@ class Markowitz():
         Generates the equivalent Ising model.
         """
 
-        sigma = self.matrix @ self.covariance @ self.matrix.T
-        mu = self.matrix @ self.expected_return
+        sigma = self.M @ self.covariance @ self.M.T
+        mu = self.M @ self.expected_return
 
         J = - .5 * self.risk_coefficient * sigma
-        h = .5 * self.risk_coefficient * sigma @ np.ones((self.number_of_assets * self.number_of_bits, 1)) - mu 
+        h = .5 * self.risk_coefficient * sigma @ self.U - mu 
         
         return Ising(J, h)
 
@@ -154,12 +155,12 @@ class Markowitz():
             display_time = display_time
         )
         
-        self.portfolio['array'] = .5 * self.matrix.T @ (ising.ground_state + np.ones((self.number_of_assets * self.number_of_bits, 1))) 
+        self.portfolio['array'] = .5 * self.M.T @ (ising.ground_state + self.U) 
         optimized_portfolio = self.portfolio['array'].T[0]
 
         assets_to_purchase = [self.assets_list[ind] for ind in range(len(self.assets_list)) if optimized_portfolio[ind] > 0]
         stocks_to_purchase = [optimized_portfolio[ind] for ind in range(len(optimized_portfolio)) if optimized_portfolio[ind] > 0]
-        total_stocks = sum(stocks_to_purchase)
+        total_stocks = np.sum(stocks_to_purchase)
 
         self.portfolio['dataframe'] = pd.DataFrame(
             {
