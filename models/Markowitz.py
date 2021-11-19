@@ -155,7 +155,6 @@ class Markowitz():
             sampling_period = sampling_period,
             display_time = display_time
         )
-        self.run_in = ising.run_in 
 
         self.portfolio['array'] = .5 * self.matrix.T @ (ising.ground_state + np.ones((self.number_of_assets * self.number_of_bits, 1))) 
         optimized_portfolio = self.portfolio['array'].T[0]

@@ -31,12 +31,11 @@ class Ising():
         self.dimension = J.shape[0]
         self.ground_state = None
         self.energy = None   
-        self.run_in = 0
 
     def optimize(
         self,
-        kerr_constant : float = 1.,
-        detuning_frequency : float = 1.,
+        kerr_constant : float = 1,
+        detuning_frequency : float = 1,
         pressure = lambda t : 0.0088 * t,
         time_step : float = 0.01,
         symplectic_parameter : int = 2,
@@ -57,7 +56,8 @@ class Ising():
 
             # Parameters calculated from matrix
             
-            xi0 = 0.7 * detuning_frequency / (np.std(self.J[~np.eye(self.J.shape[0],dtype=bool)].reshape(self.J.shape[0],-1)) * (self.dimension)**(1/2))
+            xi0 = 0.7 * detuning_frequency / (np.std(self.J) * (self.dimension)**(1/2)) # Approximate
+            #xi0 = pow( - detuning_frequency / max(np.linalg.eig(self.J)[0]), .5)        # Exact (?)
 
             # Initialization of the oscillators
 
@@ -88,7 +88,7 @@ class Ising():
                         X += symplectic_time_step * detuning_frequency * Y
                         Y -= symplectic_time_step * (kerr_constant * X**3 - factor * X)  
 
-                    Y += xi0 * (self.J @ X - 2 * pow(factor / kerr_constant, .5) * self.h) * time_step
+                    Y += time_step * xi0 * (self.J @ X - 2 * pow(factor / kerr_constant, .5) * self.h)
 
                     # Check the stop criterion
 
@@ -107,7 +107,6 @@ class Ising():
             # End of simulation
 
             simulation_time = round(end_time - start_time, 3)
-            self.run_in = simulation_time
 
             if display_time:    
 
