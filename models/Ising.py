@@ -56,8 +56,7 @@ class Ising():
 
             # Parameters calculated from matrix
             
-            xi0 = 0.7 * detuning_frequency / (np.std(self.J) * (self.dimension)**(1/2)) # Approximate
-            #xi0 = pow( - detuning_frequency / max(np.linalg.eig(self.J)[0]), .5)        # Exact (?)
+            xi0 = 0.7 * detuning_frequency / (np.std(self.J) * (self.dimension)**(1/2))
 
             # Initialization of the oscillators
 
@@ -81,7 +80,7 @@ class Ising():
 
                 factor = pressure(step * time_step) - detuning_frequency
 
-                if factor > 0:
+                if True:
 
                     for _ in range(symplectic_parameter):
 
