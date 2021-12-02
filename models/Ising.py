@@ -56,7 +56,7 @@ class Ising():
 
             # Parameters calculated from matrix
             
-            xi0 = 0.7 * detuning_frequency / (np.std(self.J[~np.eye(self.J.shape[0],dtype=bool)].reshape(self.J.shape[0],-1)) * (self.dimension)**(1/2))
+            xi0 = 0.7 * detuning_frequency / (np.std(self.J) * (self.dimension)**(1/2))
 
             # Initialization of the oscillators
 
@@ -80,14 +80,14 @@ class Ising():
 
                 factor = pressure(step * time_step) - detuning_frequency
 
-                if factor > 0:
+                if True:
 
                     for _ in range(symplectic_parameter):
 
                         X += symplectic_time_step * detuning_frequency * Y
                         Y -= symplectic_time_step * (kerr_constant * X**3 - factor * X)  
 
-                    Y += time_step * xi0 * (self.J @ X - 2 * pow(factor / kerr_constant, .5) * self.h)
+                    Y += time_step * xi0 * (self.J @ X - 2 * pow(max(factor, 0) / kerr_constant, .5) * self.h)
 
                     # Check the stop criterion
 
