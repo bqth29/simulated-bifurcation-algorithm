@@ -80,7 +80,7 @@ class Ising():
 
                 factor = pressure(step * time_step) - detuning_frequency
 
-                if True:
+                if factor > 0:
 
                     for _ in range(symplectic_parameter):
 

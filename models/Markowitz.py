@@ -134,8 +134,8 @@ class Markowitz():
         pressure = lambda t : 0.01 * t,
         time_step : float = 0.01,
         symplectic_parameter : int = 2,
-        window_size = 50,
-        sampling_period : int = 1000,
+        window_size = 35,
+        sampling_period : int = 60,
         display_time : bool = True,
     ) -> None:
 
@@ -154,7 +154,7 @@ class Markowitz():
             sampling_period = sampling_period,
             display_time = display_time
         )
-        
+        self.ising_energy = ising.energy
         self.portfolio['array'] = .5 * self.M.T @ (ising.ground_state + self.U) 
         optimized_portfolio = self.portfolio['array'].T[0]
 
