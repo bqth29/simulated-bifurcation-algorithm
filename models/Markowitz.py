@@ -1,9 +1,10 @@
+from typing import Tuple
 import numpy as np
 import pandas as pd
 import plotly.express as px
 from plotly.offline import iplot
 import plotly.graph_objs as go
-from models.Ising import Ising
+from models.KNPO import KNPO
 
 from data.data import assets, dates
 
@@ -13,69 +14,6 @@ class Markowitz():
     Implementation of Markowitz model.
     """
 
-    def __init__(
-        self, 
-        covariance : np.ndarray, 
-        expected_return : np.ndarray, 
-        risk_coefficient : float = 1, 
-        number_of_bits : int = 1,
-        date : str = dates[-1],
-        assets_list : list = assets[:]
-    ) -> None:
-
-        # Checking types
-        assert isinstance(covariance, np.ndarray), f"The type of the covariance matrix must be a numpy array, instead got {type(covariance)}"
-        assert isinstance(expected_return, np.ndarray), f"The type of h must be a numpy array, instead got {type(expected_return)}"
-
-        # Checking dimensions
-        assert covariance.shape[0] == covariance.shape[1], f" the covariance matrixmust be a square matrix, instead got {covariance.shape}"
-        assert expected_return.shape[0] == expected_return.shape[0], f"The dimension of h must fits the covariance matrix's, instead of {covariance.shape[0]} got {expected_return.shape[0]}"
-        assert expected_return.shape[1] == 1, f"h must be a column vector with dimensions of this pattern: (n,1), instead got {expected_return.shape}"
-
-        # Checking covariance matrix's properties
-        assert np.allclose(covariance, covariance.T), "The covariance matrix must be symmetric"
-        assert min(np.linalg.eig(covariance)[0]) > 0, "The covariance matrix must be postive definite"
-        
-        # Data
-        self.covariance = covariance
-        self.expected_return = expected_return
-        self.number_of_bits = number_of_bits
-        self.risk_coefficient = risk_coefficient
-        self.date = date
-        self.assets_list = assets_list
-        self.number_of_assets = covariance.shape[0]
-
-        # Parameters to optimize
-        self.portfolio = {
-            'dataframe' : None,
-            'array' : None,
-        }
-
-        # Conversion matrix and vector
-
-        matrix = np.zeros(
-            (self.number_of_assets * self.number_of_bits, self.number_of_assets),
-            dtype = np.float64
-        )
-
-        for a in range(self.number_of_assets):
-            for b in range(self.number_of_bits):
-
-                matrix[a*self.number_of_bits+b][a] = 2.0**b
-
-        self.M = matrix         
-        self.U = np.ones((self.number_of_assets * self.number_of_bits, 1), dtype = np.float64)
-
-    def __repr__(self) -> str:
-        
-        message = f"Markowitz portfolio: {self.number_of_assets} {self.number_of_bits}-bits encoded S&P500 assets (updated {self.date}) with risk aversion of {self.risk_coefficient}: {self.assets_list}."
-
-        if self.portfolio is not None:
-
-            message += f"\nOptimal portfolio:\n{self.portfolio['dataframe']}"    
-
-        return message    
-
     @classmethod
     def from_csv(
         cls,
@@ -83,10 +21,11 @@ class Markowitz():
         number_of_bits : int = 1,
         date : str = dates[-1],
         assets_list : list = assets[:]
-    ) -> None:
+    ):
 
         """
         Retrieves the data for the Markowitz model from .csv files.
+        Only works with the files in the ./data folder.
         """
         
         covariance_filename = "./data/cov.csv"
@@ -109,11 +48,83 @@ class Markowitz():
             expected_return,
             risk_coefficient = risk_coefficient,
             number_of_bits = number_of_bits,
-            date = date,
             assets_list = assets_list
-        )    
+        ) 
 
-    def to_Ising(self) -> Ising:
+    def __init__(
+        self, 
+        covariance: np.ndarray, 
+        expected_return: np.ndarray, 
+        risk_coefficient: float = 1, 
+        number_of_bits: int = 1,
+        assets_list: list = assets[:],
+        assert_parameters: bool = True,
+    ) -> None:
+        
+        # Data
+        self.covariance       = covariance
+        self.expected_return  = expected_return
+        self.risk_coefficient = risk_coefficient
+
+        self.assets_list      = assets_list
+
+        self.number_of_assets = covariance.shape[0]
+        self.number_of_bits   = number_of_bits
+
+        # Parameters to optimize
+
+        self.portfolio        = None
+
+        # Conversion matrix and vector
+
+        self.M                = self.__conversion_matrix__()         
+        self.U                = np.ones((self.number_of_assets * self.number_of_bits, 1), dtype = np.float64)
+
+        # Check parameters
+
+        if assert_parameters:
+            self.__assert__()
+
+    def __repr__(self) -> str:
+
+        return f"""Utility gain: {self.utlity_function()}
+        {self.as_dataframe()}
+        """
+
+    def __assert__(self) -> None:
+
+        """
+        Asserts that the parameters of the object follow the right pattern.
+        """  
+        
+        # Checking types
+        assert isinstance(self.covariance, np.ndarray), f"WARNING: The type of the covariance matrix must be a numpy array, instead got {type(self.covariance)}"
+        assert isinstance(self.expected_return, np.ndarray), f"WARNING: The type of h must be a numpy array, instead got {type(self.expected_return)}"
+
+        # Checking dimensions
+        assert self.covariance.shape[0] == self.covariance.shape[1], f"WARNING: The covariance matrix must be a square matrix, instead got {self.covariance.shape}"
+        assert self.expected_return.shape[0] == self.expected_return.shape[0], f"WARNING: The dimension of h must fits the covariance matrix's, instead of {self.covariance.shape[0]} got {self.expected_return.shape[0]}"
+        assert self.expected_return.shape[1] == 1, f"WARNING: h must be a column vector with dimensions of this pattern: (n,1), instead got {self.expected_return.shape}"
+
+        # Checking covariance matrix's properties
+        assert np.allclose(self.covariance, self.covariance.T), "WARNING: The covariance matrix must be symmetric"
+        assert min(np.linalg.eig(self.covariance)[0]) > 0, "WARNING: The covariance matrix must be postive definite"
+
+    def __conversion_matrix__(self) -> np.ndarray:
+
+        matrix = np.zeros(
+            (self.number_of_assets * self.number_of_bits, self.number_of_assets),
+            dtype = np.float64
+        )
+
+        for a in range(self.number_of_assets):
+            for b in range(self.number_of_bits):
+
+                matrix[a*self.number_of_bits+b][a] = 2.0**b
+
+        return matrix              
+
+    def __to_Ising__(self) -> Tuple[np.ndarray, np.ndarray]:
 
         """
         Generates the equivalent Ising model.
@@ -125,29 +136,28 @@ class Markowitz():
         J = - .5 * self.risk_coefficient * sigma
         h = .5 * self.risk_coefficient * sigma @ self.U - mu 
         
-        return Ising(J, h)
+        return J, h
 
     def optimize(
         self,
-        kerr_constant : float = 1,
-        detuning_frequency : float = 1,
-        pressure = lambda t : 0.01 * t,
-        time_step : float = 0.01,
-        symplectic_parameter : int = 2,
-        window_size = 50,
-        sampling_period : int = 1000,
-        display_time : bool = True,
+        kerr_constant: float = 1,
+        detuning_frequency: float = 1,
+        pressure = lambda t: 0.01 * t,
+        time_step: float = 0.01,
+        symplectic_parameter: int = 2,
+        window_size: int = 35,
+        sampling_period: int = 50,
+        display_time: bool = True,
     ) -> None:
 
         """
         Computes the optimal portfolio for this Markowitz model.
         """
 
-        ising = self.to_Ising()  
+        J, h = self.__to_Ising__()
+        ising = KNPO(J, h, detuning_frequency, kerr_constant, pressure)  
+
         ising.optimize(
-            kerr_constant = kerr_constant,
-            detuning_frequency = detuning_frequency,
-            pressure = pressure,
             time_step = time_step,
             symplectic_parameter = symplectic_parameter,
             window_size = window_size,
@@ -155,36 +165,59 @@ class Markowitz():
             display_time = display_time
         )
         
-        self.portfolio['array'] = .5 * self.M.T @ (ising.ground_state + self.U) 
-        optimized_portfolio = self.portfolio['array'].T[0]
+        self.portfolio = .5 * self.M.T @ (ising.ground_state + self.U) 
 
-        assets_to_purchase = [self.assets_list[ind] for ind in range(len(self.assets_list)) if optimized_portfolio[ind] > 0]
-        stocks_to_purchase = [optimized_portfolio[ind] for ind in range(len(optimized_portfolio)) if optimized_portfolio[ind] > 0]
-        total_stocks = np.sum(stocks_to_purchase)
+    # Data extraction
+        
+    def as_dataframe(self) -> pd.DataFrame:
 
-        self.portfolio['dataframe'] = pd.DataFrame(
-            {
-                'assets': assets_to_purchase,
-                'stocks': stocks_to_purchase,
-                'ratios (%)': [round(100 * stock/total_stocks, 3) for stock in stocks_to_purchase]
-            }
-        ).sort_values(by=['assets'])
+        """
+        Formats the portfolio data in a dataframe.
+        """
 
-    def gain(self) -> float:
-        if self.portfolio['array'] is not None:
-            gain = - .5 * self.risk_coefficient * self.portfolio['array'].T @ self.covariance @ self.portfolio['array'] + self.expected_return.T @ self.portfolio['array']
-            return gain[0][0]
+        if self.portfolio is None:
 
-    ############################
-    # Graphical representation #
-    ############################
+            return None
+
+        else:
+
+            optimized_portfolio = self.portfolio.T[0]
+
+            assets_to_purchase = [self.assets_list[ind] for ind in range(len(self.assets_list)) if optimized_portfolio[ind] > 0]
+            stocks_to_purchase = [optimized_portfolio[ind] for ind in range(len(optimized_portfolio)) if optimized_portfolio[ind] > 0]
+            total_stocks = np.sum(stocks_to_purchase)
+
+            df = pd.DataFrame(
+                {
+                    'assets': assets_to_purchase,
+                    'stocks': stocks_to_purchase,
+                    'ratios': [round(100 * stock/total_stocks, 3) for stock in stocks_to_purchase]
+                }
+            ).sort_values(by=['assets'])
+
+            return df
+
+    def utlity_function(self) -> float:
+
+        if self.portfolio is None:
+
+            return 0
+
+        else:
+
+            gain = - .5 * self.risk_coefficient * self.portfolio.T @ self.covariance @ self.portfolio + self.expected_return.T @ self.portfolio
+            return gain[0][0]      
+
+    # Graphical representation
 
     def pie(self) -> None:
 
-        if self.portfolio['dataframe'] is not None:
+        df = self.as_dataframe()
+
+        if df is not None:
 
             fig = px.pie(
-                self.portfolio['dataframe'],
+                df,
                 values = 'stocks',
                 names = 'assets',
                 title = 'Optimal portfolio'
@@ -193,7 +226,9 @@ class Markowitz():
 
     def table(self) -> None:
 
-        if self.portfolio['dataframe'] is not None:
+        df = self.as_dataframe()
+
+        if df is not None:
 
             trace = go.Table(
             header = dict(
@@ -207,9 +242,9 @@ class Markowitz():
             ),
             cells = dict(
                 values = [
-                    self.portfolio['dataframe'].assets,
-                    self.portfolio['dataframe'].stocks,
-                    self.portfolio['dataframe'].ratios
+                    df.assets,
+                    df.stocks,
+                    df.ratios
                 ],
                 fill = dict(color='#F5F8FF'),
                 align = ['left'] * 5)
