@@ -1,14 +1,14 @@
-from typing import Tuple
+from typing import Tuple, overload
 import numpy as np
 import pandas as pd
 import plotly.express as px
 from plotly.offline import iplot
 import plotly.graph_objs as go
-from models.KNPO import KNPO
+import simulated_bifurcation as sb
 
 from data.data import assets, dates
 
-class Markowitz():
+class Markowitz(sb.SBModel):
 
     """
     Implementation of Markowitz model.
@@ -60,7 +60,7 @@ class Markowitz():
         assets_list: list = assets[:],
         assert_parameters: bool = True,
     ) -> None:
-        
+
         # Data
         self.covariance       = covariance
         self.expected_return  = expected_return
@@ -124,7 +124,7 @@ class Markowitz():
 
         return matrix              
 
-    def __to_Ising__(self) -> Tuple[np.ndarray, np.ndarray]:
+    def __to_Ising__(self) -> sb.Ising:
 
         """
         Generates the equivalent Ising model.
@@ -136,36 +136,10 @@ class Markowitz():
         J = - .5 * self.risk_coefficient * sigma
         h = .5 * self.risk_coefficient * sigma @ self.U - mu 
         
-        return J, h
+        return sb.Ising(J, h)
 
-    def optimize(
-        self,
-        kerr_constant: float = 1,
-        detuning_frequency: float = 1,
-        pressure = lambda t: 0.01 * t,
-        time_step: float = 0.01,
-        symplectic_parameter: int = 2,
-        window_size: int = 35,
-        sampling_period: int = 50,
-        display_time: bool = True,
-    ) -> None:
-
-        """
-        Computes the optimal portfolio for this Markowitz model.
-        """
-
-        J, h = self.__to_Ising__()
-        ising = KNPO(J, h, detuning_frequency, kerr_constant, pressure)  
-
-        ising.optimize(
-            time_step = time_step,
-            symplectic_parameter = symplectic_parameter,
-            window_size = window_size,
-            sampling_period = sampling_period,
-            display_time = display_time
-        )
-        
-        self.portfolio = .5 * self.M.T @ (ising.ground_state + self.U) 
+    def __from_Ising__(self, ising: sb.Ising) -> None:
+        self.portfolio = .5 * self.M.T @ (ising.ground_state + self.U)
 
     # Data extraction
         
