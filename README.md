@@ -119,5 +119,5 @@ To access, the ground state and the energy of the Ising model, simply use:
 >>> print(ising.ground_state)
 ```
 ```
->>> print(ising.energy)
+>>> print(ising.energy())
 ```
