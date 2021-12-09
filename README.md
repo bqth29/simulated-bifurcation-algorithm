@@ -32,7 +32,7 @@ You can then run the optimization to get the portfolio using simulated bifurcati
 
 ```
 >>> markowitz.optimize()
->>> print(markowitz.portfolio['dataframe'])
+>>> print(markowitz.as_dataframe())
     assets  stocks  ratios
 3       AA     1.0   0.662
 6     AAPL     1.0   0.662
@@ -101,17 +101,17 @@ The Euler scheme stops when a stop criterion is satisfied. The latter depends on
 Even though this package was designed particularly to optimize Markowitz portfolios, it can be used to solve any Ising problem as long as you provide the correlation matrix $J$ and the magnetic field $h$ as follow:
 
 ```
->>> from models.Ising import Ising
+>>> from simulated_bifurcation import Ising
 >>> ising = Ising(J, h)
 ```
 
 This model can then be optimized following the same process as for the Markowitz problem.
 
 ```
->>> ising.optimize()
+>>> ising.get_ground_state()
 ```
 
-> The parameters used in the `optimize()` method of the `Ising` class are strictly the same as for the `Markowitz` one.
+> The parameters used in the `get_ground_state()` method of the `Ising` class are strictly the same as for the `Markowitz`'s `optimize` method.
 
 To access, the ground state and the energy of the Ising model, simply use:
 
