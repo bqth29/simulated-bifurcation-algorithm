@@ -1,9 +1,10 @@
-from typing import Tuple, overload
+import torch
 import numpy as np
 import pandas as pd
 import plotly.express as px
 from plotly.offline import iplot
 import plotly.graph_objs as go
+
 import simulated_bifurcation as sb
 
 from data.data import assets, dates
@@ -11,7 +12,7 @@ from data.data import assets, dates
 class Markowitz(sb.SBModel):
 
     """
-    Implementation of Markowitz model.
+    Implementation of an integer Markowitz model.
     """
 
     @classmethod
@@ -40,8 +41,8 @@ class Markowitz(sb.SBModel):
         mu = np.expand_dims(complete_monthly_returns[assets_list].loc[date].to_numpy(),1)
         sigma = cov[assets_list].loc[assets_list].to_numpy()
 
-        covariance = sigma
-        expected_return = mu
+        covariance = torch.from_numpy(sigma)
+        expected_return = torch.from_numpy(mu)
 
         return Markowitz(
             covariance,
@@ -53,8 +54,8 @@ class Markowitz(sb.SBModel):
 
     def __init__(
         self, 
-        covariance: np.ndarray, 
-        expected_return: np.ndarray, 
+        covariance: torch.Tensor, 
+        expected_return: torch.Tensor, 
         risk_coefficient: float = 1, 
         number_of_bits: int = 1,
         assets_list: list = assets[:],
@@ -78,12 +79,9 @@ class Markowitz(sb.SBModel):
         # Conversion matrix and vector
 
         self.M                = self.__conversion_matrix__()         
-        self.U                = np.ones((self.number_of_assets * self.number_of_bits, 1), dtype = np.float64)
+        self.U                = torch.ones([self.number_of_assets * self.number_of_bits, 1], dtype=torch.float64)
 
-        # Check parameters
-
-        if assert_parameters:
-            self.__assert__()
+        self.assert_parameters = assert_parameters
 
     def __repr__(self) -> str:
 
@@ -91,30 +89,11 @@ class Markowitz(sb.SBModel):
         {self.as_dataframe()}
         """
 
-    def __assert__(self) -> None:
+    def __conversion_matrix__(self) -> torch.Tensor:
 
-        """
-        Asserts that the parameters of the object follow the right pattern.
-        """  
-        
-        # Checking types
-        assert isinstance(self.covariance, np.ndarray), f"WARNING: The type of the covariance matrix must be a numpy array, instead got {type(self.covariance)}"
-        assert isinstance(self.expected_return, np.ndarray), f"WARNING: The type of h must be a numpy array, instead got {type(self.expected_return)}"
-
-        # Checking dimensions
-        assert self.covariance.shape[0] == self.covariance.shape[1], f"WARNING: The covariance matrix must be a square matrix, instead got {self.covariance.shape}"
-        assert self.expected_return.shape[0] == self.expected_return.shape[0], f"WARNING: The dimension of h must fits the covariance matrix's, instead of {self.covariance.shape[0]} got {self.expected_return.shape[0]}"
-        assert self.expected_return.shape[1] == 1, f"WARNING: h must be a column vector with dimensions of this pattern: (n,1), instead got {self.expected_return.shape}"
-
-        # Checking covariance matrix's properties
-        assert np.allclose(self.covariance, self.covariance.T), "WARNING: The covariance matrix must be symmetric"
-        assert min(np.linalg.eig(self.covariance)[0]) > 0, "WARNING: The covariance matrix must be postive definite"
-
-    def __conversion_matrix__(self) -> np.ndarray:
-
-        matrix = np.zeros(
-            (self.number_of_assets * self.number_of_bits, self.number_of_assets),
-            dtype = np.float64
+        matrix = torch.zeros(
+            [self.number_of_assets * self.number_of_bits, self.number_of_assets],
+            dtype=torch.float64
         )
 
         for a in range(self.number_of_assets):
@@ -122,7 +101,9 @@ class Markowitz(sb.SBModel):
 
                 matrix[a*self.number_of_bits+b][a] = 2.0**b
 
-        return matrix              
+        return matrix         
+
+    # Inherited methods         
 
     def __to_Ising__(self) -> sb.Ising:
 
@@ -130,16 +111,16 @@ class Markowitz(sb.SBModel):
         Generates the equivalent Ising model.
         """
 
-        sigma = self.M @ self.covariance @ self.M.T
+        sigma = self.M @ self.covariance @ self.M.t()
         mu = self.M @ self.expected_return
 
         J = - .5 * self.risk_coefficient * sigma
         h = .5 * self.risk_coefficient * sigma @ self.U - mu 
         
-        return sb.Ising(J, h)
+        return sb.Ising(J, h, self.assert_parameters)
 
     def __from_Ising__(self, ising: sb.Ising) -> None:
-        self.portfolio = .5 * self.M.T @ (ising.ground_state + self.U)
+        self.portfolio = .5 * self.M.t() @ (ising.ground_state + self.U)
 
     # Data extraction
         
@@ -158,7 +139,7 @@ class Markowitz(sb.SBModel):
             optimized_portfolio = self.portfolio.T[0]
 
             assets_to_purchase = [self.assets_list[ind] for ind in range(len(self.assets_list)) if optimized_portfolio[ind] > 0]
-            stocks_to_purchase = [optimized_portfolio[ind] for ind in range(len(optimized_portfolio)) if optimized_portfolio[ind] > 0]
+            stocks_to_purchase = [optimized_portfolio[ind].item() for ind in range(len(optimized_portfolio)) if optimized_portfolio[ind] > 0]
             total_stocks = np.sum(stocks_to_purchase)
 
             df = pd.DataFrame(
@@ -179,8 +160,8 @@ class Markowitz(sb.SBModel):
 
         else:
 
-            gain = - .5 * self.risk_coefficient * self.portfolio.T @ self.covariance @ self.portfolio + self.expected_return.T @ self.portfolio
-            return gain[0][0]      
+            gain = - .5 * self.risk_coefficient * self.portfolio.t() @ self.covariance @ self.portfolio + self.expected_return.t() @ self.portfolio
+            return gain.item()      
 
     # Graphical representation
 

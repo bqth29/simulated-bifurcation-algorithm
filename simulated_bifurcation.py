@@ -1,12 +1,12 @@
+import torch
 from typing import Tuple, final
-import numpy as np
 from time import time
 
 # OBJECTS
 
 class Ising():
 
-    def __init__(self, J: np.ndarray, h: np.ndarray, assert_parameters: bool = True) -> None:
+    def __init__(self, J: torch.Tensor, h: torch.Tensor, assert_parameters: bool = True) -> None:
 
         """
         Class constructor.
@@ -15,7 +15,7 @@ class Ising():
         self.J                  = J
         self.h                  = h
 
-        self.dimension          = J.shape[0]
+        self.dimension, _       = J.size()
         
         self.ground_state       = None 
 
@@ -30,18 +30,21 @@ class Ising():
         Asserts that the parameters of the object follow the right pattern.
         """  
 
+        Jx, Jy = self.J.size()
+        hx, hy = self.h.size()
+
         # Checking types
-        assert isinstance(self.J, np.ndarray), f"WARNING: The type of J must be a numpy array, instead got {type(self.J)}"
-        assert isinstance(self.h, np.ndarray), f"WARNING: The type of h must be a numpy array, instead got {type(self.h)}"
+        assert isinstance(self.J, torch.Tensor), f"WARNING: The type of J must be a numpy array, instead got {type(self.J)}"
+        assert isinstance(self.h, torch.Tensor), f"WARNING: The type of h must be a numpy array, instead got {type(self.h)}"
 
         # Checking dimensions
-        assert self.J.shape[0] == self.J.shape[1], f"WARNING: J must be a square matrix, instead got {self.J.shape}"
-        assert self.h.shape[0] == self.J.shape[0], f"WARNING: The dimension of h must fits J's, instead of {self.J.shape[0]} got {self.h.shape[0]}"
-        assert self.h.shape[1] == 1, f"WARNING: h must be a column vector with dimensions of this pattern: (n,1), instead got {self.h.shape}"
+        assert Jx == Jy, f"WARNING: J must be a square matrix, instead got {(Jx, Jy)}"
+        assert hx == Jx, f"WARNING: The dimension of h must fits J's, instead of {Jx} got {hx}"
+        assert hy == 1, f"WARNING: h must be a column vector with dimensions of this pattern: (n,1), instead got {(hx, hy)}"
 
         # Checking J's properties
-        assert np.allclose(self.J, self.J.T), "WARNING: J must be symmetric"
-        assert not np.any(self.J == np.zeros(self.J.shape)), "WARNING: J must not have null elements"   
+        assert torch.allclose(self.J, self.J.t()), "WARNING: J must be symmetric"
+        assert not torch.any(self.J == torch.zeros([Jx, Jy])), "WARNING: J must not have null elements"   
 
     def energy(self) -> float:
 
@@ -49,8 +52,8 @@ class Ising():
             return None
 
         else:
-            energy = -0.5 * self.ground_state.T @ self.J @ self.ground_state + self.ground_state.T @ self.h
-            return energy[0][0]     
+            energy = -0.5 * self.ground_state.t() @ self.J @ self.ground_state + self.ground_state.t() @ self.h
+            return energy.item()     
 
     def get_ground_state(
         self,
@@ -89,7 +92,7 @@ class Ising():
 
             print(f"Run in {simulation_time} seconds.")
 
-        self.ground_state = np.sign(X)
+        self.ground_state = torch.sign(X)
 
 class SBModel():
 
@@ -127,17 +130,17 @@ class SBModel():
 
 # FUNCTIONS
 
-def stop_criterion(window, spins,) -> Tuple[bool, np.ndarray]:
+def stop_criterion(window: torch.Tensor, spins: torch.Tensor) -> Tuple[bool, torch.Tensor]:
 
     """
     Determines whether the Euler's scheme must stop using a rolling window.
     """  
     
-    window = np.roll(window, -1, axis = 1) # Shift all columns to the left
+    window = torch.roll(window, -1, dims = 1) # Shift all columns to the left
     window[:, -1] = spins                  # Replace the last column with the spins
-    variance = np.var(window, axis = 1)    # Computes the variance
+    mean = torch.mean(window, dim = 1)    # Computes the mean
 
-    return not np.allclose(variance, 0, rtol = 1e-8) or np.any(window == 0), window     
+    return not torch.allclose(mean, spins, atol = 1e-8), window     
 
 def symplectic_euler_scheme(
     ising: Ising,
@@ -148,7 +151,7 @@ def symplectic_euler_scheme(
     symplectic_parameter: int = 2,
     window_size: int = 35,
     sampling_period: int = 60,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[torch.Tensor, torch.Tensor]:
 
     """
     Symplectic Euler scheme computing the evolution of the oscillators of a KNPO network.
@@ -157,12 +160,12 @@ def symplectic_euler_scheme(
 
     # Parameters initialization
 
-    X = np.zeros((ising.dimension, 1)) 
-    Y = np.zeros((ising.dimension, 1)) 
+    X = torch.zeros([ising.dimension, 1], dtype=torch.float64) 
+    Y = torch.zeros([ising.dimension, 1], dtype=torch.float64) 
 
-    xi0 = 0.7 * detuning_frequency / (np.std(ising.J) * (ising.dimension)**(1/2))
+    xi0 = 0.7 * detuning_frequency / (torch.std(ising.J) * (ising.dimension)**(1/2))
 
-    window = np.zeros((ising.dimension, window_size), dtype=np.float64)
+    window = torch.zeros([ising.dimension, window_size], dtype=torch.float64)
     symplectic_time_step = time_step / symplectic_parameter
 
     run = True
@@ -189,7 +192,7 @@ def symplectic_euler_scheme(
 
             if step % sampling_period == 0:
 
-                run, window = stop_criterion(window, np.sign(X).T[0])
+                run, window = stop_criterion(window, torch.sign(X).t()[0])
 
         step += 1      
 
