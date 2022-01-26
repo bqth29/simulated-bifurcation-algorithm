@@ -59,7 +59,7 @@ class Ising():
         pressure = lambda t: 0.01 * t,
         time_step: float = 0.01,
         symplectic_parameter: int = 2,
-        window_size: int = 35,
+        convergence_threshold: int = 35,
         sampling_period: int = 50,
         display_time: bool = True,
     ) -> None:
@@ -77,7 +77,7 @@ class Ising():
             pressure,
             time_step,
             symplectic_parameter,
-            window_size,
+            convergence_threshold,
             sampling_period
         )
 
@@ -107,7 +107,7 @@ class SBModel():
         pressure = lambda t: 0.01 * t,
         time_step: float = 0.01,
         symplectic_parameter: int = 2,
-        window_size: int = 35,
+        convergence_threshold: int = 35,
         sampling_period: int = 50,
         display_time: bool = True,
     ) -> None:
@@ -119,25 +119,13 @@ class SBModel():
             pressure,
             time_step,
             symplectic_parameter,
-            window_size,
+            convergence_threshold,
             sampling_period,
             display_time,
         )
         self.__from_Ising__(ising_equivalent)     
 
-# FUNCTIONS
-
-def stop_criterion(window, spins,) -> Tuple[bool, np.ndarray]:
-
-    """
-    Determines whether the Euler's scheme must stop using a rolling window.
-    """  
-    
-    window = np.roll(window, -1, axis = 1) # Shift all columns to the left
-    window[:, -1] = spins                  # Replace the last column with the spins
-    variance = np.var(window, axis = 1)    # Computes the variance
-
-    return not np.allclose(variance, 0, rtol = 1e-8) or np.any(window == 0), window     
+# Euler Scheme
 
 def symplectic_euler_scheme(
     ising: Ising,
@@ -146,7 +134,7 @@ def symplectic_euler_scheme(
     pressure = lambda t: 0.01 * t,
     time_step: float = 0.01,
     symplectic_parameter: int = 2,
-    window_size: int = 35,
+    convergence_threshold: int = 35,
     sampling_period: int = 60,
 ) -> Tuple[np.ndarray, np.ndarray]:
 
@@ -162,15 +150,16 @@ def symplectic_euler_scheme(
 
     xi0 = 0.7 * detuning_frequency / (np.std(ising.J) * (ising.dimension)**(1/2))
 
-    window = np.zeros((ising.dimension, window_size), dtype=np.float64)
+    current_spins = np.zeros((ising.dimension, 1))
+    equal_streak  = 0
+
     symplectic_time_step = time_step / symplectic_parameter
 
-    run = True
     step = 0
 
     # Simulation
 
-    while run:
+    while equal_streak < convergence_threshold - 1:
 
         factor = pressure(step * time_step) - detuning_frequency
 
@@ -189,7 +178,13 @@ def symplectic_euler_scheme(
 
             if step % sampling_period == 0:
 
-                run, window = stop_criterion(window, np.sign(X).T[0])
+                spins = np.sign(X)
+                
+                if np.allclose(spins, current_spins):
+                    equal_streak += 1
+                else:
+                    equal_streak = 0
+                    current_spins = spins.copy()
 
         step += 1      
 
