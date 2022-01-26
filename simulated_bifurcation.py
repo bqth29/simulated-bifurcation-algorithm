@@ -2,7 +2,7 @@ from typing import Tuple, final
 import numpy as np
 from time import time
 
-# OBJECTS
+# Classes
 
 class Ising():
 
