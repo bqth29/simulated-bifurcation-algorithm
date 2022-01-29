@@ -123,7 +123,7 @@ class SBModel():
             sampling_period,
             display_time,
         )
-        self.__from_Ising__(ising_equivalent)     
+        self.__from_Ising__(ising_equivalent)              
 
 # Euler Scheme
 
@@ -140,7 +140,6 @@ def symplectic_euler_scheme(
 
     """
     Symplectic Euler scheme computing the evolution of the oscillators of a KNPO network.
-    Ends using a rolling-window stop criterion.
     """
 
     # Parameters initialization

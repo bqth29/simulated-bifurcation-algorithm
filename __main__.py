@@ -3,9 +3,9 @@ from data.data import assets, dates
 from time import time
 import numpy as np
 
-markowitz = Markowitz.from_csv(assets_list = assets[:], number_of_bits = 1, date = dates[-1], risk_coefficient = 1)
+markowitz = Markowitz.from_csv(assets_list = assets[:], number_of_bits = 4, date = dates[-1], risk_coefficient = 1)
 markowitz.optimize(
-    window_size = 35,
+    convergence_threshold = 35,
     sampling_period = 60,
     time_step = 0.01,
     symplectic_parameter = 2,
@@ -14,5 +14,5 @@ markowitz.optimize(
 
 print(markowitz)       
 
-markowitz.pie()
-markowitz.table()
+# markowitz.pie()
+# markowitz.table()
