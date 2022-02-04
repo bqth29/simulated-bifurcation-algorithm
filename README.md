@@ -1,4 +1,4 @@
-# simulated-bifurcation-algorithm
+# Simulated Bifurcation for Python
 Python implementation of a _Simulated Bifurcation_ algorithm in order to approximize the optimal assets allocation for a portfolio of _S&P 500_ assets.
 
 ## Install required packages
@@ -10,6 +10,7 @@ python -m pip install -r requirements.txt
 ## Scientific background
 
 _Simulated bifurcation_ is an all new calculation method based on quantum physics used to approximize very accurately and quickly the optimal solution of Ising problems. 
+>You can read about the scientific theories at stake and the engineering of the algorithm here: https://arxiv.org/abs/2108.03092
 
 ## Simulation
 
@@ -94,7 +95,7 @@ The `symplectic_parameter` represents the number of symplectic loops at each ste
 
 #### Stop criterion
 
-The Euler scheme stops when a stop criterion is satisfied. The latter depends on the `sampling_period` and `display_time` parameters that you can change at will. The higher they are, the more accurate the final result should be, but so will be the computation time. It is recommended to try with different values to test a good batch of parameters.
+The Euler scheme stops when a stop criterion is satisfied. The latter depends on the `sampling_period` and the `convergence_threshold` parameters that you can change at will. The higher they are, the more accurate the final result should be, but so will be the computation time. It is recommended to try with different values to test a good batch of parameters.
 
 ## Broader use of the algorithm
 
@@ -121,3 +122,6 @@ To access, the ground state and the energy of the Ising model, simply use:
 ```
 >>> print(ising.energy())
 ```
+## Generalization to other Ising Problems
+
+You are free to implement your own Ising problems by creating a subclass of `SBModel`.
