@@ -6,10 +6,36 @@ from time import time
 
 class Ising():
 
+    """
+    A class to implement Ising models.
+
+    ...
+
+    Attributes
+    ----------
+    J : numpy.ndarray
+        spin interactions matrix (must be semi-definite positive)
+    h : numpy.ndarray
+        magnectic field effect vector
+    dimension : int
+        number of spins
+    ground_state : numpy.ndarray   
+        vector of spins orientation to minimize the energy
+    """
+
     def __init__(self, J: np.ndarray, h: np.ndarray, assert_parameters: bool = True) -> None:
 
         """
-        Class constructor.
+        Constructs all the necessary attributes for the Ising object.
+
+        Parameters
+        ----------
+            J : numpy.ndarray
+                spin interactions matrix (must be semi-definite positive)
+            h : numpy.ndarray
+                magnectic field effect vector
+            assert_parameters : bool, optional
+                check the format of the inputs (default is True)
         """
         
         self.J                  = J
@@ -27,7 +53,11 @@ class Ising():
     def __assert__(self) -> None:
 
         """
-        Asserts that the parameters of the object follow the right pattern.
+        Checks the format of the attributes.
+
+        Returns
+        -------
+        float
         """  
 
         # Checking types
@@ -45,6 +75,14 @@ class Ising():
 
     def energy(self) -> float:
 
+        """
+        Computes the Ising energy of the model.
+
+        Returns
+        -------
+        float
+        """
+
         if self.ground_state is None:
             return None
 
@@ -54,7 +92,7 @@ class Ising():
 
     def get_ground_state(
         self,
-        detuning_frequency: float = 1,
+        detuning_frequency: float = 1.0,
         kerr_constant: float = 1,
         pressure = lambda t: 0.01 * t,
         time_step: float = 0.01,
@@ -65,8 +103,33 @@ class Ising():
     ) -> None:
 
         """
-        Finds the optimal ground state with a symplectic Euler's scheme.
-        """  
+        Determines the ground state of the Ising model using a symplectic Euler's scheme.
+        The computation is based on the quantum mechanics of Kerr-nonlinear parametric oscillators (KPO).
+        The `ground_state` attribute is modified in place.
+
+        Parameters
+        ----------
+            detuning_frequency : float, optional
+                detuning frequency of the KPO (default is 1.0)
+            kerr_constant : float, optional
+                value of the Kerr constant (default is 1.0)
+            pressure : function, optional
+                pumping pressure allowing adiabatic evolution (default is t -> 0.01 * t)
+            time_step : float, optional
+                step size for the time discretization (default is 0.01)    
+            symplectic_parameter : int, optional
+                symplectic parameter for the Euler's scheme (default is 2)    
+            convergence_threshold : int, optional
+                number of consecutive identical spin sampling considered as a proof of convergence (default is 35) 
+            sampling_period : int, optional
+                number of time steps between two spin sampling (default is 50)    
+            display_time : bool, optional
+                allows the printing of the computation time (default is True)           
+
+        Returns
+        -------
+        None        
+        """
         
         start_time = time()
 
@@ -93,10 +156,38 @@ class Ising():
 
 class SBModel():
 
+    """
+    A class to implement Ising problems.
+    """
+
     def __to_Ising__(self) -> Ising:
+
+        """
+        Generate the equivalent Ising model of the problem.
+
+        Returns
+        -------
+        Ising
+        """
+
         pass
 
     def __from_Ising__(self, ising: Ising) -> None:
+
+        """
+        Retrieves information from the optimized equivalent Ising model.
+        Modifies the object's attributes in place.
+
+        Parameters
+        ----------
+            ising : Ising
+                equivalent Ising model of the problem
+
+        Returns
+        -------
+        None
+        """
+
         pass
     
     @final
@@ -111,6 +202,36 @@ class SBModel():
         sampling_period: int = 50,
         display_time: bool = True,
     ) -> None:
+
+        """
+        Optimizes the problem by determining the ground state of the equivalent Ising model.
+        The ground state is found using a symplectic Euler's scheme.
+        The computation is based on the quantum mechanics of Kerr-nonlinear parametric oscillators (KPO).
+        Retrieves information linked to thi soptimization and updates the object's attributes.
+
+        Parameters
+        ----------
+            detuning_frequency : float, optional
+                detuning frequency of the KPO (default is 1.0)
+            kerr_constant : float, optional
+                value of the Kerr constant (default is 1.0)
+            pressure : function, optional
+                pumping pressure allowing adiabatic evolution (default is t -> 0.01 * t)
+            time_step : float, optional
+                step size for the time discretization (default is 0.01)    
+            symplectic_parameter : int, optional
+                symplectic parameter for the Euler's scheme (default is 2)    
+            convergence_threshold : int, optional
+                number of consecutive identical spin sampling considered as a proof of convergence (default is 35) 
+            sampling_period : int, optional
+                number of time steps between two spin sampling (default is 50)    
+            display_time : bool, optional
+                allows the printing of the computation time (default is True)           
+
+        Returns
+        -------
+        None        
+        """
 
         ising_equivalent = self.__to_Ising__()
         ising_equivalent.get_ground_state(
@@ -139,7 +260,32 @@ def symplectic_euler_scheme(
 ) -> Tuple[np.ndarray, np.ndarray]:
 
     """
-    Symplectic Euler scheme computing the evolution of the oscillators of a KNPO network.
+    Use of a symplectic Euler's scheme to simulate the evolution of Kerr-nonlinear parametric oscillators (KPO) network.
+    The oscillators are initialized to zero.
+
+    Parameters
+    ----------
+        ising : Ising
+            the Ising model to optimize 
+        detuning_frequency : float, optional
+            detuning frequency of the KPO (default is 1.0)
+        kerr_constant : float, optional
+            value of the Kerr constant (default is 1.0)
+        pressure : function, optional
+            pumping pressure allowing adiabatic evolution (default is t -> 0.01 * t)
+        time_step : float, optional
+            step size for the time discretization (default is 0.01)    
+        symplectic_parameter : int, optional
+            symplectic parameter for the Euler's scheme (default is 2)    
+        convergence_threshold : int, optional
+            number of consecutive identical spin sampling considered as a proof of convergence (default is 35) 
+        sampling_period : int, optional
+            number of time steps between two spin sampling (default is 50)              
+
+    Returns
+    -------
+        X : numpy.ndarray  
+        Y : numpy.ndarray       
     """
 
     # Parameters initialization

@@ -11,7 +11,31 @@ from data.data import assets, dates
 class Markowitz(sb.SBModel):
 
     """
-    Implementation of Markowitz model.
+    A representation of the Markowitz model for portolio optimization.
+    Portfolio only takes integer stocks.
+
+    ...
+
+    Attributes
+    ----------
+    covariance : numpy.ndarray
+        the correlation matrix between the assets
+    expected_return : numpy.ndarray
+        expected return on the investment
+    risk_coefficient : float
+        risk aversion on the investment
+    assets_list : list 
+        list of the assets to invest in
+    number_of_assets : int 
+        number of different assets 
+    number_of_bits : int 
+        number of bits for the binary decomposition of the assets stocks
+    portfolio : numpy.ndarray 
+        array of stocks to purchase per asset  
+    M : numpy.ndarray 
+        integer-binary conversion matrix  
+    ones : numpy.ndarray 
+        ones vector      
     """
 
     @classmethod
@@ -61,6 +85,25 @@ class Markowitz(sb.SBModel):
         assert_parameters: bool = True,
     ) -> None:
 
+        """
+        Constructs all the necessary attributes for the Markowitz object.
+
+        Parameters
+        ----------
+            covariance : numpy.ndarray
+                the correlation matrix between the assets
+            expected_return : numpy.ndarray
+                expected return on the investment
+            risk_coefficient : float
+                risk aversion on the investment
+            assets_list : list 
+                list of the assets to invest in
+            number_of_bits : int 
+                number of bits for the binary decomposition of the assets stocks
+            assert_parameters : bool, optional
+                check the format of the inputs (default is True)
+        """
+
         # Data
         self.covariance       = covariance
         self.expected_return  = expected_return
@@ -78,7 +121,7 @@ class Markowitz(sb.SBModel):
         # Conversion matrix and vector
 
         self.M                = self.__conversion_matrix__()         
-        self.U                = np.ones((self.number_of_assets * self.number_of_bits, 1), dtype = np.float64)
+        self.ones                = np.ones((self.number_of_assets * self.number_of_bits, 1), dtype = np.float64)
 
         # Check parameters
 
@@ -94,8 +137,12 @@ class Markowitz(sb.SBModel):
     def __assert__(self) -> None:
 
         """
-        Asserts that the parameters of the object follow the right pattern.
-        """  
+        Checks the format of the attributes.
+
+        Returns
+        -------
+        float
+        """    
         
         # Checking types
         assert isinstance(self.covariance, np.ndarray), f"WARNING: The type of the covariance matrix must be a numpy array, instead got {type(self.covariance)}"
@@ -112,6 +159,14 @@ class Markowitz(sb.SBModel):
 
     def __conversion_matrix__(self) -> np.ndarray:
 
+        """
+        Generates the integer-binary conversion matrix with the model's dimensions.
+
+        Returns
+        -------
+        numpy.ndarray
+        """  
+
         matrix = np.zeros(
             (self.number_of_assets * self.number_of_bits, self.number_of_assets),
             dtype = np.float64
@@ -126,20 +181,16 @@ class Markowitz(sb.SBModel):
 
     def __to_Ising__(self) -> sb.Ising:
 
-        """
-        Generates the equivalent Ising model.
-        """
-
         sigma = self.M @ self.covariance @ self.M.T
         mu = self.M @ self.expected_return
 
         J = - .5 * self.risk_coefficient * sigma
-        h = .5 * self.risk_coefficient * sigma @ self.U - mu 
+        h = .5 * self.risk_coefficient * sigma @ self.ones - mu 
         
         return sb.Ising(J, h)
 
     def __from_Ising__(self, ising: sb.Ising) -> None:
-        self.portfolio = .5 * self.M.T @ (ising.ground_state + self.U)
+        self.portfolio = .5 * self.M.T @ (ising.ground_state + self.ones)
 
     # Data extraction
         
@@ -147,6 +198,10 @@ class Markowitz(sb.SBModel):
 
         """
         Formats the portfolio data in a dataframe.
+
+        Returns
+        -------
+        pandas.DataFrame
         """
 
         if self.portfolio is None:
@@ -173,6 +228,15 @@ class Markowitz(sb.SBModel):
 
     def utlity_function(self) -> float:
 
+        """
+        Computes the Markowitz utility function given the portfolio.
+        Default is 0 is case there is no portfolio.
+
+        Returns
+        -------
+        float
+        """
+
         if self.portfolio is None:
 
             return 0
@@ -185,6 +249,14 @@ class Markowitz(sb.SBModel):
     # Graphical representation
 
     def pie(self) -> None:
+
+        """
+        Plots a pie chart to visualize the investments' data.
+
+        Returns
+        -------
+        None
+        """
 
         df = self.as_dataframe()
 
@@ -199,6 +271,14 @@ class Markowitz(sb.SBModel):
             fig.show()
 
     def table(self) -> None:
+
+        """
+        Draws a data table to visualize the investments' data.
+
+        Returns
+        -------
+        None
+        """
 
         df = self.as_dataframe()
 
