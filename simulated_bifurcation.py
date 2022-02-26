@@ -21,6 +21,8 @@ class Ising():
         number of spins
     ground_state : numpy.ndarray   
         vector of spins orientation to minimize the energy
+    optimization_logs : dict   
+        data about the optimization of the model    
     """
 
     def __init__(self, J: np.ndarray, h: np.ndarray, assert_parameters: bool = True) -> None:
@@ -38,12 +40,13 @@ class Ising():
                 check the format of the inputs (default is True)
         """
         
-        self.J                  = J
-        self.h                  = h
+        self.J                 = J
+        self.h                 = h
 
-        self.dimension          = J.shape[0]
+        self.dimension         = J.shape[0]
         
-        self.ground_state       = None 
+        self.ground_state      = None
+        self.optimization_logs = dict() 
 
         # Check parameters
 
@@ -99,7 +102,6 @@ class Ising():
         symplectic_parameter: int = 2,
         convergence_threshold: int = 35,
         sampling_period: int = 50,
-        display_time: bool = True,
     ) -> None:
 
         """
@@ -122,18 +124,14 @@ class Ising():
             convergence_threshold : int, optional
                 number of consecutive identical spin sampling considered as a proof of convergence (default is 35) 
             sampling_period : int, optional
-                number of time steps between two spin sampling (default is 50)    
-            display_time : bool, optional
-                allows the printing of the computation time (default is True)           
+                number of time steps between two spin sampling (default is 50)          
 
         Returns
         -------
         None        
         """
-        
-        start_time = time()
 
-        X, _ = symplectic_euler_scheme(
+        X, _, data = symplectic_euler_scheme(
             self,
             detuning_frequency,
             kerr_constant,
@@ -144,13 +142,7 @@ class Ising():
             sampling_period
         )
 
-        end_time = time()
-
-        simulation_time = round(end_time - start_time, 3)
-
-        if display_time:    
-
-            print(f"Run in {simulation_time} seconds.")
+        self.optimization_logs = data
 
         self.ground_state = np.sign(X)
 
@@ -200,7 +192,6 @@ class SBModel():
         symplectic_parameter: int = 2,
         convergence_threshold: int = 35,
         sampling_period: int = 50,
-        display_time: bool = True,
     ) -> None:
 
         """
@@ -224,9 +215,7 @@ class SBModel():
             convergence_threshold : int, optional
                 number of consecutive identical spin sampling considered as a proof of convergence (default is 35) 
             sampling_period : int, optional
-                number of time steps between two spin sampling (default is 50)    
-            display_time : bool, optional
-                allows the printing of the computation time (default is True)           
+                number of time steps between two spin sampling (default is 50)         
 
         Returns
         -------
@@ -241,8 +230,7 @@ class SBModel():
             time_step,
             symplectic_parameter,
             convergence_threshold,
-            sampling_period,
-            display_time,
+            sampling_period
         )
         self.__from_Ising__(ising_equivalent)              
 
@@ -285,7 +273,8 @@ def symplectic_euler_scheme(
     Returns
     -------
         X : numpy.ndarray  
-        Y : numpy.ndarray       
+        Y : numpy.ndarray   
+        data : dict    
     """
 
     # Parameters initialization
@@ -301,8 +290,11 @@ def symplectic_euler_scheme(
     symplectic_time_step = time_step / symplectic_parameter
 
     step = 0
+    zero_step = 0
 
     # Simulation
+
+    start_time = time()
 
     while equal_streak < convergence_threshold - 1:
 
@@ -331,6 +323,22 @@ def symplectic_euler_scheme(
                     equal_streak = 0
                     current_spins = spins.copy()
 
-        step += 1      
+        else: zero_step +=1
+        step += 1  
 
-    return X, Y
+    end_time = time()
+
+    data = dict(
+        time = round(end_time - start_time, 3),
+        steps = step,
+        non_zero_steps = step - zero_step,
+        detuning_frequency = detuning_frequency,
+        kerr_constant = kerr_constant,
+        pressure_slope = pressure(1),
+        time_step = time_step,
+        symplectic_parameter = symplectic_parameter,
+        convergence_threshold = convergence_threshold,
+        sampling_period = sampling_period,
+    )        
+
+    return X, Y, data

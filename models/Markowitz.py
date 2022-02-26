@@ -305,4 +305,59 @@ class Markowitz(sb.SBModel):
             )
 
             data = [trace]
-            iplot(data, filename = 'pandas_table')  
+            iplot(data, filename = 'pandas_table') 
+            
+def recursive_subportfolio_optimization(
+    assets_list : list = assets[:],
+    number_of_bits : int = 1,
+    risk_coefficient : float = 1, 
+    date : str = dates[-1],
+    detuning_frequency: float = 1,
+    kerr_constant: float = 1,
+    pressure = lambda t: 0.01 * t,
+    time_step: float = 0.01,
+    symplectic_parameter: int = 2,
+    convergence_threshold: int = 35,
+    sampling_period: int = 50,
+    print_evolution: bool = True
+):
+
+    # Initialization
+    assets_kept = assets_list[:]
+    previous, current = -1, 0
+    investment = None
+
+    while previous < current:
+
+        previous = current
+
+        # Retrieve previous step's portfolio
+        try:
+            investment = markowitz.as_dataframe()
+        except:
+            pass   
+
+        # Optimize with the sub assets list    
+        markowitz = Markowitz.from_csv(
+            assets_list = assets_kept[:],
+            number_of_bits = number_of_bits,
+            date = date,
+            risk_coefficient = risk_coefficient
+        )
+
+        markowitz.optimize(
+            detuning_frequency,
+            kerr_constant,
+            pressure,
+            time_step,
+            symplectic_parameter,
+            convergence_threshold,
+            sampling_period,
+        )
+
+        current = markowitz.utlity_function()
+        assets_kept = list(markowitz.as_dataframe()['assets'])
+
+        if print_evolution and previous < current: print(current, len(assets_kept))
+
+    return current, investment
