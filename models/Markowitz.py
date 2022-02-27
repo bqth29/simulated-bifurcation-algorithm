@@ -360,4 +360,4 @@ def recursive_subportfolio_optimization(
 
         if print_evolution and previous < current: print(current, len(assets_kept))
 
-    return current, investment
+    return previous, investment
