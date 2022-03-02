@@ -6,10 +6,10 @@ import numpy as np
 import random as rd
 from MARSO import MultiAgentRecursiveSubportfolioOptimizer as MARSO
 
-l = assets#rd.sample(assets, 440)
+l = rd.sample(assets, 8)
 bits = 4
 
-marso = MARSO([4, 2, 1], l, number_of_bits=bits)
+marso = MARSO([2, 2], l, number_of_bits=bits)
 marso.solve()
 print(marso.utility_function)
 print(marso.portfolio)

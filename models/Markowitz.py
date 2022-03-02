@@ -222,7 +222,7 @@ class Markowitz(sb.SBModel):
                     'stocks': stocks_to_purchase,
                     'ratios': [round(100 * stock/total_stocks, 3) for stock in stocks_to_purchase]
                 }
-            ).sort_values(by=['assets'])
+            )#.sort_values(by=['assets'])
 
             return df
 
