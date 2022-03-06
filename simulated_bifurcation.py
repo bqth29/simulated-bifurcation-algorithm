@@ -40,9 +40,9 @@ class Ising():
                 check the format of the inputs (default is True)
         """
         
-        self.J                 = 10**4 * J
-        self.h                 = 10**4 * h
-        print(np.max(np.linalg.eig(self.J)[0]))
+        self.J                 = J
+        self.h                 = h
+        
         self.dimension         = J.shape[0]
         
         self.ground_state      = None
