@@ -1,5 +1,6 @@
 from typing import Tuple, overload
 import numpy as np
+import torch
 import pandas as pd
 import plotly.express as px
 from plotly.offline import iplot
@@ -18,9 +19,9 @@ class Markowitz(sb.SBModel):
 
     Attributes
     ----------
-    covariance : numpy.ndarray
+    covariance : torch.Tensor
         the correlation matrix between the assets
-    expected_return : numpy.ndarray
+    expected_return : torch.Tensor
         expected return on the investment
     risk_coefficient : float
         risk aversion on the investment
@@ -30,11 +31,11 @@ class Markowitz(sb.SBModel):
         number of different assets 
     number_of_bits : int 
         number of bits for the binary decomposition of the assets stocks
-    portfolio : numpy.ndarray 
+    portfolio : torch.Tensor 
         array of stocks to purchase per asset  
-    M : numpy.ndarray 
+    M : torch.Tensor 
         integer-binary conversion matrix  
-    ones : numpy.ndarray 
+    ones : torch.Tensor 
         ones vector      
     """
 
@@ -64,8 +65,8 @@ class Markowitz(sb.SBModel):
         mu = np.expand_dims(complete_monthly_returns[assets_list].loc[date].to_numpy(),1)
         sigma = cov[assets_list].loc[assets_list].to_numpy()
 
-        covariance = sigma
-        expected_return = mu
+        covariance = torch.Tensor(sigma)
+        expected_return = torch.Tensor(mu)
 
         return Markowitz(
             covariance,
@@ -77,8 +78,8 @@ class Markowitz(sb.SBModel):
 
     def __init__(
         self, 
-        covariance: np.ndarray, 
-        expected_return: np.ndarray, 
+        covariance: torch.Tensor, 
+        expected_return: torch.Tensor, 
         risk_coefficient: float = 1, 
         number_of_bits: int = 1,
         assets_list: list = assets[:],
@@ -90,9 +91,9 @@ class Markowitz(sb.SBModel):
 
         Parameters
         ----------
-            covariance : numpy.ndarray
+            covariance : torch.Tensor
                 the correlation matrix between the assets
-            expected_return : numpy.ndarray
+            expected_return : torch.Tensor
                 expected return on the investment
             risk_coefficient : float
                 risk aversion on the investment
@@ -111,7 +112,7 @@ class Markowitz(sb.SBModel):
 
         self.assets_list      = assets_list
 
-        self.number_of_assets = covariance.shape[0]
+        self.number_of_assets = covariance.size()[0]
         self.number_of_bits   = number_of_bits
 
         # Parameters to optimize
@@ -121,7 +122,7 @@ class Markowitz(sb.SBModel):
         # Conversion matrix and vector
 
         self.M                = self.__conversion_matrix__()         
-        self.ones                = np.ones((self.number_of_assets * self.number_of_bits, 1), dtype = np.float64)
+        self.ones             = torch.ones((self.number_of_assets * self.number_of_bits, 1))
 
         # Check parameters
 
@@ -145,31 +146,30 @@ class Markowitz(sb.SBModel):
         """    
         
         # Checking types
-        assert isinstance(self.covariance, np.ndarray), f"WARNING: The type of the covariance matrix must be a numpy array, instead got {type(self.covariance)}"
-        assert isinstance(self.expected_return, np.ndarray), f"WARNING: The type of h must be a numpy array, instead got {type(self.expected_return)}"
+        assert isinstance(self.covariance, torch.Tensor), f"WARNING: The type of the covariance matrix must be a numpy array, instead got {type(self.covariance)}"
+        assert isinstance(self.expected_return, torch.Tensor), f"WARNING: The type of h must be a numpy array, instead got {type(self.expected_return)}"
 
         # Checking dimensions
-        assert self.covariance.shape[0] == self.covariance.shape[1], f"WARNING: The covariance matrix must be a square matrix, instead got {self.covariance.shape}"
-        assert self.expected_return.shape[0] == self.expected_return.shape[0], f"WARNING: The dimension of h must fits the covariance matrix's, instead of {self.covariance.shape[0]} got {self.expected_return.shape[0]}"
-        assert self.expected_return.shape[1] == 1, f"WARNING: h must be a column vector with dimensions of this pattern: (n,1), instead got {self.expected_return.shape}"
+        assert self.covariance.size()[0] == self.covariance.size()[1], f"WARNING: The covariance matrix must be a square matrix, instead got {self.covariance.size()}"
+        assert self.expected_return.size()[0] == self.expected_return.size()[0], f"WARNING: The dimension of h must fits the covariance matrix's, instead of {self.covariance.size()[0]} got {self.expected_return.size()[0]}"
+        assert self.expected_return.size()[1] == 1, f"WARNING: h must be a column vector with dimensions of this pattern: (n,1), instead got {self.expected_return.size()}"
 
         # Checking covariance matrix's properties
-        assert np.allclose(self.covariance, self.covariance.T), "WARNING: The covariance matrix must be symmetric"
+        assert torch.allclose(self.covariance, self.covariance.t()), "WARNING: The covariance matrix must be symmetric"
         assert min(np.linalg.eig(self.covariance)[0]) > 0, "WARNING: The covariance matrix must be postive definite"
 
-    def __conversion_matrix__(self) -> np.ndarray:
+    def __conversion_matrix__(self) -> torch.Tensor:
 
         """
         Generates the integer-binary conversion matrix with the model's dimensions.
 
         Returns
         -------
-        numpy.ndarray
+        torch.Tensor
         """  
 
-        matrix = np.zeros(
-            (self.number_of_assets * self.number_of_bits, self.number_of_assets),
-            dtype = np.float64
+        matrix = torch.zeros(
+            (self.number_of_assets * self.number_of_bits, self.number_of_assets)
         )
 
         for a in range(self.number_of_assets):
@@ -184,7 +184,8 @@ class Markowitz(sb.SBModel):
         sigma = self.M @ self.covariance @ self.M.T
         mu = self.M @ self.expected_return
 
-        J = - .5 * self.risk_coefficient * sigma
+        aux_J = - .5 * self.risk_coefficient * sigma
+        J = aux_J - torch.diag(torch.diag(aux_J))
         h = .5 * self.risk_coefficient * sigma @ self.ones - mu 
         
         return sb.Ising(J, h)
@@ -210,10 +211,10 @@ class Markowitz(sb.SBModel):
 
         else:
 
-            optimized_portfolio = self.portfolio.T[0]
-
-            assets_to_purchase = [self.assets_list[ind] for ind in range(len(self.assets_list)) if optimized_portfolio[ind] > 0]
-            stocks_to_purchase = [optimized_portfolio[ind] for ind in range(len(optimized_portfolio)) if optimized_portfolio[ind] > 0]
+            optimized_portfolio = self.portfolio.t()[0]
+            
+            assets_to_purchase = [self.assets_list[ind] for ind in range(len(self.assets_list)) if optimized_portfolio[ind].item() > 0]
+            stocks_to_purchase = [optimized_portfolio[ind].item() for ind in range(optimized_portfolio.size()[0]) if optimized_portfolio[ind].item() > 0]
             total_stocks = np.sum(stocks_to_purchase)
 
             df = pd.DataFrame(
@@ -243,8 +244,8 @@ class Markowitz(sb.SBModel):
 
         else:
 
-            gain = - .5 * self.risk_coefficient * self.portfolio.T @ self.covariance @ self.portfolio + self.expected_return.T @ self.portfolio
-            return gain[0][0]      
+            gain = - .5 * self.risk_coefficient * self.portfolio.t() @ self.covariance @ self.portfolio + self.expected_return.t() @ self.portfolio
+            return gain[0][0].item()      
 
     # Graphical representation
 
