@@ -192,6 +192,7 @@ class Markowitz(sb.SBModel):
 
     def __from_Ising__(self, ising: sb.Ising) -> None:
         self.portfolio = .5 * self.M.T @ (ising.ground_state + self.ones)
+        self.optimization_logs = ising.optimization_logs
 
     # Data extraction
         
@@ -313,9 +314,6 @@ def recursive_subportfolio_optimization(
     number_of_bits : int = 1,
     risk_coefficient : float = 1, 
     date : str = dates[-1],
-    detuning_frequency: float = 1,
-    kerr_constant: float = 1,
-    pressure = lambda t: 0.01 * t,
     time_step: float = 0.01,
     symplectic_parameter: int = 2,
     convergence_threshold: int = 35,
@@ -347,9 +345,6 @@ def recursive_subportfolio_optimization(
         )
 
         markowitz.optimize(
-            detuning_frequency,
-            kerr_constant,
-            pressure,
             time_step,
             symplectic_parameter,
             convergence_threshold,

@@ -26,6 +26,89 @@ class Ising():
         data about the optimization of the model    
     """
 
+    detuning_frequency  = 1.0
+    kerr_constant       = 1.0
+    pressure_slope      = 0.01
+    pressure_limit      = 5.0
+    pressure_categories = ['linear', 'ramp', 'tanh']
+    pressure_category   = 'linear'
+    pressure            = lambda t: Ising.pressure_slope * t
+
+    @staticmethod
+    def set_pressure(category) -> None:
+
+        if category is None: pass
+        
+        elif category == 'linear':
+            Ising.pressure_category = category
+            Ising.pressure = lambda t: Ising.pressure_slope * t
+            print(f'-> Pressure type set to {category}.')
+
+        elif category == 'ramp':
+            Ising.pressure_category = category
+            Ising.pressure = lambda t: min(Ising.pressure_slope * t, Ising.pressure_limit)
+            print(f'-> Pressure type set to {category}.')
+
+        elif category == 'tanh':
+            Ising.pressure_category = category
+            Ising.pressure = lambda t: Ising.pressure_limit * np.tanh(Ising.pressure_slope * t / Ising.pressure_limit)
+            print(f'-> Pressure type set to {category}.')
+
+        else: raise ValueError(f'Pressure type must be in {Ising.pressure_categories}.')
+        
+
+        return
+
+    @staticmethod
+    def assert_parameter(parameter: float, parameter_name: str) -> bool:
+
+        """
+        Method to ensure that a parameter is a positive float (or int).
+        """
+
+        if parameter is not None:
+
+            if isinstance(parameter, int) or isinstance(parameter, float):
+                if parameter > 0:
+                    return True
+            else:
+                print(f'Please provide a non-negative float (or int) for the {parameter_name}.')
+
+        return False
+
+    @staticmethod
+    def set_env(
+        detuning_frequency: float = None,
+        kerr_constant: float = None,
+        pressure_slope: float = None,
+        pressure_limit: float = None,
+        pressure_category: str = None,
+    ) -> None:
+
+        """
+        Set the physical parameters of the Hamiltonian. 
+        """
+
+        if Ising.assert_parameter(detuning_frequency, 'detuning frequency'):
+            Ising.detuning_frequency = detuning_frequency
+            print(f'-> Detuning frequency updated to {detuning_frequency}')
+
+        if Ising.assert_parameter(kerr_constant, 'Kerr constant'):
+            Ising.kerr_constant = kerr_constant
+            print(f'-> Kerr constant updated to {kerr_constant}')
+
+        if Ising.assert_parameter(pressure_slope, 'pressure slope'):
+            Ising.pressure_slope = pressure_slope
+            print(f'-> Pressure slope updated to {pressure_slope}')
+
+        if Ising.assert_parameter(pressure_limit, 'pressure limit'):
+            Ising.pressure_limit = pressure_limit
+            print(f'-> Pressure limit updated to {pressure_limit}')
+
+        Ising.set_pressure(pressure_category)
+
+        return
+
     def __init__(self, J: torch.Tensor, h: torch.Tensor, assert_parameters: bool = True) -> None:
 
         """
@@ -96,9 +179,6 @@ class Ising():
 
     def get_ground_state(
         self,
-        detuning_frequency: float = 1.0,
-        kerr_constant: float = 1,
-        pressure = lambda t: 0.01 * t,
         time_step: float = 0.01,
         symplectic_parameter: int = 2,
         convergence_threshold: int = 35,
@@ -134,9 +214,6 @@ class Ising():
 
         X, _, data = symplectic_euler_scheme(
             self,
-            detuning_frequency,
-            kerr_constant,
-            pressure,
             time_step,
             symplectic_parameter,
             convergence_threshold,
@@ -186,9 +263,6 @@ class SBModel():
     @final
     def optimize(
         self,
-        detuning_frequency: float = 1,
-        kerr_constant: float = 1,
-        pressure = lambda t: 0.01 * t,
         time_step: float = 0.01,
         symplectic_parameter: int = 2,
         convergence_threshold: int = 35,
@@ -225,9 +299,6 @@ class SBModel():
 
         ising_equivalent = self.__to_Ising__()
         ising_equivalent.get_ground_state(
-            detuning_frequency,
-            kerr_constant,
-            pressure,
             time_step,
             symplectic_parameter,
             convergence_threshold,
@@ -239,9 +310,6 @@ class SBModel():
 
 def symplectic_euler_scheme(
     ising: Ising,
-    detuning_frequency: float = 1,
-    kerr_constant: float = 1,
-    pressure = lambda t: 0.01 * t,
     time_step: float = 0.01,
     symplectic_parameter: int = 2,
     convergence_threshold: int = 35,
@@ -283,7 +351,7 @@ def symplectic_euler_scheme(
     X = torch.zeros((ising.dimension, 1)) 
     Y = torch.zeros((ising.dimension, 1)) 
 
-    xi0 = 0.7 * detuning_frequency / (torch.std(ising.J) * (ising.dimension)**(1/2))
+    xi0 = 0.7 * Ising.detuning_frequency / (torch.std(ising.J) * (ising.dimension)**(1/2))
 
     current_spins = torch.zeros((ising.dimension, 1))
     equal_streak  = 0
@@ -298,8 +366,8 @@ def symplectic_euler_scheme(
     start_time = time()
 
     while equal_streak < convergence_threshold - 1:
-
-        factor = pressure(step * time_step) - detuning_frequency
+        
+        factor = Ising.pressure(step * time_step) - Ising.detuning_frequency
 
         if factor > 0:
 
@@ -307,10 +375,10 @@ def symplectic_euler_scheme(
 
             for _ in range(symplectic_parameter):
 
-                X += symplectic_time_step * detuning_frequency * Y
-                Y -= symplectic_time_step * (kerr_constant * X**3 - factor * X)  
+                X += symplectic_time_step * Ising.detuning_frequency * Y
+                Y -= symplectic_time_step * (Ising.kerr_constant * X**3 - factor * X)  
 
-            Y += time_step * xi0 * (ising.J @ X - pow(factor / kerr_constant, .5) * ising.h)
+            Y += time_step * xi0 * (ising.J @ X - pow(factor / Ising.kerr_constant, .5) * ising.h)
 
             # Check the stop criterion
 
@@ -333,9 +401,11 @@ def symplectic_euler_scheme(
         time = round(end_time - start_time, 3),
         steps = step,
         non_zero_steps = step - zero_step,
-        detuning_frequency = detuning_frequency,
-        kerr_constant = kerr_constant,
-        pressure_slope = pressure(1),
+        detuning_frequency = Ising.detuning_frequency,
+        kerr_constant = Ising.kerr_constant,
+        pressure_slope = Ising.pressure_slope,
+        pressure_limit = Ising.pressure_limit,
+        pressure_category = Ising.pressure_category,
         time_step = time_step,
         symplectic_parameter = symplectic_parameter,
         convergence_threshold = convergence_threshold,
