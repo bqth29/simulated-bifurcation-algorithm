@@ -7,13 +7,12 @@ import random as rd
 
 print(RSO(rd.sample(assets, 227), 3))
 
-markowitz = Markowitz.from_csv(assets_list = assets[:], number_of_bits = 2, date = dates[-1], risk_coefficient = 1)
+markowitz = Markowitz.from_csv(assets_list = assets[:], number_of_bits = 1, date = dates[-1], risk_coefficient = 1)
 markowitz.optimize(
     convergence_threshold = 35,
     sampling_period = 60,
     time_step = 0.01,
-    symplectic_parameter = 2,
-    pressure = lambda t : 0.0088 * t
+    symplectic_parameter = 2
 )
 
 print(markowitz)

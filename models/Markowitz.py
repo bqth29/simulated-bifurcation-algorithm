@@ -130,7 +130,7 @@ class Markowitz(sb.SBModel):
 
     def __repr__(self) -> str:
 
-        return f"""Utility gain: {self.utlity_function()}
+        return f"""Utility gain: {self.utlity_function}
         {self.as_dataframe()}
         """
 
@@ -226,6 +226,7 @@ class Markowitz(sb.SBModel):
 
             return df
 
+    @property
     def utlity_function(self) -> float:
 
         """
@@ -312,13 +313,20 @@ def recursive_subportfolio_optimization(
     number_of_bits : int = 1,
     risk_coefficient : float = 1, 
     date : str = dates[-1],
-    detuning_frequency: float = 1,
-    kerr_constant: float = 1,
-    pressure = lambda t: 0.01 * t,
-    time_step: float = 0.01,
+    time_step: float = .01,
     symplectic_parameter: int = 2,
-    convergence_threshold: int = 35,
-    sampling_period: int = 50,
+    convergence_threshold: int = 60,
+    sampling_period: int = 35,
+    max_steps: int = 60000,
+    agents: int = 20,
+    detuning_frequency: float = 1.,
+    pressure_slope: float = .01,
+    final_pressure: float = None,
+    xi0: float = None,
+    heat_parameter: float = 0.06,
+    use_window: bool = True,
+    ballistic: bool = True,
+    heated: bool = True,
     print_evolution: bool = True
 ):
 
@@ -346,16 +354,23 @@ def recursive_subportfolio_optimization(
         )
 
         markowitz.optimize(
-            detuning_frequency,
-            kerr_constant,
-            pressure,
             time_step,
             symplectic_parameter,
             convergence_threshold,
             sampling_period,
+            max_steps,
+            agents,
+            detuning_frequency,
+            pressure_slope,
+            final_pressure,
+            xi0,
+            heat_parameter,
+            use_window,
+            ballistic,
+            heated
         )
 
-        current = markowitz.utlity_function()
+        current = markowitz.utlity_function
         assets_kept = list(markowitz.as_dataframe()['assets'])
 
         if print_evolution and previous < current: print(current, len(assets_kept))
