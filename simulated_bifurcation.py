@@ -84,7 +84,7 @@ class Ising():
         For higher dimensions, see the `optimize` method instead.
         """
 
-        all_combinations = list(it.product([-1, 1], repeat = self.dimension))
+        all_combinations = list(it.product([-1., 1.], repeat = self.dimension))
 
         S = np.array(
             [
@@ -98,7 +98,7 @@ class Ising():
         all = - .5 * np.array([[np.dot(S[i,:], right_product[i,:])] for i in range(2 ** self.dimension)]) + S @ self.h
 
         self.ising_energy = np.min(all)
-        self.ground_state = S[np.argmin(all.reshape(-1, ))]
+        self.ground_state = S[np.argmin(all.reshape(-1, ))].reshape(-1, 1)
 
     def optimize(
         self,
@@ -110,11 +110,11 @@ class Ising():
         agents: int = 20,
         detuning_frequency: float = 1.,
         pressure_slope: float = .01,
-        final_pressure: float = None,
+        final_pressure: float = 1.,
         xi0: float = None,
         heat_parameter: float = 0.06,
         use_window: bool = True,
-        ballistic: bool = True,
+        ballistic: bool = False,
         heated: bool = True
     ):
 
@@ -258,7 +258,7 @@ class Ising():
         # Optimisation
         
         self.ground_state = solver.iterate(self, use_window)
-
+        
 
 class SBModel():
 
@@ -305,11 +305,11 @@ class SBModel():
         agents: int = 20,
         detuning_frequency: float = 1.,
         pressure_slope: float = .01,
-        final_pressure: float = None,
+        final_pressure: float = 1.,
         xi0: float = None,
         heat_parameter: float = 0.06,
         use_window: bool = True,
-        ballistic: bool = True,
+        ballistic: bool = False,
         heated: bool = True
     ) -> None:
 
@@ -547,11 +547,13 @@ class SymplecticEulerScheme():
         if final_pressure is None: self.pressure = lambda t: pressure_slope * t
         else: self.pressure = lambda t: np.minimum(pressure_slope * t, final_pressure)
 
-        self.field_coefficient = lambda t: np.sqrt(
-            self.pressure(t) - self.detuning_frequency * np.tanh(
-                self.pressure(t) / self.detuning_frequency
-            )
-        )
+        # self.field_coefficient = lambda t: np.sqrt(
+        #     self.pressure(t) - self.detuning_frequency * np.tanh(
+        #         self.pressure(t) / self.detuning_frequency
+        #     )
+        # )
+
+        self.field_coefficient = lambda t: self.pressure(t)
 
         # Evolutive parameters
         self.X, self.Y = None, None
@@ -744,7 +746,7 @@ class BallisticHeatedSymplecticEulerScheme(SymplecticEulerScheme):
     def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06) -> None:
         super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter)
 
-    def non_symplectic_update(self, ising: Ising) -> None: self.Y += self.time_step * (self.xi0 * (ising.J @ self.X - 2 * self.field_coefficient(self.time_step * self.step) * ising.h) + self.heat_parameter * self.Y)
+    def non_symplectic_update(self, ising: Ising) -> None: self.Y += self.time_step * (self.xi0 * (ising.J @ self.X - self.field_coefficient(self.time_step * self.step) * ising.h) + self.heat_parameter * self.Y)
 
 class BallisticSymplecticEulerScheme(SymplecticEulerScheme):
 
@@ -755,7 +757,7 @@ class BallisticSymplecticEulerScheme(SymplecticEulerScheme):
     def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06) -> None:
         super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter)
 
-    def non_symplectic_update(self, ising: Ising) -> None: self.Y += self.time_step * self.xi0 * (ising.J @ self.X - 2 * self.field_coefficient(self.time_step * self.step) * ising.h)
+    def non_symplectic_update(self, ising: Ising) -> None: self.Y += self.time_step * self.xi0 * (ising.J @ self.X - self.field_coefficient(self.time_step * self.step) * ising.h)
 
 class DiscreteHeatedSymplecticEulerScheme(SymplecticEulerScheme):
 
@@ -766,7 +768,7 @@ class DiscreteHeatedSymplecticEulerScheme(SymplecticEulerScheme):
     def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06) -> None:
         super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter)
 
-    def non_symplectic_update(self, ising: Ising) -> None: self.Y += self.time_step * (self.xi0 * (ising.J @ np.sign(self.X) - 2 * self.field_coefficient(self.time_step * self.step) * ising.h) + self.heat_parameter * self.Y)
+    def non_symplectic_update(self, ising: Ising) -> None: self.Y += self.time_step * (self.xi0 * (ising.J @ np.sign(self.X) - self.field_coefficient(self.time_step * self.step) * ising.h) + self.heat_parameter * self.Y)
 
 class DiscreteSymplecticEulerScheme(SymplecticEulerScheme):
 
@@ -777,4 +779,4 @@ class DiscreteSymplecticEulerScheme(SymplecticEulerScheme):
     def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06) -> None:
         super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter)
 
-    def non_symplectic_update(self, ising: Ising) -> None: self.Y += self.time_step * self.xi0 * (ising.J @ np.sign(self.X) - 2 * self.field_coefficient(self.time_step * self.step) * ising.h)
+    def non_symplectic_update(self, ising: Ising) -> None: self.Y += self.time_step * self.xi0 * (ising.J @ np.sign(self.X) - self.field_coefficient(self.time_step * self.step) * ising.h)

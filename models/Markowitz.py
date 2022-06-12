@@ -321,11 +321,11 @@ def recursive_subportfolio_optimization(
     agents: int = 20,
     detuning_frequency: float = 1.,
     pressure_slope: float = .01,
-    final_pressure: float = None,
+    final_pressure: float = 1.,
     xi0: float = None,
     heat_parameter: float = 0.06,
     use_window: bool = True,
-    ballistic: bool = True,
+    ballistic: bool = False,
     heated: bool = True,
     print_evolution: bool = True
 ):
