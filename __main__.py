@@ -6,8 +6,6 @@ import numpy as np
 import random as rd
 import matplotlib.pyplot as plt
 
-print(RSO(rd.sample(assets, 227), 5))
-
 markowitz = Markowitz.from_csv(assets_list = assets[:], number_of_bits = 1, date = dates[-1], risk_coefficient = 1)
 markowitz.optimize(
     convergence_threshold = 35,
@@ -15,10 +13,10 @@ markowitz.optimize(
     time_step = 0.01, 
     symplectic_parameter = 2,
     agents = 20,
-    ballistic=True,
+    ballistic=False,
     heated=True,
     final_pressure=1.,
-    pressure_slope=0.01
+    pressure_slope=0.1
 )
 
 print(markowitz)

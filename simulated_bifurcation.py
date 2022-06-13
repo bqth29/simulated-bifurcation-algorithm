@@ -630,16 +630,20 @@ class SymplecticEulerScheme():
         self.step += 1
 
     @final    
-    def symplectic_update(self) -> None:
+    def symplectic_update(self, ising: Ising) -> None:
 
         """
         Update the particle vectors with the symplectic part of the Hamiltonian equations.
+
+        Parameters
+        ----------
+        ising : Ising
+            the Ising model to solve
         """
 
         for _ in range(self.symplectic_parameter):
-
             self.Y += self.symplectic_time_step * (self.pressure(self.time_step * self.step) - self.detuning_frequency) * self.X
-            self.X += self.symplectic_time_step * self.detuning_frequency * self.Y
+            self.X += self.symplectic_time_step * (self.pressure(self.time_step * self.step) + self.detuning_frequency - self.xi0 * np.expand_dims(ising.J.diagonal(),axis=1)) * self.Y
 
     @abstractmethod
     def non_symplectic_update(self, ising: Ising) -> None: 
@@ -726,7 +730,7 @@ class SymplecticEulerScheme():
 
         while self.run:
 
-            self.symplectic_update()
+            self.symplectic_update(ising)
             self.non_symplectic_update(ising)
             self.confine()
             self.step_update()
