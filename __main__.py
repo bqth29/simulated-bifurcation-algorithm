@@ -43,7 +43,11 @@ x.optimize(convergence_threshold = 35,
     heated=True,
     final_pressure=1.,
     pressure_slope=0.2)
+
 print(x)
+
+with open('warm_start.npy', 'wb') as f:
+    np.save(f, x.ground_state)
 
 # ex = 0
 # rel = 0
