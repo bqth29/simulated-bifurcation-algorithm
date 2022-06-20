@@ -6,20 +6,44 @@ import numpy as np
 import random as rd
 import matplotlib.pyplot as plt
 
-markowitz = Markowitz.from_csv(assets_list = assets[:], number_of_bits = 1, date = dates[-1], risk_coefficient = 1)
+
+#markowitz = Markowitz.from_csv(assets_list = assets[:], number_of_bits = 1, date = dates[-1], risk_coefficient = 1)
+#print(markowitz.__to_Ising__().h.shape)
+
+"""
 markowitz.optimize(
     convergence_threshold = 35,
     sampling_period = 60,
     time_step = 0.01, 
     symplectic_parameter = 2,
-    agents = 20,
+    agents = 5,
     ballistic=False,
     heated=True,
     final_pressure=1.,
-    pressure_slope=0.1
+    pressure_slope=0.2
 )
 
 print(markowitz)
+"""
+
+with open('test_J.npy', 'rb') as f:
+    test_J = np.load(f)
+
+with open('test_h.npy', 'rb') as f:
+    test_h = np.expand_dims(np.load(f),axis=1)
+
+from simulated_bifurcation import Ising
+x = Ising(test_J,test_h)
+x.optimize(convergence_threshold = 35,
+    sampling_period = 60,
+    time_step = 0.01, 
+    symplectic_parameter = 2,
+    agents = 10,
+    ballistic=False,
+    heated=True,
+    final_pressure=1.,
+    pressure_slope=0.2)
+print(x)
 
 # ex = 0
 # rel = 0
