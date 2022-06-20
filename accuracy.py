@@ -25,12 +25,12 @@ def get_accuracy(max_assets = 20, max_bits = 10, max_dimension = 20, samples = 1
                     ising.comprehensive_search()
                     exact_energy = ising.energy
                     markowitz.__from_Ising__(ising)
-                    exact_utility_function = markowitz.utlity_function
+                    exact_utility_function = markowitz.utility_function
 
                     ising.optimize(agents = 100)
                     sb_energy = ising.energy
                     markowitz.__from_Ising__(ising)
-                    sb_utility_function = markowitz.utlity_function
+                    sb_utility_function = markowitz.utility_function
 
                     energy_gap = abs(exact_energy - sb_energy)
                     utility_function_gap = abs(exact_utility_function - sb_utility_function)

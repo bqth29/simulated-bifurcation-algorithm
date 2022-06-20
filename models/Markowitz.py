@@ -130,7 +130,7 @@ class Markowitz(sb.SBModel):
 
     def __repr__(self) -> str:
 
-        return f"""Utility gain: {self.utlity_function}
+        return f"""Utility gain: {self.utility_function}
         {self.as_dataframe()}
         """
 
@@ -227,7 +227,7 @@ class Markowitz(sb.SBModel):
             return df
 
     @property
-    def utlity_function(self) -> float:
+    def utility_function(self) -> float:
 
         """
         Computes the Markowitz utility function given the portfolio.
@@ -370,7 +370,7 @@ def recursive_subportfolio_optimization(
             heated
         )
 
-        current = markowitz.utlity_function
+        current = markowitz.utility_function
         assets_kept = list(markowitz.as_dataframe()['assets'])
 
         if print_evolution and previous < current: print(current, len(assets_kept))
