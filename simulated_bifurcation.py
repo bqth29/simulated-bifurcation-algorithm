@@ -5,7 +5,6 @@ import numpy as np
 from halo import Halo
 import itertools as it
 
-
 class Ising():
 
     """
@@ -258,7 +257,6 @@ class Ising():
         # Optimisation
         
         self.ground_state = solver.iterate(self, use_window)
-        
 
 class SBModel():
 

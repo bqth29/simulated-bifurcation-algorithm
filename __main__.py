@@ -1,5 +1,5 @@
-from models.Markowitz import Markowitz
-from models.Markowitz import recursive_subportfolio_optimization as RSO
+#from models.Markowitz import Markowitz
+#from models.Markowitz import recursive_subportfolio_optimization as RSO
 from data.data import assets, dates
 from time import time
 import numpy as np
@@ -32,13 +32,13 @@ with open('test_J.npy', 'rb') as f:
 with open('test_h.npy', 'rb') as f:
     test_h = np.expand_dims(np.load(f),axis=1)
 
-from simulated_bifurcation import Ising
+from test import Ising
 x = Ising(test_J,test_h)
 x.optimize(convergence_threshold = 35,
     sampling_period = 60,
     time_step = 0.01, 
     symplectic_parameter = 2,
-    agents = 10,
+    agents = 1,
     ballistic=False,
     heated=True,
     final_pressure=1.,
@@ -46,8 +46,8 @@ x.optimize(convergence_threshold = 35,
 
 print(x)
 
-with open('warm_start.npy', 'wb') as f:
-    np.save(f, x.ground_state)
+with open('ground_state.npy', 'wb') as f:
+    np.save(f,x.ground_state)
 
 # ex = 0
 # rel = 0
