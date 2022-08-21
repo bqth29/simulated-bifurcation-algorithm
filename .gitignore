@@ -6,7 +6,7 @@ __pycache__/
 # C extensions
 *.so
 
-test_gurobi/
+test_cbc/
 
 # Distribution / packaging
 .Python
