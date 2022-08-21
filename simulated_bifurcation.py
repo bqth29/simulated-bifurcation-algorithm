@@ -5,6 +5,7 @@ import numpy as np
 from halo import Halo
 import itertools as it
 
+
 class Ising():
 
     """
@@ -40,7 +41,7 @@ class Ising():
             magnectic field effect vector
         """
 
-        self.J                 = J
+        self.J                 = J - np.diag(np.diag(J))
         self.h                 = h
         
         self.dimension         = J.shape[0]
@@ -96,7 +97,7 @@ class Ising():
 
         all = - .5 * np.array([[np.dot(S[i,:], right_product[i,:])] for i in range(2 ** self.dimension)]) + S @ self.h
 
-        self.ising_energy = np.min(all)
+        self.energy_distribution = all.reshape(-1,)
         self.ground_state = S[np.argmin(all.reshape(-1, ))].reshape(-1, 1)
 
     def optimize(
@@ -209,7 +210,7 @@ class Ising():
                 heat_parameter
             )
 
-        elif ballistic and ~heated:
+        elif ballistic and not heated:
             solver = BallisticSymplecticEulerScheme(
                 time_step,
                 symplectic_parameter,
@@ -224,7 +225,7 @@ class Ising():
                 heat_parameter
             )
 
-        elif ~ballistic and heated:
+        elif not ballistic and heated:
             solver = DiscreteHeatedSymplecticEulerScheme(
                 time_step,
                 symplectic_parameter,
@@ -471,7 +472,7 @@ class SymplecticEulerScheme():
     step : int
         current number of iterations
     time : float | None
-        time required for the spins to bifurcte (i.e. simulation time)
+        time required for the spins to bifurcate (i.e. simulation time)
     spinner : halo.Halo
         spinner displayed in the console to inform on the state of the simulation
     """
@@ -558,6 +559,8 @@ class SymplecticEulerScheme():
         self.dimension = None
         self.current_spins = None
         self.stability = None
+        self.bifurcated = None
+        self.equal = None
         self.run = True
         self.step = 0
         self.time = 0
@@ -573,7 +576,7 @@ class SymplecticEulerScheme():
         """
 
         to_confine = np.abs(self.X) >= 1
-        self.X = np.minimum(np.maximum(self.X, -1.), 1.)
+        np.minimum(np.maximum(self.X, -1.), 1., out = self.X)
         self.Y[to_confine] = 0
 
     @final
@@ -584,13 +587,13 @@ class SymplecticEulerScheme():
         Modify the stability vector in place.
         """
 
-        bifurcated = self.stability == self.convergence_threshold - 1
-        equal = np.multiply(self.current_spins, np.sign(self.X)).sum(axis = 0) == self.dimension
+        np.equal(self.stability, self.convergence_threshold - 1, out = self.bifurcated)
+        np.equal(np.einsum('ik, ik -> k', self.current_spins, np.sign(self.X)), self.dimension, out = self.equal)
 
-        self.stability[np.logical_and(equal, ~bifurcated)] += 1
-        self.stability[np.logical_and(~equal, ~bifurcated)] = 0
+        self.stability[np.logical_and(self.equal, ~ self.bifurcated)] += 1
+        self.stability[np.logical_and(~ self.equal, ~ self.bifurcated)] = 0
 
-        self.current_spins = np.sign(self.X)
+        np.sign(self.X, out = self.current_spins)
 
     @final
     def reset(self, ising: Ising) -> None:
@@ -610,13 +613,21 @@ class SymplecticEulerScheme():
 
         self.current_spins = np.zeros((self.dimension, self.agents))
         self.stability = np.zeros(self.agents)
+        self.bifurcated = np.zeros(self.agents).astype(bool)
+        self.equal = np.zeros(self.agents).astype(bool)
 
         self.run = True
 
         self.step = 0
         self.time = 0
 
-        if self.xi0 is None: self.xi0 = 0.7 * self.detuning_frequency / (np.std(ising.J) * (ising.dimension)**(1/2))
+        # if self.xi0 is None: self.xi0 = 0.7 * self.detuning_frequency / (np.std(ising.J) * (ising.dimension)**(1/2))
+        if self.xi0 is None: self.xi0 = self.detuning_frequency / np.max(
+            np.sum(
+                np.abs(ising.J),
+                axis = 1
+            )
+        )
 
     @final
     def step_update(self) -> None: 
@@ -628,7 +639,7 @@ class SymplecticEulerScheme():
         self.step += 1
 
     @final    
-    def symplectic_update(self, ising: Ising) -> None:
+    def symplectic_update(self) -> None:
 
         """
         Update the particle vectors with the symplectic part of the Hamiltonian equations.
@@ -639,9 +650,11 @@ class SymplecticEulerScheme():
             the Ising model to solve
         """
 
+        pressure = self.pressure(self.time_step * self.step)
+
         for _ in range(self.symplectic_parameter):
-            self.Y += self.symplectic_time_step * (self.pressure(self.time_step * self.step) - self.detuning_frequency) * self.X
-            self.X += self.symplectic_time_step * (self.pressure(self.time_step * self.step) + self.detuning_frequency - self.xi0 * np.expand_dims(ising.J.diagonal(),axis=1)) * self.Y
+            np.add(self.Y, self.symplectic_time_step * (pressure - self.detuning_frequency) * self.X, out = self.Y)
+            np.add(self.X, self.symplectic_time_step * (pressure + self.detuning_frequency) * self.Y, out = self.X)
 
     @abstractmethod
     def non_symplectic_update(self, ising: Ising) -> None: 
@@ -673,7 +686,7 @@ class SymplecticEulerScheme():
 
             self.update_window()
             self.run = np.any(self.stability < self.convergence_threshold - 1)
-            self.spinner.text = f'Bifurcated spins {np.count_nonzero(self.stability == self.convergence_threshold - 1)}/{self.agents}'
+            self.spinner.text = f'Bifurcated agents {self.bifurcated.sum()}/{self.agents}'
 
         if self.step >= self.max_steps: self.run = False 
 
@@ -728,14 +741,14 @@ class SymplecticEulerScheme():
 
         while self.run:
 
-            self.symplectic_update(ising)
+            self.symplectic_update()
             self.non_symplectic_update(ising)
             self.confine()
             self.step_update()
             self.check_stop(use_window)
 
         self.time = time() - start_time
-        self.spinner.succeed(f'Spins bifurcated in {round(self.time, 3)} sec.')
+        self.spinner.succeed(f'Agents bifurcated in {round(self.time, 3)} sec.')
 
         return self.get_best_spins(ising)
 
@@ -748,7 +761,7 @@ class BallisticHeatedSymplecticEulerScheme(SymplecticEulerScheme):
     def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06) -> None:
         super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter)
 
-    def non_symplectic_update(self, ising: Ising) -> None: self.Y += self.time_step * (self.xi0 * (ising.J @ self.X - self.field_coefficient(self.time_step * self.step) * ising.h) + self.heat_parameter * self.Y)
+    def non_symplectic_update(self, ising: Ising) -> None: np.add(self.Y, self.time_step * (self.xi0 * (ising.J @ self.X - self.field_coefficient(self.time_step * self.step) * ising.h) + self.heat_parameter * self.Y), out = self.Y)
 
 class BallisticSymplecticEulerScheme(SymplecticEulerScheme):
 
@@ -759,7 +772,7 @@ class BallisticSymplecticEulerScheme(SymplecticEulerScheme):
     def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06) -> None:
         super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter)
 
-    def non_symplectic_update(self, ising: Ising) -> None: self.Y += self.time_step * self.xi0 * (ising.J @ self.X - self.field_coefficient(self.time_step * self.step) * ising.h)
+    def non_symplectic_update(self, ising: Ising) -> None: np.add(self.Y, self.time_step * self.xi0 * (ising.J @ self.X - self.field_coefficient(self.time_step * self.step) * ising.h), out = self.Y)
 
 class DiscreteHeatedSymplecticEulerScheme(SymplecticEulerScheme):
 
@@ -770,7 +783,7 @@ class DiscreteHeatedSymplecticEulerScheme(SymplecticEulerScheme):
     def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06) -> None:
         super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter)
 
-    def non_symplectic_update(self, ising: Ising) -> None: self.Y += self.time_step * (self.xi0 * (ising.J @ np.sign(self.X) - self.field_coefficient(self.time_step * self.step) * ising.h) + self.heat_parameter * self.Y)
+    def non_symplectic_update(self, ising: Ising) -> None: np.add(self.Y, self.time_step * (self.xi0 * (ising.J @ np.sign(self.X) - self.field_coefficient(self.time_step * self.step) * ising.h) + self.heat_parameter * self.Y), out = self.Y)
 
 class DiscreteSymplecticEulerScheme(SymplecticEulerScheme):
 
@@ -781,4 +794,4 @@ class DiscreteSymplecticEulerScheme(SymplecticEulerScheme):
     def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06) -> None:
         super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter)
 
-    def non_symplectic_update(self, ising: Ising) -> None: self.Y += self.time_step * self.xi0 * (ising.J @ np.sign(self.X) - self.field_coefficient(self.time_step * self.step) * ising.h)
+    def non_symplectic_update(self, ising: Ising) -> None: np.add(self.Y, self.time_step * self.xi0 * (ising.J @ np.sign(self.X) - self.field_coefficient(self.time_step * self.step) * ising.h), out = self.Y)
