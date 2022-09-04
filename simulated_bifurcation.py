@@ -607,8 +607,8 @@ class SymplecticEulerScheme():
         """
 
         self.dimension = ising.dimension
-        self.X = 2 * np.random.random((self.dimension, self.agents)) - 1
-        self.Y = 2 * np.random.random((self.dimension, self.agents)) - 1
+        self.X = np.random.uniform(-1, 1, size = (self.dimension, self.agents))
+        self.Y = np.random.uniform(-1, 1, size = (self.dimension, self.agents))
 
         self.current_spins = np.zeros((self.dimension, self.agents))
         self.stability = np.zeros(self.agents)
