@@ -575,9 +575,8 @@ class SymplecticEulerScheme():
         `x` is replaced by `sign(x)` and the corresponding pulsation `y` is set to 0.
         """
 
-        to_confine = np.abs(self.X) >= 1
-        np.minimum(np.maximum(self.X, -1.), 1., out = self.X)
-        self.Y[to_confine] = 0
+        np.clip(self.X, -1., 1., out = self.X)
+        self.Y[np.abs(self.X) == 1.] = 0
 
     @final
     def update_window(self) -> None:
