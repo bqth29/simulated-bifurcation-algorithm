@@ -164,7 +164,7 @@ class Ising():
         agents : int, optional
             number of vectors to make evolve at the same time (default is 20)
         use_window : bool, optional
-            indicated whether to use the window as a stopping criterion or not (default is True)
+            indicates whether to use the window as a stopping criterion or not (default is True)
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the discrete SB (default is True)
         heated : bool, optional
@@ -368,7 +368,7 @@ class SBModel():
         agents : int, optional
             number of vectors to make evolve at the same time (default is 20)
         use_window : bool, optional
-            indicated whether to use the window as a stopping criterion or not (default is True)
+            indicates whether to use the window as a stopping criterion or not (default is True)
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the discrete SB (default is True)
         heated : bool, optional
@@ -618,6 +618,11 @@ class SymplecticEulerScheme():
         self.stability[np.logical_and(self.equal, ~ self.bifurcated)] += 1
         self.stability[np.logical_and(~ self.equal, ~ self.bifurcated)] = 0
 
+        np.logical_xor(self.bifurcated, self.previously_bifurcated, out = self.new_bifurcated)
+        self.previously_bifurcated = self.bifurcated[:]
+
+        self.final_spins[:, self.new_bifurcated] = np.sign(self.X[:, self.new_bifurcated])
+
         np.sign(self.X, out = self.current_spins)
 
     @final
@@ -637,7 +642,11 @@ class SymplecticEulerScheme():
         self.Y = np.random.uniform(-1, 1, size = (self.dimension, self.agents))
 
         self.current_spins = np.zeros((self.dimension, self.agents))
+        self.final_spins = np.zeros((self.dimension, self.agents))
+
         self.stability = np.zeros(self.agents)
+        self.new_bifurcated = np.zeros(self.agents).astype(bool)
+        self.previously_bifurcated = np.zeros(self.agents).astype(bool)
         self.bifurcated = np.zeros(self.agents).astype(bool)
         self.equal = np.zeros(self.agents).astype(bool)
 
@@ -704,7 +713,7 @@ class SymplecticEulerScheme():
         Parameters
         ----------
         use_window : bool
-            indicated whether to use the window as a stopping criterion or not
+            indicates whether to use the window as a stopping criterion or not
         verbose : bool, optional
             whether to display evolution information or not (default is True)
         """
@@ -718,7 +727,7 @@ class SymplecticEulerScheme():
         if self.step >= self.max_steps: self.run = False 
 
     @final
-    def get_best_spins(self, ising: Ising, verbose: bool = True) -> np.ndarray:
+    def get_best_spins(self, ising: Ising, use_window: bool, verbose: bool = True) -> np.ndarray:
 
         """
         Retrieves the best spin vector among all the agents.
@@ -727,6 +736,8 @@ class SymplecticEulerScheme():
         ----------
         ising : Ising
             the Ising model to solve
+        use_window : bool
+            indicates whether to use the window as a stopping criterion or not
         verbose : bool, optional
             whether to display evolution information or not (default is True)
 
@@ -738,12 +749,15 @@ class SymplecticEulerScheme():
 
         if verbose: self.spinner.start('Retrieving ground state')
 
-        energies = np.diag(-.5 * np.sign(self.X.T) @ ising.J @ np.sign(self.X) + np.sign(self.X.T) @ ising.h)
+        if use_window: energies = np.diag(-.5 * np.sign(self.X.T) @ ising.J @ np.sign(self.X) + np.sign(self.X.T) @ ising.h)
+        else: np.diag(-.5 * self.final_spins.T @ ising.J @ self.final_spins + self.final_spins.T @ ising.h)
+
         index = np.argmin(energies)
 
         if verbose: self.spinner.succeed('Ground state retrieved')
 
-        return np.sign(self.X)[:, index].reshape(-1, 1)
+        if use_window: return np.sign(self.X)[:, index].reshape(-1, 1)
+        else: return self.final_spins[:, index].reshape(-1, 1) 
 
     @final
     def iterate(self, ising: Ising, use_window: bool = True, verbose: bool = True) -> np.ndarray:
@@ -756,7 +770,7 @@ class SymplecticEulerScheme():
         ising : Ising
             the Ising model to solve
         use_window : bool, optional
-            indicated whether to use the window as a stopping criterion or not (default is True)
+            indicates whether to use the window as a stopping criterion or not (default is True)
         verbose : bool, optional
             whether to display evolution information or not (default is True)
 
