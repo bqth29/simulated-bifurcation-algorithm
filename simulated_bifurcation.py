@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from tabnanny import verbose
 from time import time
 from typing import final
 import numpy as np
@@ -115,7 +116,8 @@ class Ising():
         heat_parameter: float = 0.06,
         use_window: bool = True,
         ballistic: bool = False,
-        heated: bool = True
+        heated: bool = True,
+        verbose: bool = True
     ):
 
         """
@@ -181,6 +183,11 @@ class Ising():
         heat_parameter : float, optional
             heat parameter for the heated SB algorithm (default is 0.06)    
 
+        - Others
+
+        verbose : bool, optional
+            whether to display evolution information or not (default is True)
+
         See Also
         --------
 
@@ -207,7 +214,8 @@ class Ising():
                 pressure_slope,
                 final_pressure,
                 xi0,
-                heat_parameter
+                heat_parameter,
+                verbose
             )
 
         elif ballistic and not heated:
@@ -222,7 +230,8 @@ class Ising():
                 pressure_slope,
                 final_pressure,
                 xi0,
-                heat_parameter
+                heat_parameter,
+                verbose
             )
 
         elif not ballistic and heated:
@@ -237,7 +246,8 @@ class Ising():
                 pressure_slope,
                 final_pressure,
                 xi0,
-                heat_parameter
+                heat_parameter,
+                verbose
             )
 
         else:
@@ -252,12 +262,13 @@ class Ising():
                 pressure_slope,
                 final_pressure,
                 xi0,
-                heat_parameter
+                heat_parameter,
+                verbose
             )
 
         # Optimisation
         
-        self.ground_state = solver.iterate(self, use_window)
+        self.ground_state = solver.iterate(self, use_window, verbose)
 
 class SBModel():
 
@@ -309,7 +320,8 @@ class SBModel():
         heat_parameter: float = 0.06,
         use_window: bool = True,
         ballistic: bool = False,
-        heated: bool = True
+        heated: bool = True,
+        verbose: bool = True
     ) -> None:
 
         """
@@ -375,6 +387,11 @@ class SBModel():
         heat_parameter : float, optional
             heat parameter for the heated SB algorithm (default is 0.06)    
 
+        - Others
+
+        verbose : bool, optional
+            whether to display evolution information or not (default is True)
+
         See Also
         --------
 
@@ -402,7 +419,8 @@ class SBModel():
             heat_parameter,
             use_window,
             ballistic,
-            heated
+            heated,
+            verbose
         )
         self.__from_Ising__(ising_equivalent)  
 
@@ -489,7 +507,8 @@ class SymplecticEulerScheme():
         pressure_slope: float = .01,
         final_pressure: float = None,
         xi0: float = None,
-        heat_parameter: float = 0.06
+        heat_parameter: float = 0.06,
+        verbose: bool = True
     ) -> None:
 
         """
@@ -522,10 +541,16 @@ class SymplecticEulerScheme():
             weighting coefficient in the Hamiltonian; if None it will be computed based on the J matrix (default is None)
         heat_parameter : float, optional
             heat parameter for the heated SB algorithm (default is 0.06)  
+
+        - Others
+
+        verbose : bool, optional
+            whether to display evolution information or not (default is True)
         """
 
-        self.spinner = Halo()
-        self.spinner.start('Building solver')
+        if verbose:
+            self.spinner = Halo()
+            self.spinner.start('Building solver')
 
         # Simulation parameters    
         self.time_step = time_step
@@ -565,7 +590,8 @@ class SymplecticEulerScheme():
         self.step = 0
         self.time = 0
 
-        self.spinner.succeed('Solver built')
+        if verbose:
+            self.spinner.succeed('Solver built')
 
     @final
     def confine(self) -> None:
@@ -670,7 +696,7 @@ class SymplecticEulerScheme():
         pass
 
     @final
-    def check_stop(self, use_window: bool) -> None:
+    def check_stop(self, use_window: bool, verbose: bool = True) -> None:
 
         """
         Checks the stopping condition and update the `run` attribute consequently.
@@ -679,18 +705,20 @@ class SymplecticEulerScheme():
         ----------
         use_window : bool
             indicated whether to use the window as a stopping criterion or not
+        verbose : bool, optional
+            whether to display evolution information or not (default is True)
         """
 
         if use_window and self.step % self.sampling_period == 0:
 
             self.update_window()
             self.run = np.any(self.stability < self.convergence_threshold - 1)
-            self.spinner.text = f'Bifurcated agents {self.bifurcated.sum()}/{self.agents}'
+            if verbose: self.spinner.text = f'Bifurcated agents {self.bifurcated.sum()}/{self.agents}'
 
         if self.step >= self.max_steps: self.run = False 
 
     @final
-    def get_best_spins(self, ising: Ising) -> np.ndarray:
+    def get_best_spins(self, ising: Ising, verbose: bool = True) -> np.ndarray:
 
         """
         Retrieves the best spin vector among all the agents.
@@ -699,6 +727,8 @@ class SymplecticEulerScheme():
         ----------
         ising : Ising
             the Ising model to solve
+        verbose : bool, optional
+            whether to display evolution information or not (default is True)
 
         Returns
         -------
@@ -706,17 +736,17 @@ class SymplecticEulerScheme():
             the spin vector giving the lowest Ising energy among all the agents
         """
 
-        self.spinner.start('Retrieving ground state')
+        if verbose: self.spinner.start('Retrieving ground state')
 
         energies = np.diag(-.5 * np.sign(self.X.T) @ ising.J @ np.sign(self.X) + np.sign(self.X.T) @ ising.h)
         index = np.argmin(energies)
 
-        self.spinner.succeed('Ground state retrieved')
+        if verbose: self.spinner.succeed('Ground state retrieved')
 
         return np.sign(self.X)[:, index].reshape(-1, 1)
 
     @final
-    def iterate(self, ising: Ising, use_window: bool = True) -> np.ndarray:
+    def iterate(self, ising: Ising, use_window: bool = True, verbose: bool = True) -> np.ndarray:
 
         """
         Iterates the Symplectic Euler Scheme until the stopping condition is met.
@@ -725,8 +755,10 @@ class SymplecticEulerScheme():
         ----------
         ising : Ising
             the Ising model to solve
-        use_window : bool
+        use_window : bool, optional
             indicated whether to use the window as a stopping criterion or not (default is True)
+        verbose : bool, optional
+            whether to display evolution information or not (default is True)
 
         Returns
         -------
@@ -736,7 +768,7 @@ class SymplecticEulerScheme():
         
         self.reset(ising)
         start_time = time()
-        self.spinner.start('Spins evolving')
+        if verbose: self.spinner.start('Spins evolving')
 
         while self.run:
 
@@ -744,12 +776,12 @@ class SymplecticEulerScheme():
             self.non_symplectic_update(ising)
             self.confine()
             self.step_update()
-            self.check_stop(use_window)
+            self.check_stop(use_window, verbose)
 
         self.time = time() - start_time
-        self.spinner.succeed(f'Agents bifurcated in {round(self.time, 3)} sec.')
+        if verbose: self.spinner.succeed(f'Agents bifurcated in {round(self.time, 3)} sec.')
 
-        return self.get_best_spins(ising)
+        return self.get_best_spins(ising, verbose)
 
 class BallisticHeatedSymplecticEulerScheme(SymplecticEulerScheme):
 
@@ -757,8 +789,8 @@ class BallisticHeatedSymplecticEulerScheme(SymplecticEulerScheme):
     Symplectic Euler Scheme for the Heated ballistic Simulated Bifurcation (HbSB) algorithm.
     """
 
-    def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06) -> None:
-        super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter)
+    def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06, verbose: bool = True) -> None:
+        super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter, verbose)
 
     def non_symplectic_update(self, ising: Ising) -> None: np.add(self.Y, self.time_step * (self.xi0 * (ising.J @ self.X - self.field_coefficient(self.time_step * self.step) * ising.h) + self.heat_parameter * self.Y), out = self.Y)
 
@@ -768,8 +800,8 @@ class BallisticSymplecticEulerScheme(SymplecticEulerScheme):
     Symplectic Euler Scheme for the ballistic Simulated Bifurcation (bSB) algorithm.
     """
 
-    def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06) -> None:
-        super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter)
+    def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06, verbose: bool = True) -> None:
+        super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter, verbose)
 
     def non_symplectic_update(self, ising: Ising) -> None: np.add(self.Y, self.time_step * self.xi0 * (ising.J @ self.X - self.field_coefficient(self.time_step * self.step) * ising.h), out = self.Y)
 
@@ -779,8 +811,8 @@ class DiscreteHeatedSymplecticEulerScheme(SymplecticEulerScheme):
     Symplectic Euler Scheme for the Heated discrete Simulated Bifurcation (HdSB) algorithm.
     """
 
-    def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06) -> None:
-        super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter)
+    def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06, verbose: bool = True) -> None:
+        super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter, verbose)
 
     def non_symplectic_update(self, ising: Ising) -> None: np.add(self.Y, self.time_step * (self.xi0 * (ising.J @ np.sign(self.X) - self.field_coefficient(self.time_step * self.step) * ising.h) + self.heat_parameter * self.Y), out = self.Y)
 
@@ -790,7 +822,7 @@ class DiscreteSymplecticEulerScheme(SymplecticEulerScheme):
     Symplectic Euler Scheme for the discrete Simulated Bifurcation (dSB) algorithm.
     """
 
-    def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06) -> None:
-        super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter)
+    def __init__(self, time_step: float = 0.01, symplectic_parameter: int = 2, convergence_threshold: int = 60, sampling_period: int = 35, max_steps: int = 60000, agents: int = 20, detuning_frequency: float = 1, pressure_slope: float = 0.01, final_pressure: float = None, xi0: float = None, heat_parameter: float = 0.06, verbose: bool = True) -> None:
+        super().__init__(time_step, symplectic_parameter, convergence_threshold, sampling_period, max_steps, agents, detuning_frequency, pressure_slope, final_pressure, xi0, heat_parameter, verbose)
 
     def non_symplectic_update(self, ising: Ising) -> None: np.add(self.Y, self.time_step * self.xi0 * (ising.J @ np.sign(self.X) - self.field_coefficient(self.time_step * self.step) * ising.h), out = self.Y)
