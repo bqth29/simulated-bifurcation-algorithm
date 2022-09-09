@@ -548,9 +548,8 @@ class SymplecticEulerScheme():
             whether to display evolution information or not (default is True)
         """
 
-        if verbose:
-            self.spinner = Halo()
-            self.spinner.start('Building solver')
+        self.spinner = Halo()
+        if verbose: self.spinner.start('Building solver')
 
         # Simulation parameters    
         self.time_step = time_step
@@ -750,7 +749,7 @@ class SymplecticEulerScheme():
         if verbose: self.spinner.start('Retrieving ground state')
 
         if use_window: energies = np.diag(-.5 * np.sign(self.X.T) @ ising.J @ np.sign(self.X) + np.sign(self.X.T) @ ising.h)
-        else: np.diag(-.5 * self.final_spins.T @ ising.J @ self.final_spins + self.final_spins.T @ ising.h)
+        else: energies = np.diag(-.5 * self.final_spins.T @ ising.J @ self.final_spins + self.final_spins.T @ ising.h)
 
         index = np.argmin(energies)
 
@@ -795,7 +794,7 @@ class SymplecticEulerScheme():
         self.time = time() - start_time
         if verbose: self.spinner.succeed(f'Agents bifurcated in {round(self.time, 3)} sec.')
 
-        return self.get_best_spins(ising, verbose)
+        return self.get_best_spins(ising, use_window, verbose)
 
 class BallisticHeatedSymplecticEulerScheme(SymplecticEulerScheme):
 
