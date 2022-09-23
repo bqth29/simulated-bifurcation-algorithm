@@ -1,8 +1,10 @@
 cff-version: 1.0.0
 message: "If you use this code for your own works, please cite it as below."
 authors:
-  - family-names: Bouquet, Pugliese
-    given-names: Bouquet Thomas, Pugliese Lorenzo
+  - family-names: Bouquet
+    given-names: Thomas
+  - family-names: Pugliese
+    given-names: Lorenzo
 title: "Simulated Bifurcation (SB) algorithm for Python"
 version: 2.0.1
 date-released: 2022-09-23
