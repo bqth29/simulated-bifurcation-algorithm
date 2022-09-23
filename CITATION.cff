@@ -1,6 +1,8 @@
 cff-version: 1.0.0
 message: "If you use this code for your own works, please cite it as below."
 authors:
+  - family-names: Ageron
+    given-names: Romain
   - family-names: Bouquet
     given-names: Thomas
   - family-names: Pugliese
