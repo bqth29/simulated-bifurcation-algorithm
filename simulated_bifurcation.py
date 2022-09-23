@@ -1,9 +1,8 @@
 from abc import abstractmethod
-from tabnanny import verbose
 from time import time
 from typing import final
 import numpy as np
-from halo import Halo
+from tqdm import tqdm
 import itertools as it
 
 
@@ -268,7 +267,7 @@ class Ising():
 
         # Optimisation
         
-        self.ground_state = solver.iterate(self, use_window, verbose)
+        self.ground_state = solver.iterate(self, use_window)
 
 class SBModel():
 
@@ -491,8 +490,8 @@ class SymplecticEulerScheme():
         current number of iterations
     time : float | None
         time required for the spins to bifurcate (i.e. simulation time)
-    spinner : halo.Halo
-        spinner displayed in the console to inform on the state of the simulation
+    progress : tqdm.tqdm
+        progress bar displayed in the console to inform on the state of the simulation
     """
 
     def __init__(
@@ -548,13 +547,12 @@ class SymplecticEulerScheme():
             whether to display evolution information or not (default is True)
         """
 
-        self.spinner = Halo()
-        if verbose: self.spinner.start('Building solver')
+        self.progress = tqdm(total = agents, desc = 'Bifurcated agents', disable = not verbose)
 
         # Simulation parameters    
         self.time_step = time_step
         self.symplectic_parameter = symplectic_parameter
-        self.symplectic_time_step = time_step / symplectic_parameter
+        if symplectic_parameter != 'inf': self.symplectic_time_step = time_step / symplectic_parameter
         self.agents = agents
 
         # Stopping criterion parameters
@@ -589,9 +587,6 @@ class SymplecticEulerScheme():
         self.step = 0
         self.time = 0
 
-        if verbose:
-            self.spinner.succeed('Solver built')
-
     @final
     def confine(self) -> None:
 
@@ -611,18 +606,21 @@ class SymplecticEulerScheme():
         Modify the stability vector in place.
         """
 
-        np.equal(self.stability, self.convergence_threshold - 1, out = self.bifurcated)
         np.equal(np.einsum('ik, ik -> k', self.current_spins, np.sign(self.X)), self.dimension, out = self.equal)
 
         self.stability[np.logical_and(self.equal, ~ self.bifurcated)] += 1
         self.stability[np.logical_and(~ self.equal, ~ self.bifurcated)] = 0
 
+        np.equal(self.stability, self.convergence_threshold - 1, out = self.bifurcated)
+
         np.logical_xor(self.bifurcated, self.previously_bifurcated, out = self.new_bifurcated)
-        self.previously_bifurcated = self.bifurcated[:]
+        self.previously_bifurcated = self.bifurcated.copy()
 
         self.final_spins[:, self.new_bifurcated] = np.sign(self.X[:, self.new_bifurcated])
 
         np.sign(self.X, out = self.current_spins)
+
+        self.progress.update(self.new_bifurcated.sum())
 
     @final
     def reset(self, ising: Ising) -> None:
@@ -654,13 +652,14 @@ class SymplecticEulerScheme():
         self.step = 0
         self.time = 0
 
-        # if self.xi0 is None: self.xi0 = 0.7 * self.detuning_frequency / (np.std(ising.J) * (ising.dimension)**(1/2))
-        if self.xi0 is None: self.xi0 = self.detuning_frequency / np.max(
+        if self.xi0 is None: self.xi0 = 0.7 * self.detuning_frequency / (np.std(ising.J) * (ising.dimension)**(1/2))
+        elif self.xi0 == 'gerschgorin': self.xi0 = self.detuning_frequency / np.max(
             np.sum(
                 np.abs(ising.J),
                 axis = 1
             )
         )
+        else: pass
 
     @final
     def step_update(self) -> None: 
@@ -685,9 +684,31 @@ class SymplecticEulerScheme():
 
         pressure = self.pressure(self.time_step * self.step)
 
-        for _ in range(self.symplectic_parameter):
-            np.add(self.Y, self.symplectic_time_step * (pressure - self.detuning_frequency) * self.X, out = self.Y)
-            np.add(self.X, self.symplectic_time_step * (pressure + self.detuning_frequency) * self.Y, out = self.X)
+        if self.symplectic_parameter != 'inf':
+
+            for _ in range(self.symplectic_parameter):
+                np.add(self.Y, self.symplectic_time_step * (pressure - self.detuning_frequency) * self.X, out = self.Y)
+                np.add(self.X, self.symplectic_time_step * (pressure + self.detuning_frequency) * self.Y, out = self.X)
+
+        else:
+
+            a, b = self.time_step * (pressure - self.detuning_frequency), self.time_step * (pressure + self.detuning_frequency)
+
+            if pressure < self.detuning_frequency:
+
+                cos_coeff = np.cos(np.sqrt(- a * b))
+                sin_coeff = np.sin(np.sqrt(- a * b)) / np.sqrt(- a * b)
+
+                aux_X = cos_coeff * self.X + sin_coeff * b * self.Y
+                aux_Y = cos_coeff * self.Y + sin_coeff * a * self.X
+
+            else:
+
+                aux_X = self.X + b * self.Y
+                aux_Y = self.Y + a * self.X
+
+            self.X = aux_X.copy()
+            self.Y = aux_Y.copy()
 
     @abstractmethod
     def non_symplectic_update(self, ising: Ising) -> None: 
@@ -704,7 +725,7 @@ class SymplecticEulerScheme():
         pass
 
     @final
-    def check_stop(self, use_window: bool, verbose: bool = True) -> None:
+    def check_stop(self, use_window: bool) -> None:
 
         """
         Checks the stopping condition and update the `run` attribute consequently.
@@ -721,12 +742,11 @@ class SymplecticEulerScheme():
 
             self.update_window()
             self.run = np.any(self.stability < self.convergence_threshold - 1)
-            if verbose: self.spinner.text = f'Bifurcated agents {self.bifurcated.sum()}/{self.agents}'
 
         if self.step >= self.max_steps: self.run = False 
 
     @final
-    def get_best_spins(self, ising: Ising, use_window: bool, verbose: bool = True) -> np.ndarray:
+    def get_best_spins(self, ising: Ising, use_window: bool) -> np.ndarray:
 
         """
         Retrieves the best spin vector among all the agents.
@@ -746,20 +766,17 @@ class SymplecticEulerScheme():
             the spin vector giving the lowest Ising energy among all the agents
         """
 
-        if verbose: self.spinner.start('Retrieving ground state')
-
-        if use_window: energies = np.diag(-.5 * np.sign(self.X.T) @ ising.J @ np.sign(self.X) + np.sign(self.X.T) @ ising.h)
+        if not use_window: energies = np.diag(-.5 * np.sign(self.X.T) @ ising.J @ np.sign(self.X) + np.sign(self.X.T) @ ising.h)
         else: energies = np.diag(-.5 * self.final_spins.T @ ising.J @ self.final_spins + self.final_spins.T @ ising.h)
 
         index = np.argmin(energies)
+        self.progress.close()
 
-        if verbose: self.spinner.succeed('Ground state retrieved')
-
-        if use_window: return np.sign(self.X)[:, index].reshape(-1, 1)
+        if not use_window: return np.sign(self.X)[:, index].reshape(-1, 1)
         else: return self.final_spins[:, index].reshape(-1, 1) 
 
     @final
-    def iterate(self, ising: Ising, use_window: bool = True, verbose: bool = True) -> np.ndarray:
+    def iterate(self, ising: Ising, use_window: bool = True) -> np.ndarray:
 
         """
         Iterates the Symplectic Euler Scheme until the stopping condition is met.
@@ -781,7 +798,6 @@ class SymplecticEulerScheme():
         
         self.reset(ising)
         start_time = time()
-        if verbose: self.spinner.start('Spins evolving')
 
         while self.run:
 
@@ -789,12 +805,11 @@ class SymplecticEulerScheme():
             self.non_symplectic_update(ising)
             self.confine()
             self.step_update()
-            self.check_stop(use_window, verbose)
+            self.check_stop(use_window)
 
         self.time = time() - start_time
-        if verbose: self.spinner.succeed(f'Agents bifurcated in {round(self.time, 3)} sec.')
 
-        return self.get_best_spins(ising, use_window, verbose)
+        return self.get_best_spins(ising, use_window)
 
 class BallisticHeatedSymplecticEulerScheme(SymplecticEulerScheme):
 
