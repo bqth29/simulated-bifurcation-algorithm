@@ -42,7 +42,8 @@ class Ising:
         h : numpy.ndarray
             magnectic field effect vector
         """
-        self.J = J - np.diag(np.diag(J))
+        self.J = J 
+        self.null_diag_J = J - np.diag(np.diag(J))
         self.h = h
 
         self.dimension = J.shape[0]
@@ -651,10 +652,10 @@ class SymplecticEulerScheme(ABC):
 
         if self.xi0 is None:
             self.xi0 = 0.7 * self.detuning_frequency / \
-                (np.std(ising.J) * (ising.dimension)**(1/2))
+                (np.std(ising.null_diag_J) * (ising.dimension)**(1/2))
         elif self.xi0 == 'gerschgorin':
             self.xi0 = self.detuning_frequency / np.max(
-                np.sum(np.abs(ising.J), axis=1))
+                np.sum(np.abs(ising.null_diag_J), axis=1))
         else:
             pass
 
@@ -810,7 +811,7 @@ class BallisticHeatedSymplecticEulerScheme(SymplecticEulerScheme):
     """
 
     def non_symplectic_update(self, ising: Ising) -> None:
-        temp = ising.J @ self.X - \
+        temp = ising.null_diag_J @ self.X - \
             self.field_coefficient(self.time_step * self.step) * ising.h
         temp = self.xi0 * temp + self.heat_parameter * self.Y
         self.Y += self.time_step * temp
@@ -823,7 +824,7 @@ class BallisticSymplecticEulerScheme(SymplecticEulerScheme):
     """
 
     def non_symplectic_update(self, ising: Ising) -> None:
-        temp = ising.J @ self.X - \
+        temp = ising.null_diag_J @ self.X - \
             self.field_coefficient(self.time_step * self.step) * ising.h
         self.Y += self.time_step * self.xi0 * temp
 
@@ -835,7 +836,7 @@ class DiscreteHeatedSymplecticEulerScheme(SymplecticEulerScheme):
     """
 
     def non_symplectic_update(self, ising: Ising) -> None:
-        temp = ising.J @ np.sign(self.X) - \
+        temp = ising.null_diag_J @ np.sign(self.X) - \
             self.field_coefficient(self.time_step * self.step) * ising.h
         temp = self.xi0 * temp + self.heat_parameter * self.Y
         self.Y += self.time_step * temp
@@ -848,7 +849,7 @@ class DiscreteSymplecticEulerScheme(SymplecticEulerScheme):
     """
 
     def non_symplectic_update(self, ising: Ising) -> None:
-        temp = ising.J @ np.sign(self.X) - \
+        temp = ising.null_diag_J @ np.sign(self.X) - \
             self.field_coefficient(self.time_step * self.step) * ising.h
         self.Y += self.time_step * self.xi0 * temp
 
