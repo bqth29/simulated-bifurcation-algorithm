@@ -1,127 +1,128 @@
 # Simulated Bifurcation for Python
-Python implementation of a _Simulated Bifurcation_ algorithm in order to approximize the optimal assets allocation for a portfolio of _S&P 500_ assets.
 
-## Install required packages
-This algorithm relies on several Python packages. To install them all, execute the following command : 
+Python implementation of the _Simulated Bifurcation_ algorithm in order to approximize the optimal solution of Ising problems. The last accuracy tests showed a median optimality gap of less than 1% on high-dimensional instances.
+
+## ⚙️ Install
+
+1. Clone the repository
+
 ```
+git clone https://github.com/bqth29/simulated-bifurcation-algorithm.git
+```
+
+1. Change directory
+
+```
+cd simulated-bifurcation-algorithm
+```
+
+1. Intall dependencies
+
+```powershell
 python -m pip install -r requirements.txt
 ```
 
-## Scientific background
+## 🧪 Scientific background
 
-_Simulated bifurcation_ is an all new calculation method based on quantum physics used to approximize very accurately and quickly the optimal solution of Ising problems. 
+_Simulated bifurcation_ is a state-of-the-art algorithm based on quantum physics theory and used to approximize very accurately and quickly the optimal solution of Ising problems. 
 >You can read about the scientific theories at stake and the engineering of the algorithm here: https://arxiv.org/abs/2108.03092
 
-## Simulation
+Ising problems can be used in many sectors such as finance, transportation or chemistry or derived as other well-know optimization problems (QUBO, Knapsack problem, ...).
 
-### Create a basic Markowitz model
+## 🚀 Optimization of an Ising model
 
-The algorithm is meant to optimize a Markowitz portfolio. You can use your own data by using your own covariance matrix and expected return vector as follow:
-```
->>> from models.Markowitz import Markowitz
->>> markowitz = Markowitz(covariance, expected_return)
-```
+### Definition
 
-The other possibility is to generate automatically these matrices using the built-in data generator from `.csv` data:
+An Ising problem, given a **square symmetric** matrix `J` of size `n x n` and a vector `h` of size `n`, consists in finding the spin vector `s = [s_1, s_2, ..., s_n]`, called the *ground state*, (each `s_i` is either `1` or `-1`) such that the value `E = - 0.5 * ∑∑ J_ij*s_i*s_j + ∑ h_i*s_i`, called *Ising energy*, is minimal.
 
-```
->>> from models.Markowitz import Markowitz
->>> markowitz = Markowitz.from_csv()
-```
+### Create an instance
 
-You can then run the optimization to get the portfolio using simulated bifurcation.
+Given `J` and `h`, creating an Ising model is done as follows:
 
-```
->>> markowitz.optimize()
->>> print(markowitz.as_dataframe())
-    assets  stocks  ratios
-3       AA     1.0   0.662
-6     AAPL     1.0   0.662
-129    ACN     1.0   0.662
-4      AEP     1.0   0.662
-5      AIG     1.0   0.662
-..     ...     ...     ...
-102      X     1.0   0.662
-72     XEL     1.0   0.662
-37     XOM     1.0   0.662
-41    XRAY     1.0   0.662
-147   ZBRA     1.0   0.662
+```python
+import simulated_bifurcation as sb
+
+ising = sb.Ising(J, h)
 ```
 
-### Advanced models
+### Optimize a model
 
-#### Taking risks in account
+To optimize an Ising model using the Simulated Bifurcation algorithm, you simply need to run:
 
-The `Markowitz` class allow you to set a risk coefficient that represents the importance of volatility in the optimization. The higher this coefficient, the lesser the algorithm will *take risks* optimizing the portfolio and tend to reduce the number of investments.
-
-```
->>> markowitz = Markowitz(risk_coefficient = 10) # default 1.0
+```python
+ising.optimize()
 ```
 
-#### Binary encoding
+The `optimize` methods takes several parameters that are presented in the dedicated section.
 
-You also have the possibility to set the number of bits on which the weights of the portfolio are encoded. This is a modeling of a budget limitation. 
+### Retrieve the ground state / Ising energy
 
-```
->>> markowitz = Markowitz(number_of_bits = 3) # default 1
-```
+Once the model is optimized, you can get the best found Ising features using model's attributes
 
-> **Remark:** note that the lower the number of bits for the weights encoding is, the higher the accuracy of the algorithm is. This is due to a higher weighting of the errors in the binary decompostion of the integers. 
-
-### Optimization parameters
-
-The optimization lays on Hamiltonian mechanics theorems that lead to a solving using a symplectic Euler scheme. The latter requires some parameters that you can edit at will and whose functionnality is explained hereafter. To use your personal parameters, simply write:
-
-```
->>> markowitz.optimize(name_of_parameter = value)
+```python
+ising.energy # Ising energy -> float
+ising.ground_state # Ground state (best spin vector) -> numpy.ndarray
 ```
 
-#### Quantum parameters
+## 📊 Optimization parameters
 
-The parameters called `detuning_frequency` and `kerr_constant` come straightly from the quantum theory. Their default value were established through scientific studies and it is advised not to change them.
+*Coming soon*
 
-However, you can modify at will the `pressure` parameter as long as you respect some constraints:
-- it must be a `lambda` function 
-- it must be greater than the `detuning_frequency` at some point, else the scheme will never bifurcate
-- keep in mind that the pressure models a slow and steady evolution of the quantum system so it must evolve slowly and continuously
+## 🔀 Derive the algorithm for other problems using the SBModel API
 
-These constraints are actually simple recommendations but not respecting them could (and should) lead to unaccurate and irrelevant results.
+A lot of mathematical problems can be written as Ising problems, and thus can be solved using the Simulated Bifurcation algorithm. Some of them are already implemented in the `models` folder but you are free to create your own models using our API.
 
-#### Euler scheme parameters
+To do so, you need to create a subclass of the abstract class `SBModel`.
 
-The `time_step` represents the disretized time between to time steps in the Euler scheme. Small time steps lead to a higher accuracy but also to longer computation times.
-
-The `symplectic_parameter` represents the number of symplectic loops at each step of the Euler scheme. Its value must be an integer and should be comprised between 2 and 5.
-
-#### Stop criterion
-
-The Euler scheme stops when a stop criterion is satisfied. The latter depends on the `sampling_period` and the `convergence_threshold` parameters that you can change at will. The higher they are, the more accurate the final result should be, but so will be the computation time. It is recommended to try with different values to test a good batch of parameters.
-
-## Broader use of the algorithm
-
-Even though this package was designed particularly to optimize Markowitz portfolios, it can be used to solve any Ising problem as long as you provide the correlation matrix $J$ and the magnetic field $h$ as follow:
-
-```
->>> from simulated_bifurcation import Ising
->>> ising = Ising(J, h)
+```python
+class YourModel(sb.SBModel):
+    
+    ...
 ```
 
-This model can then be optimized following the same process as for the Markowitz problem.
+Once created, such an object can be optimized using the same principle as an `Ising` object, using the `optimize` methods which uses the same parameters as the `Ising`'s one:
 
-```
->>> ising.get_ground_state()
+```python
+your_model = YourModel(...)
+your_model.optimize()
 ```
 
-> The parameters used in the `get_ground_state()` method of the `Ising` class are strictly the same as for the `Markowitz`'s `optimize` method.
+Yet, to make it work, you will first have to overwrite two abstract methods of the `SBModel` class (`__to_Ising__` and `__from_Ising__`) that are called by the `optimize` method. Otherwise you will get a `NotImplementedError` error message.
 
-To access, the ground state and the energy of the Ising model, simply use:
+When the `optimize` method is called, an equivalent Ising model will first be created using `__to_Ising__` and then optimized using the exact same parameters you provided as input for the `SBModel.optimize` method. Once it is optimized, information for your own model will be derived from the optimal features of this equivalent Ising model using `__from_Ising__`.
 
-```
->>> print(ising.ground_state)
-```
-```
->>> print(ising.energy())
-```
-## Generalization to other Ising Problems
+### `__to_Ising__` method
 
-You are free to implement your own Ising problems by creating a subclass of `SBModel`.
+The `__to_Ising__` is meant to create an instance of an Ising model based on the data of your problem. It takes no argument and must only return an `Ising` object. The idea is to rely on the parameters of your problems to derive an Ising representation of it. At some point in the definition of the method, you will have to create the `J` matrix and the `h` vector and eventually return `Ising(J, h)`.
+
+```python
+def __to_Ising__(self) -> sb.Ising:
+    # YOUR CODE HERE
+    J = ...
+    h = ...
+    return sb.Ising(J, h)
+```
+
+### `__from_Ising__` method
+
+The `__from_Ising__` is the reciprocal method. Once the equivalent Ising model of your problem has been optimized, you can retrieve information from its ground state and/or energy and adapt them to your own problem. It must only take an `Ising` object for input and return `None`.
+
+```python
+def __from_Ising__(self, ising: sb.Ising) -> None:
+    # YOUR CODE HERE
+    return 
+```
+
+## 🔗 Cite this repository
+
+If you are using this code for your own projects please cite our work:
+
+```bibtex
+@software{Ageron_Simulated_Bifurcation_SB_2022,
+    author = {Ageron, Romain and Bouquet, Thomas and Pugliese, Lorenzo},
+    month = {9},
+    title = {{Simulated Bifurcation (SB) algorithm for Python}},
+    version = {2.0.1},
+    year = {2022}
+}
+```
