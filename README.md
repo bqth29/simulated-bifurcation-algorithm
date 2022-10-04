@@ -66,7 +66,47 @@ ising.ground_state # Ground state (best spin vector) -> numpy.ndarray
 
 ## 📊 Optimization parameters
 
-*Coming soon*
+The `optimize` methods uses a lot of parameters but only some of them may be changes since the biggest part has been set after reserach and fine-tuning work.
+
+### Quantum parameters
+
+These parameters stem from the quantum theory Their purpose is described in the paper cited above.
+
+> The parameters marked with ⚠️ should not be changed to ensure a good accuracy of the algorithm.
+
+- `detuning_frequency` ⚠️
+- `pressure_slope` ⚠️
+- `final_pressure` ⚠️
+- `xi0`: if `None` then uses the value defined by Goto *et al.*; if `'gerschgorin'` then uses the Gerschgorin's theorem to set the value; else uses the provided value (`float`)
+- `heat_parameter` ⚠️
+- `time_step` ⚠️
+- `symplectic_parameter`: either an `int` or `'inf'` for the asymptotic symplectic update
+
+### Simulated Bifurcation modes
+
+There are four modes of the algorithm (ballistic v. discrete + heated v. non-heated) that result in small variations in the algorithm general operation. These mode can be selected setting the parameters `ballistic` and `heated` to `True` or `False`.
+
+> The ballistic mode is supposed to give a slighter less good accuracy but to converge faster in comparison to the discrete mode which is generally more accurate but also a bit slower.
+
+### Early stopping
+
+One particularity of our implementation of the Simulated Bifurcation algorithm is the possibility to perform an early stopping and save computation time. The sampling frequence and window size for deciding whether to stop or continue can be set through the parameters `sampling_period` and `convergence_threshold`. 
+
+> Yet, the default parameters have been set as the result of a good trade-off betwwen computation time and accurary so it is not recommanded to change them.
+
+To use early stopping, the `use_window` parameter must be set to `True`. Anyways, the algorithm will stop after a certain number of iterations (if early stopping conditions were not met or if `use_window` was set to `False`) that is defined by the `max_steps` parameter.
+
+### Multi-agent optimization
+
+This version of the Simulated Bifurcation algorithm also allows a multi-agent search of the optimal solution which benefits from the parallelization of the computations. The number of agents is set by the `agents` parameter.
+
+> **💡 Tip:** it is faster to run once the algorithm with N agents than to run N times the algorithm with only one agent.
+
+### Displaying the state of evolution
+
+FInally, you can choose to show or hide the evolution of the algorithm setting the `verbose` parameter to either `True` or `False`.
+
+> If you choose to set `verbose = True`, the evolution will be displayed as `tqdm` progress bar(s) in your terminal.
 
 ## 🔀 Derive the algorithm for other problems using the SBModel API
 
@@ -76,7 +116,7 @@ To do so, you need to create a subclass of the abstract class `SBModel`.
 
 ```python
 class YourModel(sb.SBModel):
-    
+
     ...
 ```
 
