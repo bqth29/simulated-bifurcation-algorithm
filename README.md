@@ -94,7 +94,7 @@ One particularity of our implementation of the Simulated Bifurcation algorithm i
 
 > Yet, the default parameters have been set as the result of a good trade-off betwwen computation time and accurary so it is not recommanded to change them.
 
-To use early stopping, the `use_window` parameter must be set to `True`. Anyways, the algorithm will stop after a certain number of iterations (if early stopping conditions were not met or if `use_window` was set to `False`) that is defined by the `max_steps` parameter.
+To use early stopping, the `use_window` parameter must be set to `True`. Both ways, the algorithm will stop after a certain number of iterations (if early stopping conditions were not met or if `use_window` was set to `False`) that is defined by the `max_steps` parameter.
 
 ### Multi-agent optimization
 
