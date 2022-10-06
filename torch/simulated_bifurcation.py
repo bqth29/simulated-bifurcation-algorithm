@@ -4,8 +4,9 @@ import textwrap
 from time import time
 from typing import final
 
-import numpy as np
+import torch
 from tqdm import tqdm
+from numpy import minimum
 
 
 class Ising:
@@ -23,32 +24,36 @@ class Ising:
 
     Attributes
     ----------
-    J : numpy.ndarray
+    J : torch.Tensor
         spin interactions matrix (must be symmetric with zero diagonal)
-    h : numpy.ndarray
+    h : torch.Tensor
         magnectic field effect vector
     dimension : int
         number of spins
-    ground_state : numpy.ndarray
+    ground_state : torch.Tensor
         vector of spins orientation to minimize the Ising energy
     """
 
-    def __init__(self, J: np.ndarray, h: np.ndarray) -> None:
+    def __init__(self, J: torch.Tensor, h: torch.Tensor,
+                dtype: torch.dtype=torch.float32,
+                device: torch.device=torch.device('cpu')) -> None:
         """
         Parameters
         ----------
-        J : numpy.ndarray
+        J : torch.Tensor
             spin interactions matrix (must be symmetric with zero diagonal)
-        h : numpy.ndarray
+        h : torch.Tensor
             magnectic field effect vector
         """
-        self.J = J 
-        self.null_diag_J = J - np.diag(np.diag(J))
-        self.h = h
+        self.J = J.to(dtype).to(device)
+        self.null_diag_J = self.J - torch.diag(torch.diag(self.J))
+        self.h = h.to(dtype).to(device)
 
         self.dimension = J.shape[0]
-        self.energy_distribution = None
         self.ground_state = None
+
+        self.dtype = dtype
+        self.device = device
 
     def __str__(self) -> str:
         if self.ground_state is None:
@@ -73,34 +78,9 @@ class Ising:
         """
         if self.ground_state is None:
             return None
-        energy = -0.5 * self.ground_state.T @ self.J @ self.ground_state + \
-            self.ground_state.T @ self.h
-        return energy[0][0]
-
-    def comprehensive_search(self):
-        """
-        Performs a comprehensive search among all the possible spin vectors to
-        find the lowest Ising energy and modify the ground state of the object.
-        The eventual ground state is always the optimal one. Yet, due to an
-        exponential complexity, this method is deprecated for a dimension
-        greater than 30.
-
-        Notes
-        -----
-
-        For higher dimensions, see the `optimize` method instead.
-        """
-        all_combinations = list(it.product([-1., 1.], repeat=self.dimension))
-        spins = np.array([[x for x in combination]
-                          for combination in all_combinations])
-
-        right_product = spins @ self.J
-        energies = -0.5 * np.array([[np.dot(spins[i, :], right_product[i, :])]
-                                    for i in range(2 ** self.dimension)])
-        energies += spins @ self.h
-        self.energy_distribution = energies.reshape(-1,)
-        best_spin = np.argmin(energies.reshape(-1, ))
-        self.ground_state = spins[best_spin].reshape(-1, 1)
+        energy = -0.5 * self.ground_state.t() @ self.J @ self.ground_state + \
+            self.ground_state.t() @ self.h
+        return energy[0][0].item()
 
     def optimize(
         self,
@@ -404,24 +384,6 @@ class SBModel(ABC):
         )
         self.__from_Ising__(ising_equivalent)
 
-    @final
-    def comprehensive_search(self) -> None:
-        """
-        Performs a comprehensive search among all the possible spin vectors to
-        find the lowest Ising energy and modify the ground state of the object.
-        The eventual ground state is always the optimal one. Yet, due to an
-        exponential complexity, this method is deprecated for a dimension
-        greater than 30.
-
-        Notes
-        -----
-
-        For higher dimensions, see the `optimize` method instead.
-        """
-        ising_equivalent = self.__to_Ising__()
-        ising_equivalent.comprehensive_search()
-        self.__from_Ising__(ising_equivalent)
-
 
 class SymplecticEulerScheme(ABC):
     """
@@ -456,15 +418,15 @@ class SymplecticEulerScheme(ABC):
         weighting coefficient in the Hamiltonian
     heat_parameter : float
         heat parameter for the heated SB algorithm
-    X : numpy.ndarray | None
+    X : torch.Tensor | None
         particles' position vectors
-    Y : numpy.ndarray | None
+    Y : torch.Tensor | None
         particles' pulsation vectors
     dimension : int | None
         dimension of the Ising problem to solve
-    current_spins : numpy.ndarray | None
+    current_spins : torch.Tensor | None
         current value of the spins
-    stability : numpy.ndarray | None
+    stability : torch.Tensor | None
         vector gathering, for each agent, the stability of its spins throughout
         time (used by the window)
     run : bool
@@ -565,7 +527,7 @@ class SymplecticEulerScheme(ABC):
         if final_pressure is None:
             self.pressure = lambda t: pressure_slope * t
         else:
-            self.pressure = lambda t: np.minimum(
+            self.pressure = lambda t: minimum(
                 pressure_slope * t, final_pressure)
 
         # self.field_coefficient = lambda t: np.sqrt(
@@ -597,8 +559,8 @@ class SymplecticEulerScheme(ABC):
         or `x < -1`, `x` is replaced by `sign(x)` and the corresponding
         pulsation `y` is set to 0.
         """
-        np.clip(self.X, -1., 1., out=self.X)
-        self.Y[np.abs(self.X) == 1.] = 0
+        torch.clip(self.X, -1., 1., out=self.X)
+        self.Y[torch.abs(self.X) == 1.] = 0
 
     @final
     def update_window(self) -> None:
@@ -606,26 +568,27 @@ class SymplecticEulerScheme(ABC):
         Sample the current spins and compare them to the previous ones.
         Modify the stability vector in place.
         """
-        np.equal(np.einsum('ik, ik -> k', self.current_spins, np.sign(self.X)),
+        torch.eq(torch.einsum('ik, ik -> k', self.current_spins, torch.sign(self.X)),
                  self.dimension, out=self.equal)
-        not_bifurcated = np.logical_not(self.bifurcated)
-        not_equal = np.logical_not(self.equal)
-        self.stability[np.logical_and(self.equal, not_bifurcated)] += 1
-        self.stability[np.logical_and(not_equal, not_bifurcated)] = 0
+        not_bifurcated = torch.logical_not(self.bifurcated)
+        not_equal = torch.logical_not(self.equal)
+        self.stability[torch.logical_and(self.equal, not_bifurcated)] += 1
+        self.stability[torch.logical_and(not_equal, not_bifurcated)] = 0
 
-        np.equal(self.stability, self.convergence_threshold - 1,
+        torch.eq(self.stability, self.convergence_threshold - 1,
                  out=self.bifurcated)
 
-        np.logical_xor(self.bifurcated, self.previously_bifurcated,
+        torch.logical_xor(self.bifurcated, self.previously_bifurcated,
                        out=self.new_bifurcated)
-        self.previously_bifurcated = self.bifurcated.copy()
 
-        self.final_spins[:, self.new_bifurcated] = np.sign(
+        self.previously_bifurcated = self.bifurcated * 1.
+
+        self.final_spins[:, self.new_bifurcated] = torch.sign(
             self.X[:, self.new_bifurcated])
 
-        np.sign(self.X, out=self.current_spins)
+        torch.sign(self.X, out=self.current_spins)
 
-        self.agents_progress.update(self.new_bifurcated.sum())
+        self.agents_progress.update(self.new_bifurcated.sum().item())
 
     @final
     def reset(self, ising: Ising) -> None:
@@ -638,17 +601,26 @@ class SymplecticEulerScheme(ABC):
             the Ising model to solve
         """
         self.dimension = ising.dimension
-        self.X = np.random.uniform(-1, 1, size=(self.dimension, self.agents))
-        self.Y = np.random.uniform(-1, 1, size=(self.dimension, self.agents))
+        self.X = 2 * torch.rand(size=(self.dimension, self.agents), 
+                device = ising.device, dtype=ising.dtype) - 1
+        self.Y = 2 * torch.rand(size=(self.dimension, self.agents),
+                device = ising.device, dtype=ising.dtype) - 1
 
-        self.current_spins = np.zeros((self.dimension, self.agents))
-        self.final_spins = np.zeros((self.dimension, self.agents))
+        self.current_spins = torch.zeros((self.dimension, self.agents),
+                device = ising.device, dtype=ising.dtype)
+        self.final_spins = torch.zeros((self.dimension, self.agents),
+                device = ising.device, dtype=ising.dtype)
 
-        self.stability = np.zeros(self.agents)
-        self.new_bifurcated = np.zeros(self.agents, dtype=bool)
-        self.previously_bifurcated = np.zeros(self.agents, dtype=bool)
-        self.bifurcated = np.zeros(self.agents, dtype=bool)
-        self.equal = np.zeros(self.agents, dtype=bool)
+        self.stability = torch.zeros(self.agents,
+                device = ising.device, dtype=ising.dtype)
+        self.new_bifurcated = torch.zeros(self.agents, dtype=bool,
+                device = ising.device)
+        self.previously_bifurcated = torch.zeros(self.agents, dtype=bool,
+                device = ising.device)
+        self.bifurcated = torch.zeros(self.agents, dtype=bool,
+                device = ising.device)
+        self.equal = torch.zeros(self.agents, dtype=bool,
+                device = ising.device)
 
         self.run = True
 
@@ -657,10 +629,10 @@ class SymplecticEulerScheme(ABC):
 
         if self.xi0 is None:
             self.xi0 = 0.7 * self.detuning_frequency / \
-                (np.std(ising.null_diag_J) * (ising.dimension)**(1/2))
+                (torch.std(ising.null_diag_J) * (ising.dimension)**(1/2))
         elif self.xi0 == 'gerschgorin':
-            self.xi0 = self.detuning_frequency / np.max(
-                np.sum(np.abs(ising.null_diag_J), axis=1))
+            self.xi0 = self.detuning_frequency / torch.max(
+                torch.sum(torch.abs(ising.null_diag_J), axis=1))
         else:
             pass
 
@@ -687,17 +659,17 @@ class SymplecticEulerScheme(ABC):
 
         if self.symplectic_parameter != 'inf':
             for _ in range(self.symplectic_parameter):
-                np.add(self.Y, self.symplectic_time_step * (pressure -
+                torch.add(self.Y, self.symplectic_time_step * (pressure -
                        self.detuning_frequency) * self.X, out=self.Y)
-                np.add(self.X, self.symplectic_time_step * (pressure +
+                torch.add(self.X, self.symplectic_time_step * (pressure +
                        self.detuning_frequency) * self.Y, out=self.X)
         else:
             a = self.time_step * (pressure - self.detuning_frequency)
             b = self.time_step * (pressure + self.detuning_frequency)
             if pressure < self.detuning_frequency:
-                x = np.sqrt(- a * b)
-                cos_coeff = np.cos(x)
-                sinc_coeff = np.sin(x) / x
+                x = torch.sqrt(- a * b)
+                cos_coeff = torch.cos(x)
+                sinc_coeff = torch.sin(x) / x
                 aux_X = cos_coeff * self.X + sinc_coeff * b * self.Y
                 aux_Y = cos_coeff * self.Y + sinc_coeff * a * self.X
             else:
@@ -734,13 +706,13 @@ class SymplecticEulerScheme(ABC):
         """
         if use_window and self.step % self.sampling_period == 0:
             self.update_window()
-            self.run = np.any(self.stability < self.convergence_threshold - 1)
+            self.run = torch.any(self.stability < self.convergence_threshold - 1)
 
         if self.step >= self.max_steps:
             self.run = False
 
     @final
-    def get_best_spins(self, ising: Ising, use_window: bool) -> np.ndarray:
+    def get_best_spins(self, ising: Ising, use_window: bool) -> torch.Tensor:
         """
         Retrieves the best spin vector among all the agents.
 
@@ -755,26 +727,26 @@ class SymplecticEulerScheme(ABC):
 
         Returns
         -------
-        ground_state : numpy.ndarray
+        ground_state : torch.Tensor
             the spin vector giving the lowest Ising energy among all the agents
         """
         if not use_window:
-            energies = np.diag(-.5 * np.sign(self.X.T) @ ising.J @
-                               np.sign(self.X) + np.sign(self.X.T) @ ising.h)
+            energies = torch.diag(-.5 * torch.sign(self.X.t()) @ ising.J @
+                               torch.sign(self.X) + torch.sign(self.X.t()) @ ising.h)
         else:
-            energies = np.diag(-.5 * self.final_spins.T @ ising.J @
-                               self.final_spins + self.final_spins.T @ ising.h)
+            energies = torch.diag(-.5 * self.final_spins.t() @ ising.J @
+                               self.final_spins + self.final_spins.t() @ ising.h)
 
-        index = np.argmin(energies)
+        index = torch.argmin(energies)
         self.agents_progress.close()
         self.iterations_progress.close()
 
         if not use_window:
-            return np.sign(self.X)[:, index].reshape(-1, 1)
+            return torch.sign(self.X)[:, index].reshape(-1, 1)
         return self.final_spins[:, index].reshape(-1, 1)
 
     @final
-    def iterate(self, ising: Ising, use_window: bool = True) -> np.ndarray:
+    def iterate(self, ising: Ising, use_window: bool = True) -> torch.Tensor:
         """
         Iterates the Symplectic Euler Scheme until the stopping condition is
         met.
@@ -791,7 +763,7 @@ class SymplecticEulerScheme(ABC):
 
         Returns
         -------
-        ground_state : numpy.ndarray
+        ground_state : torch.Tensor
             the spin vector giving the lowest Ising energy among all the agents
         """
         self.reset(ising)
@@ -841,7 +813,7 @@ class DiscreteHeatedSymplecticEulerScheme(SymplecticEulerScheme):
     """
 
     def non_symplectic_update(self, ising: Ising) -> None:
-        temp = ising.null_diag_J @ np.sign(self.X) - \
+        temp = ising.null_diag_J @ torch.sign(self.X) - \
             self.field_coefficient(self.time_step * self.step) * ising.h
         temp = self.xi0 * temp + self.heat_parameter * self.Y
         self.Y += self.time_step * temp
@@ -854,12 +826,20 @@ class DiscreteSymplecticEulerScheme(SymplecticEulerScheme):
     """
 
     def non_symplectic_update(self, ising: Ising) -> None:
-        temp = ising.null_diag_J @ np.sign(self.X) - \
+        temp = ising.null_diag_J @ torch.sign(self.X) - \
             self.field_coefficient(self.time_step * self.step) * ising.h
         self.Y += self.time_step * self.xi0 * temp
 
 
 def main():
+
+    import numpy as np
+
+    if torch.cuda.is_available(): device = torch.device('cuda:0')
+    else: device = torch.device('cpu')
+
+    print(f'Environment set on {device}.')
+
     dim = 1024
     agents = 128
     J = np.random.uniform(-0.5, 0.5, size=(dim, dim))
@@ -867,7 +847,8 @@ def main():
     energies = []
     for ballistic in [True, False]:
         for heated in [True, False]:
-            ising = Ising(J, h)
+            ising = Ising(torch.from_numpy(J), torch.from_numpy(h),
+            device = device)
             ising.optimize(agents=agents, ballistic=ballistic,
                            heated=heated)
             energies.append(ising.energy)
