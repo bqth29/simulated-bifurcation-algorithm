@@ -104,13 +104,13 @@ This version of the Simulated Bifurcation algorithm also allows a multi-agent se
 
 ### Displaying the state of evolution
 
-FInally, you can choose to show or hide the evolution of the algorithm setting the `verbose` parameter to either `True` or `False`.
+Finally, you can choose to show or hide the evolution of the algorithm setting the `verbose` parameter to either `True` or `False`.
 
 > If you choose to set `verbose = True`, the evolution will be displayed as `tqdm` progress bar(s) in your terminal.
 
 ## 🔀 Derive the algorithm for other problems using the SBModel API
 
-A lot of mathematical problems can be written as Ising problems, and thus can be solved using the Simulated Bifurcation algorithm. Some of them are already implemented in the `models` folder but you are free to create your own models using our API.
+A lot of mathematical problems ([QUBO](https://en.wikipedia.org/wiki/Quadratic_unconstrained_binary_optimization), [TSP](https://en.wikipedia.org/wiki/Travelling_salesman_problem), ...) can be written as Ising problems, and thus can be solved using the Simulated Bifurcation algorithm. Some of them are already implemented in the `models` folder but you are free to create your own models using our API.
 
 To do so, you need to create a subclass of the abstract class `SBModel`.
 
@@ -152,6 +152,8 @@ def __from_Ising__(self, ising: sb.Ising) -> None:
     # YOUR CODE HERE
     return 
 ```
+
+> 🔎 You can check [Andrew Lucas' paper](https://arxiv.org/pdf/1302.5843.pdf) on Ising formulations of NP-complete and NP-hard problems, including all of Karp's 21 NP-complete problems.
 
 ## 🔗 Cite this repository
 
