@@ -1,5 +1,7 @@
 # Simulated Bifurcation for Python
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1xtse4sLIDAh8nsQ6HcIr7BzM7sft88WA?usp=sharing)]
+
 Python implementation of the _Simulated Bifurcation_ algorithm in order to approximize the optimal solution of Ising problems. The last accuracy tests showed a median optimality gap of less than 1% on high-dimensional instances.
 
 ## ⚙️ Install
