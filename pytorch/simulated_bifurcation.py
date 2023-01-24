@@ -1,15 +1,13 @@
 from abc import ABC, abstractmethod
-import itertools as it
-import textwrap
-from time import time
-from typing import final
+from typing import List, Tuple, Union, final
 
 import torch
 from tqdm import tqdm
-from numpy import minimum
+from numpy import minimum, argmin
 
 
 class Ising:
+
     """
     Implementation of an Ising problem to be solved using Simulated
     Bifurcation.
@@ -34,9 +32,12 @@ class Ising:
         vector of spins orientation to minimize the Ising energy
     """
 
-    def __init__(self, J: torch.Tensor, h: torch.Tensor,
-                dtype: torch.dtype=torch.float32,
-                device: torch.device=torch.device('cpu')) -> None:
+    def __init__(
+        self, J: torch.Tensor,
+        h: Union[torch.Tensor, None] = None,
+        dtype: torch.dtype=torch.float32,
+        device: str = 'cpu'
+    ) -> None:
         """
         Parameters
         ----------
@@ -45,59 +46,153 @@ class Ising:
         h : torch.Tensor
             magnectic field effect vector
         """
-        self.J = J.to(dtype).to(device)
-        self.null_diag_J = self.J - torch.diag(torch.diag(self.J))
-        self.h = h.to(dtype).to(device)
+
+        if h is None: 
+            self.matrix = J.to(device=device, dtype=dtype)
+            self.linear_term = False
+
+        elif torch.all(h == 0):
+            self.matrix = J.to(device=device, dtype=dtype)
+            self.linear_term = False
+
+        else: 
+            self.matrix = Ising.attach(J, h, dtype, device)
+            self.linear_term = True
 
         self.dimension = J.shape[0]
-        self.ground_state = None
-
-        self.dtype = dtype
-        self.device = device
-
-    def __str__(self) -> str:
-        if self.ground_state is None:
-            return 'Non-optimized Ising model'
-        str_ground_state = ''.join(map(lambda s: '+' if s > 0 else '-',
-                                       self.ground_state.reshape(-1,)))
-        message = textwrap.dedent(f"""
-        Optimized Ising model
-        - Spins: {self.dimension}
-        - Best ground state: {str_ground_state}
-        - Energy: {self.energy}
-        """)
-        return message
+        self.computed_spins = None
 
     def __len__(self) -> int:
         return self.dimension
 
+    def __call__(self, spins: torch.Tensor) -> Union[None, float, List[float]]:
+
+        if spins is None: return None
+
+        elif not isinstance(spins, torch.Tensor):
+            raise TypeError(f"Expected a Tensor but got {type(spins)}.")
+
+        elif torch.any(torch.abs(spins) != 1):
+            raise ValueError('Spins must be either 1 or -1.')
+
+        elif spins.shape in [(self.dimension,), (self.dimension, 1)]:
+            spins = spins.reshape((-1, 1))
+            J, h = self.J, self.h.reshape((-1, 1))
+            energy = -.5 * spins.t() @ J @ spins + spins.t() @ h
+            return energy.item()
+
+        elif spins.shape[0] == self.dimension:
+            J, h = self.J, self.h.reshape((-1, 1))
+            energies = torch.einsum('ij, ji -> i', spins.t(), -.5 * J @ spins + h)
+            return energies.tolist()
+
+        else:
+            raise ValueError(f"Expected {self.dimension} rows, got {spins.shape[0]}.")
+
+
+    @classmethod
+    def attach(
+        cls, J: torch.Tensor, h: torch.Tensor,
+        dtype: torch.dtype=torch.float32,
+        device: str='cpu'
+    ) -> torch.Tensor:
+
+        dimension = J.shape[0]
+        matrix = torch.zeros(
+            (dimension + 1, dimension + 1),
+            dtype=dtype, device=device
+        )
+
+        matrix[:dimension, :dimension] = J
+        matrix[:dimension, dimension] = - h.reshape(-1,)
+        matrix[dimension, :dimension] = - h.reshape(-1,)
+
+        return matrix
+
+    @classmethod
+    def detach(
+        cls, matrix: torch.Tensor,
+        dtype: torch.dtype=torch.float32,
+        device: str='cpu'
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+
+        dimension = matrix.shape[0] - 1
+
+        J = matrix[:dimension, :dimension].to(
+            dtype=dtype, device=device)
+        h = - matrix[:dimension, dimension].to(
+            dtype=dtype, device=device)
+
+        return J, h
+
+    @classmethod
+    def remove_diagonal(cls, matrix: torch.Tensor) -> torch.Tensor:
+        return matrix - torch.diag(torch.diag(matrix))
+
     @property
-    def energy(self) -> float:
+    def dtype(self) -> torch.dtype: return self.matrix.dtype
+
+    @property
+    def device(self) -> torch.device: return self.matrix.device
+
+    @property
+    def shape(self) -> Tuple[int, int]: return self.matrix.shape
+
+    @property
+    def ground_state(self) -> Union[torch.Tensor, None]:
+        if self.computed_spins is None: return None
+        else: return self.min(self.computed_spins)
+
+    @property
+    def energy(self) -> Union[float, None]: return self(self.ground_state)
+
+    @property
+    def J(self) -> torch.Tensor: 
+        if self.linear_term:
+            return Ising.detach(
+                self.matrix,
+                self.dtype,
+                self.device
+            )[0]
+        else: return self.matrix
+
+    @property
+    def h(self) -> torch.Tensor: 
+        if self.linear_term:
+            return Ising.detach(
+                self.matrix,
+                self.dtype,
+                self.device
+            )[1]
+        else:
+            return torch.zeros(
+                self.dimension,
+                dtype=self.dtype,
+                device=self.device
+            )
+
+    def min(self, spins: torch.Tensor) -> torch.Tensor:
+
         """
-        Ising energy of the model.
+        Returns the spin vector with the lowest Ising energy.
         """
-        if self.ground_state is None:
-            return None
-        energy = -0.5 * self.ground_state.t() @ self.J @ self.ground_state + \
-            self.ground_state.t() @ self.h
-        return energy[0][0].item()
+
+        energies = self(spins)
+        best_energy = argmin(energies)
+        return spins[:, best_energy]
 
     def optimize(
         self,
-        time_step: float = .01,
-        symplectic_parameter: int = 2,
-        convergence_threshold: int = 60,
-        sampling_period: int = 35,
-        max_steps: int = 60000,
-        agents: int = 20,
-        detuning_frequency: float = 1.,
+        time_step: float = .1,
+        convergence_threshold: int = 50,
+        sampling_period: int = 50,
+        max_steps: int = 10000,
+        agents: int = 128,
         pressure_slope: float = .01,
-        final_pressure: float = 1.,
-        xi0: float = None,
-        heat_parameter: float = 0.06,
+        gerschgorin: bool = False,
         use_window: bool = True,
         ballistic: bool = False,
-        heated: bool = True,
+        heat_parameter: float = None,
         verbose: bool = True
     ):
         """
@@ -198,19 +293,15 @@ class Ising:
         For low dimensions, see the `comprehensive_search` method function
         instead that will always find the true optimal ground state.
         """
-        if ballistic and heated:
-            algo = BallisticHeatedSymplecticEulerScheme
-        elif ballistic and not heated:
-            algo = BallisticSymplecticEulerScheme
-        elif not ballistic and heated:
-            algo = DiscreteHeatedSymplecticEulerScheme
-        else:
-            algo = DiscreteSymplecticEulerScheme
-        solver = algo(time_step, symplectic_parameter, convergence_threshold,
-                      sampling_period, max_steps, agents, detuning_frequency,
-                      pressure_slope, final_pressure, xi0, heat_parameter,
-                      verbose)
-        self.ground_state = solver.iterate(self, use_window)
+        optimizer = Optimizer(time_step, convergence_threshold,
+                      sampling_period, max_steps, agents,
+                      pressure_slope, gerschgorin, ballistic, 
+                      heat_parameter, verbose)
+
+        spins = optimizer.symplectic_update(self, use_window)
+        
+        if self.linear_term: self.computed_spins = spins[-1] * spins[:-1, :]
+        else: self.computed_spins = spins
 
 
 class SBModel(ABC):
@@ -250,20 +341,16 @@ class SBModel(ABC):
     @final
     def optimize(
         self,
-        time_step: float = .01,
-        symplectic_parameter: int = 2,
-        convergence_threshold: int = 60,
-        sampling_period: int = 35,
-        max_steps: int = 60000,
-        agents: int = 20,
-        detuning_frequency: float = 1.,
+        time_step: float = .1,
+        convergence_threshold: int = 50,
+        sampling_period: int = 50,
+        max_steps: int = 10000,
+        agents: int = 128,
         pressure_slope: float = .01,
-        final_pressure: float = 1.,
-        xi0: float = None,
-        heat_parameter: float = 0.06,
+        gerschgorin: bool = False,
         use_window: bool = True,
         ballistic: bool = False,
-        heated: bool = True,
+        heat_parameter: float = None,
         verbose: bool = True
     ) -> None:
         """
@@ -367,25 +454,21 @@ class SBModel(ABC):
         ising_equivalent = self.__to_Ising__()
         ising_equivalent.optimize(
             time_step,
-            symplectic_parameter,
             convergence_threshold,
             sampling_period,
             max_steps,
             agents,
-            detuning_frequency,
             pressure_slope,
-            final_pressure,
-            xi0,
-            heat_parameter,
+            gerschgorin,
             use_window,
             ballistic,
-            heated,
+            heat_parameter,
             verbose
         )
         self.__from_Ising__(ising_equivalent)
 
 
-class SymplecticEulerScheme(ABC):
+class Optimizer():
     """
     An abstract class to implement a Symplectic Euler Scheme to perform the
     Simulated Bifurcation (SB) algorithm.
@@ -444,20 +527,21 @@ class SymplecticEulerScheme(ABC):
         simulation
     """
 
+    ballistic_activation = torch.nn.Identity()
+    discrete_activation = torch.sign
+
     def __init__(
         self,
-        time_step: float = .01,
-        symplectic_parameter: int = 2,
-        convergence_threshold: int = 60,
-        sampling_period: int = 35,
-        max_steps: int = 60000,
-        agents: int = 20,
-        detuning_frequency: float = 1.,
-        pressure_slope: float = .01,
-        final_pressure: float = None,
-        xi0: float = None,
-        heat_parameter: float = 0.06,
-        verbose: bool = True
+        time_step: float,
+        convergence_threshold: int,
+        sampling_period: int,
+        max_steps: int,
+        agents: int,
+        pressure_slope: float,
+        gerschgorin: bool,
+        ballistic: bool,
+        heat_parameter: float,
+        verbose: bool
     ) -> None:
         """
         Parameters
@@ -507,11 +591,19 @@ class SymplecticEulerScheme(ABC):
                                         disable=not verbose, smoothing=0.1,
                                         mininterval=0.5)
 
+        # Optimizer setting
+        self.ballistic = ballistic
+        self.discrete = not ballistic
+
+        if ballistic: self.activation = Optimizer.ballistic_activation
+        else: self.activation = Optimizer.discrete_activation
+
+        self.heat_parameter = heat_parameter
+        self.heated = heat_parameter is not None
+
         # Simulation parameters
+        self.initialized = False
         self.time_step = time_step
-        self.symplectic_parameter = symplectic_parameter
-        if symplectic_parameter != 'inf':
-            self.symplectic_time_step = time_step / symplectic_parameter
         self.agents = agents
 
         # Stopping criterion parameters
@@ -520,27 +612,14 @@ class SymplecticEulerScheme(ABC):
         self.max_steps = max_steps
 
         # Quantum parameters
-        self.detuning_frequency = detuning_frequency
-        self.heat_parameter = heat_parameter
-        self.xi0 = xi0
-
-        if final_pressure is None:
-            self.pressure = lambda t: pressure_slope * t
-        else:
-            self.pressure = lambda t: minimum(
-                pressure_slope * t, final_pressure)
-
-        # self.field_coefficient = lambda t: np.sqrt(
-        #     self.pressure(t) - self.detuning_frequency * np.tanh(
-        #         self.pressure(t) / self.detuning_frequency
-        #     )
-        # )
-
-        self.field_coefficient = self.pressure
+        self.gerschgorin = gerschgorin
+        self.pressure = lambda t: minimum(
+                pressure_slope * t, 1.)
 
         # Evolutive parameters
         self.X, self.Y = None, None
         self.dimension = None
+        self.ising_model = None
         self.current_spins = None
         self.final_spins = None
         self.stability = None
@@ -549,20 +628,38 @@ class SymplecticEulerScheme(ABC):
         self.new_bifurcated = None
         self.equal = None
         self.run = True
+        self.xi0 = None
         self.step = 0
         self.time = 0
 
-    @final
+    @property
+    def shape(self) -> Tuple[Union[int, None], int]:
+        if self.initialized: return (self.dimension, self.agents)
+        else: return (None, self.agents)
+
+    def set_ballistic(self) -> None:
+        if self.ballistic: pass
+        else:
+            self.discrete = False
+            self.ballistic = True
+            self.activation = Optimizer.ballistic_activation
+    
+    def set_discrete(self) -> None:
+        if self.discrete: pass
+        else:
+            self.discrete = True
+            self.ballistic = False
+            self.activation = Optimizer.discrete_activation
+
     def confine(self) -> None:
         """
         Confine the particles' position in the range [-1, 1], i.e. if a `x > 1`
         or `x < -1`, `x` is replaced by `sign(x)` and the corresponding
         pulsation `y` is set to 0.
         """
+        self.Y[torch.abs(self.X) > 1.] = 0
         torch.clip(self.X, -1., 1., out=self.X)
-        self.Y[torch.abs(self.X) == 1.] = 0
 
-    @final
     def update_window(self) -> None:
         """
         Sample the current spins and compare them to the previous ones.
@@ -590,7 +687,6 @@ class SymplecticEulerScheme(ABC):
 
         self.agents_progress.update(self.new_bifurcated.sum().item())
 
-    @final
     def reset(self, ising: Ising) -> None:
         """
         Reset the simulation parameters.
@@ -600,11 +696,15 @@ class SymplecticEulerScheme(ABC):
         ising : Ising
             the Ising model to solve
         """
-        self.dimension = ising.dimension
+        self.dimension = ising.matrix.shape[0]
+        self.ising_model = Ising.remove_diagonal(ising.matrix)
+
         self.X = 2 * torch.rand(size=(self.dimension, self.agents), 
                 device = ising.device, dtype=ising.dtype) - 1
         self.Y = 2 * torch.rand(size=(self.dimension, self.agents),
                 device = ising.device, dtype=ising.dtype) - 1
+
+        # Stopping window
 
         self.current_spins = torch.zeros((self.dimension, self.agents),
                 device = ising.device, dtype=ising.dtype)
@@ -623,20 +723,17 @@ class SymplecticEulerScheme(ABC):
                 device = ising.device)
 
         self.run = True
-
         self.step = 0
-        self.time = 0
 
-        if self.xi0 is None:
-            self.xi0 = 0.7 * self.detuning_frequency / \
-                (torch.std(ising.null_diag_J) * (ising.dimension)**(1/2))
-        elif self.xi0 == 'gerschgorin':
-            self.xi0 = self.detuning_frequency / torch.max(
-                torch.sum(torch.abs(ising.null_diag_J), axis=1))
+        if not self.gerschgorin:
+            self.xi0 = 0.7 / \
+                (torch.std(self.ising_model) * (self.dimension)**(1/2))
         else:
-            pass
+            self.xi0 = 1. / torch.max(
+                torch.sum(torch.abs(self.ising_model), axis=1))
 
-    @final
+        self.initialized = True
+
     def step_update(self) -> None:
         """
         Increments the current step by 1.
@@ -644,54 +741,26 @@ class SymplecticEulerScheme(ABC):
         self.step += 1
         self.iterations_progress.update()
 
-    @final
-    def symplectic_update(self) -> None:
-        """
-        Update the particle vectors with the symplectic part of the Hamiltonian
-        equations.
-
-        Parameters
-        ----------
-        ising : Ising
-            the Ising model to solve
-        """
+    def update_X(self) -> None:
         pressure = self.pressure(self.time_step * self.step)
+        torch.add(self.X, self.time_step * (1. + pressure) * self.Y, out=self.X)
+    
+    def update_Y(self) -> None:
+        pressure = self.pressure(self.time_step * self.step)
+        torch.add(
+            self.Y,
+            self.time_step * (pressure - 1.) * self.X,
+            out=self.Y
+        )
 
-        if self.symplectic_parameter != 'inf':
-            for _ in range(self.symplectic_parameter):
-                torch.add(self.Y, self.symplectic_time_step * (pressure -
-                       self.detuning_frequency) * self.X, out=self.Y)
-                torch.add(self.X, self.symplectic_time_step * (pressure +
-                       self.detuning_frequency) * self.Y, out=self.X)
-        else:
-            a = self.time_step * (pressure - self.detuning_frequency)
-            b = self.time_step * (pressure + self.detuning_frequency)
-            if pressure < self.detuning_frequency:
-                x = torch.sqrt(- a * b)
-                cos_coeff = torch.cos(x)
-                sinc_coeff = torch.sin(x) / x
-                aux_X = cos_coeff * self.X + sinc_coeff * b * self.Y
-                aux_Y = cos_coeff * self.Y + sinc_coeff * a * self.X
-            else:
-                aux_X = self.X + b * self.Y
-                aux_Y = self.Y + a * self.X
-            self.X = aux_X.copy()
-            self.Y = aux_Y.copy()
+    def quadratic_update(self) -> None:
+        temp = self.ising_model @ self.activation(self.X)
+        torch.add(
+            self.Y,
+            self.time_step * self.xi0 * temp,
+            out=self.Y
+        )
 
-    @abstractmethod
-    def non_symplectic_update(self, ising: Ising) -> None:
-        """
-        Update the particle vectors with the non-symplectic part of the
-        Hamiltonian equations.
-
-        Parameters
-        ----------
-        ising : Ising
-            the Ising model to solve
-        """
-        raise NotImplementedError
-
-    @final
     def check_stop(self, use_window: bool) -> None:
         """
         Checks the stopping condition and update the `run` attribute
@@ -711,42 +780,7 @@ class SymplecticEulerScheme(ABC):
         if self.step >= self.max_steps:
             self.run = False
 
-    @final
-    def get_best_spins(self, ising: Ising, use_window: bool) -> torch.Tensor:
-        """
-        Retrieves the best spin vector among all the agents.
-
-        Parameters
-        ----------
-        ising : Ising
-            the Ising model to solve
-        use_window : bool
-            indicates whether to use the window as a stopping criterion or not
-        verbose : bool, optional
-            whether to display evolution information or not (default is True)
-
-        Returns
-        -------
-        ground_state : torch.Tensor
-            the spin vector giving the lowest Ising energy among all the agents
-        """
-        if not use_window:
-            energies = torch.diag(-.5 * torch.sign(self.X.t()) @ ising.J @
-                               torch.sign(self.X) + torch.sign(self.X.t()) @ ising.h)
-        else:
-            energies = torch.diag(-.5 * self.final_spins.t() @ ising.J @
-                               self.final_spins + self.final_spins.t() @ ising.h)
-
-        index = torch.argmin(energies)
-        self.agents_progress.close()
-        self.iterations_progress.close()
-
-        if not use_window:
-            return torch.sign(self.X)[:, index].reshape(-1, 1)
-        return self.final_spins[:, index].reshape(-1, 1)
-
-    @final
-    def iterate(self, ising: Ising, use_window: bool = True) -> torch.Tensor:
+    def symplectic_update(self, ising: Ising, use_window: bool) -> torch.Tensor:
         """
         Iterates the Symplectic Euler Scheme until the stopping condition is
         met.
@@ -767,68 +801,31 @@ class SymplecticEulerScheme(ABC):
             the spin vector giving the lowest Ising energy among all the agents
         """
         self.reset(ising)
-        start_time = time()
 
         while self.run:
-            self.symplectic_update()
-            self.non_symplectic_update(ising)
+
+            if self.heated: heatY = self.Y.clone().detach()
+
+            self.update_Y()
+            self.update_X()
+            self.quadratic_update()
             self.confine()
+
+            if self.heated: torch.add(self.Y, self.time_step * self.heat_parameter * heatY, out=self.Y)
+
             self.step_update()
             self.check_stop(use_window)
 
-        self.time = time() - start_time
+        self.agents_progress.close()
+        self.iterations_progress.close()
 
-        return self.get_best_spins(ising, use_window)
-
-
-class BallisticHeatedSymplecticEulerScheme(SymplecticEulerScheme):
-    """
-    Symplectic Euler Scheme for the Heated ballistic Simulated Bifurcation
-    (HbSB) algorithm.
-    """
-
-    def non_symplectic_update(self, ising: Ising) -> None:
-        temp = ising.null_diag_J @ self.X - \
-            self.field_coefficient(self.time_step * self.step) * ising.h
-        temp = self.xi0 * temp + self.heat_parameter * self.Y
-        self.Y += self.time_step * temp
-
-
-class BallisticSymplecticEulerScheme(SymplecticEulerScheme):
-    """
-    Symplectic Euler Scheme for the ballistic Simulated Bifurcation (bSB)
-    algorithm.
-    """
-
-    def non_symplectic_update(self, ising: Ising) -> None:
-        temp = ising.null_diag_J @ self.X - \
-            self.field_coefficient(self.time_step * self.step) * ising.h
-        self.Y += self.time_step * self.xi0 * temp
-
-
-class DiscreteHeatedSymplecticEulerScheme(SymplecticEulerScheme):
-    """
-    Symplectic Euler Scheme for the Heated discrete Simulated Bifurcation
-    (HdSB) algorithm.
-    """
-
-    def non_symplectic_update(self, ising: Ising) -> None:
-        temp = ising.null_diag_J @ torch.sign(self.X) - \
-            self.field_coefficient(self.time_step * self.step) * ising.h
-        temp = self.xi0 * temp + self.heat_parameter * self.Y
-        self.Y += self.time_step * temp
-
-
-class DiscreteSymplecticEulerScheme(SymplecticEulerScheme):
-    """
-    Symplectic Euler Scheme for the discrete Simulated Bifurcation (dSB)
-    algorithm.
-    """
-
-    def non_symplectic_update(self, ising: Ising) -> None:
-        temp = ising.null_diag_J @ torch.sign(self.X) - \
-            self.field_coefficient(self.time_step * self.step) * ising.h
-        self.Y += self.time_step * self.xi0 * temp
+        if use_window: 
+            if torch.any(self.bifurcated):
+                return self.final_spins[:, self.bifurcated]
+            else:
+                print('No agent bifurcated. Returned final oscillators instead.')
+                return torch.sign(self.X)
+        else: return torch.sign(self.X)
 
 
 def main():
@@ -840,17 +837,18 @@ def main():
 
     print(f'Environment set on {device}.')
 
-    dim = 1024
+    dim = 400
     agents = 128
     J = np.random.uniform(-0.5, 0.5, size=(dim, dim))
+    J = .5 * (J + J.T)
     h = np.random.uniform(-0.5, 0.5, size=(dim, 1))
     energies = []
     for ballistic in [True, False]:
-        for heated in [True, False]:
+        for gerschgorin in [True, False]:
             ising = Ising(torch.from_numpy(J), torch.from_numpy(h),
             device = device)
             ising.optimize(agents=agents, ballistic=ballistic,
-                           heated=heated)
+                gerschgorin=gerschgorin)
             energies.append(ising.energy)
     print(energies)
 
