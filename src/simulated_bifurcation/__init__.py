@@ -305,9 +305,14 @@ class Ising:
 
 
 class SBModel(ABC):
+
     """
     An abstract class to adapt optimization problems as Ising problems.
     """
+
+    def __init__(self, dtype: torch.dtype, device: str = 'cpu') -> None:
+        self.dtype = dtype
+        self.device = device
 
     @abstractmethod
     def __to_Ising__(self) -> Ising:
