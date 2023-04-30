@@ -15,7 +15,7 @@ pip install simulated-bifurcation
 ## 🧪 Scientific background
 
 _Simulated bifurcation_ is a state-of-the-art algorithm based on quantum physics theory and used to approximize very accurately and quickly the optimal solution of Ising problems. 
->You can read about the scientific theories at stake and the engineering of the algorithm here: https://arxiv.org/abs/2108.03092
+>You can read about the scientific theories at stake and the engineering of the algorithm by Goto *et al.* here: https://www.nature.com/articles/s42005-022-00929-9
 
 Ising problems can be used in many sectors such as finance, transportation or chemistry or derived as other well-know optimization problems (QUBO, Knapsack problem, ...).
 
@@ -51,7 +51,7 @@ Once the model is optimized, you can get the best found Ising features using mod
 
 ```python
 ising.energy # Ising energy -> float
-ising.ground_state # Ground state (best spin vector) -> numpy.ndarray
+ising.ground_state # Ground state (best spin vector) -> torch.Tensor
 ```
 
 ## 📊 Optimization parameters
@@ -95,16 +95,22 @@ Finally, you can choose to show or hide the evolution of the algorithm setting t
 
 > If you choose to set `verbose = True`, the evolution will be displayed as `tqdm` progress bar(s) in your terminal.
 
-## 🔀 Derive the algorithm for other problems using the SBModel API
+## 🔀 Derive the algorithm for other problems using the IsingInterface API
 
 A lot of mathematical problems ([QUBO](https://en.wikipedia.org/wiki/Quadratic_unconstrained_binary_optimization), [TSP](https://en.wikipedia.org/wiki/Travelling_salesman_problem), ...) can be written as Ising problems, and thus can be solved using the Simulated Bifurcation algorithm. Some of them are already implemented in the `models` folder but you are free to create your own models using our API.
 
-To do so, you need to create a subclass of the abstract class `SBModel`.
+To do so, you need to create a subclass of the abstract class `IsingInterface` present in the `interface` submodule. The `IsingInterface` has only two attributes `dtype` and `device` which allow you to set the type of the data and the device with which you wish to work.
 
 ```python
-class YourModel(sb.SBModel):
+from simulated_bifurcation.interface import IsingInterface
 
-    ...
+
+class YourModel(IsingInterface):
+
+    def __init__(self, dtype, device, *args, **kwargs):
+        super().__init__(dtype, device) # Mandatory
+        # YOUR CODE HERE
+        ...
 ```
 
 Once created, such an object can be optimized using the same principle as an `Ising` object, using the `optimize` methods which uses the same parameters as the `Ising`'s one:
@@ -114,9 +120,9 @@ your_model = YourModel(...)
 your_model.optimize()
 ```
 
-Yet, to make it work, you will first have to overwrite two abstract methods of the `SBModel` class (`__to_Ising__` and `__from_Ising__`) that are called by the `optimize` method. Otherwise you will get a `NotImplementedError` error message.
+Yet, to make it work, you will first have to overwrite two abstract methods of the `IsingInterface` class (`__to_Ising__` and `__from_Ising__`) that are called by the `optimize` method. Otherwise you will get a `NotImplementedError` error message.
 
-When the `optimize` method is called, an equivalent Ising model will first be created using `__to_Ising__` and then optimized using the exact same parameters you provided as input for the `SBModel.optimize` method. Once it is optimized, information for your own model will be derived from the optimal features of this equivalent Ising model using `__from_Ising__`.
+When the `optimize` method is called, an equivalent Ising model will first be created using `__to_Ising__` and then optimized using the exact same parameters you provided as input for the `IsingInterface.optimize` method. Once it is optimized, information for your own model will be derived from the optimal features of this equivalent Ising model using `__from_Ising__`.
 
 ### `__to_Ising__` method
 
@@ -127,8 +133,10 @@ def __to_Ising__(self) -> sb.Ising:
     # YOUR CODE HERE
     J = ...
     h = ...
-    return sb.Ising(J, h)
+    return sb.Ising(J, h, dtype=self.dtype, device=self.device)
 ```
+
+> Do not forget to set the `device` attribute when you instantiate the class if you are working on a GPU because all the tensors must be set on the same device.
 
 ### `__from_Ising__` method
 
@@ -139,6 +147,10 @@ def __from_Ising__(self, ising: sb.Ising) -> None:
     # YOUR CODE HERE
     return 
 ```
+
+### Binary and integer formulations
+
+Note that many problems that can be represented as Ising models are not based on spin vectors but rather on binary or integer vectors. The `interface` submodule thus has two additional classes, `Binary` and `Integer`, both of which inherit from `IsingInterface` in order to generalize these cases more easily.
 
 > 🔎 You can check [Andrew Lucas' paper](https://arxiv.org/pdf/1302.5843.pdf) on Ising formulations of NP-complete and NP-hard problems, including all of Karp's 21 NP-complete problems.
 

@@ -1,8 +1,9 @@
 from . import *
+from . interface import IsingInterface
 from numpy import sum
 
 
-class NumberPartioning(SBModel):
+class NumberPartioning(IsingInterface):
 
     """
     A solver that separates a set of numbers into two subsets whose 
