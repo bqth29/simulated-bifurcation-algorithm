@@ -19,8 +19,8 @@ class Markowitz(Integer):
     ) -> None:
 
         # Data
-        self.covariance       = covariance.to(dtype, device)
-        self.expected_return  = expected_return.to(dtype, device)
+        self.covariance       = covariance.to(dtype=dtype, device=device)
+        self.expected_return  = expected_return.to(dtype=dtype, device=device)
         self.risk_coefficient = risk_coefficient
         super().__init__(- risk_coefficient * covariance, 
                         - expected_return, number_of_bits,
