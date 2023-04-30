@@ -163,7 +163,7 @@ If you are using this code for your own projects please cite our work:
     author = {Ageron, Romain and Bouquet, Thomas and Pugliese, Lorenzo},
     month = {4},
     title = {{Simulated Bifurcation (SB) algorithm for Python}},
-    version = {1.0.0},
+    version = {1.0.2},
     year = {2023}
 }
 ```
