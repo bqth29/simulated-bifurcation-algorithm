@@ -8,30 +8,8 @@ Python implementation of the _Simulated Bifurcation_ algorithm in order to appro
 
 ## ⚙️ Install
 
-### With `pip`
-
 ```
 pip install simulated-bifurcation
-```
-
-### From GitHub
-
-1. Clone the repository
-
-```
-git clone https://github.com/bqth29/simulated-bifurcation-algorithm.git
-```
-
-1. Change directory
-
-```bash
-cd simulated-bifurcation-algorithm
-```
-
-1. Intall dependencies
-
-```powershell
-python -m pip install -r requirements.txt
 ```
 
 ## 🧪 Scientific background
@@ -86,13 +64,10 @@ These parameters stem from the quantum theory Their purpose is described in the 
 
 > The parameters marked with ⚠️ should not be changed to ensure a good accuracy of the algorithm.
 
-- `detuning_frequency` ⚠️
 - `pressure_slope` ⚠️
-- `final_pressure` ⚠️
-- `xi0`: if `None` then uses the value defined by Goto *et al.*; if `'gerschgorin'` then uses the Gerschgorin's theorem to set the value; else uses the provided value (`float`)
+- `gerschgorin`: if `True` then uses the Gerschgorin's theorem to set the scale value; else uses the uses the value defined by Goto *et al.*
 - `heat_parameter` ⚠️
 - `time_step` ⚠️
-- `symplectic_parameter`: either an `int` or `'inf'` for the asymptotic symplectic update
 
 ### Simulated Bifurcation modes
 
