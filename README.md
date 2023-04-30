@@ -4,9 +4,17 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1xtse4sLIDAh8nsQ6HcIr7BzM7sft88WA?usp=sharing)
 ![GitHub stars](https://img.shields.io/github/stars/bqth29/simulated-bifurcation-algorithm.svg?style=social&label=Star)
 
-Python implementation of the _Simulated Bifurcation_ algorithm in order to approximize the optimal solution of Ising problems. The last accuracy tests showed a median optimality gap of less than 1% on high-dimensional instances.
+Python implementation of the _Simulated Bifurcation_ algorithm in order to approximize the optimal solution of **Ising problems**. The last accuracy tests showed a median optimality gap of less than 1% on high-dimensional instances.
 
 ## ⚙️ Install
+
+### With `pip`
+
+```
+pip install simulated-bifurcation
+```
+
+### From GitHub
 
 1. Clone the repository
 
@@ -16,7 +24,7 @@ git clone https://github.com/bqth29/simulated-bifurcation-algorithm.git
 
 1. Change directory
 
-```
+```bash
 cd simulated-bifurcation-algorithm
 ```
 
@@ -90,7 +98,7 @@ These parameters stem from the quantum theory Their purpose is described in the 
 
 There are four modes of the algorithm (ballistic v. discrete + heated v. non-heated) that result in small variations in the algorithm general operation. These mode can be selected setting the parameters `ballistic` and `heated` to `True` or `False`.
 
-> The ballistic mode is supposed to give a slighter less good accuracy but to converge faster in comparison to the discrete mode which is generally more accurate but also a bit slower.
+> The ballistic mode is supposed to give a slighter less satisfying accuracy but to converge faster in comparison to the discrete mode which is generally more accurate but also a bit slower.
 
 ### Early stopping
 
@@ -159,16 +167,16 @@ def __from_Ising__(self, ising: sb.Ising) -> None:
 
 > 🔎 You can check [Andrew Lucas' paper](https://arxiv.org/pdf/1302.5843.pdf) on Ising formulations of NP-complete and NP-hard problems, including all of Karp's 21 NP-complete problems.
 
-## 🔗 Cite this repository
+## 🔗 Cite this work
 
 If you are using this code for your own projects please cite our work:
 
 ```bibtex
 @software{Ageron_Simulated_Bifurcation_SB_2022,
     author = {Ageron, Romain and Bouquet, Thomas and Pugliese, Lorenzo},
-    month = {9},
+    month = {4},
     title = {{Simulated Bifurcation (SB) algorithm for Python}},
-    version = {2.0.1},
-    year = {2022}
+    version = {1.0.0},
+    year = {2023}
 }
 ```
