@@ -1,5 +1,6 @@
-from . interface import Integer
-from . import torch, Union
+from .integer import Integer
+import torch
+from typing import Union
 
 class Markowitz(Integer):
 

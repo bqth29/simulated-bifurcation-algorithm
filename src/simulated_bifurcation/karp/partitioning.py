@@ -1,6 +1,7 @@
-from . import *
-from . interface import IsingInterface
+from ..ising import Ising
+from ..interface import IsingInterface
 from numpy import sum
+import torch
 
 
 class NumberPartioning(IsingInterface):

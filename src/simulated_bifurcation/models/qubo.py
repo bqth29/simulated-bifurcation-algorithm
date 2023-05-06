@@ -1,5 +1,5 @@
-from . interface import Binary
-from . import torch
+from .binary import Binary
+import torch
 
 
 class QUBO(Binary):
