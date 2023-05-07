@@ -49,6 +49,11 @@ class SymplecticIntegrator:
         self.momentum_update(momentum_coefficient)
         self.position_update(position_coefficient)
         self.quadratic_position_update(quadratic_coefficient, matrix)
+        self.simulate_inelastic_walls()
+
+    def simulate_inelastic_walls(self) -> None:
+        self.position[torch.abs(self.momentum) > 1.] = 0
+        torch.clip(self.momentum, -1., 1., out=self.momentum)
 
     def sample_spins(self) -> torch.Tensor:
         return torch.sign(self.momentum)
@@ -204,10 +209,6 @@ class Optimizer:
             mininterval=0.5
         )
 
-    def confine(self) -> None:
-        self.symplectic_integrator.position[torch.abs(self.symplectic_integrator.momentum) > 1.] = 0
-        torch.clip(self.symplectic_integrator.momentum, -1., 1., out=self.symplectic_integrator.momentum)
-
     def reset(self, matrix: torch.Tensor) -> None:
         self.iterations_progress = self.__init_progress_bar(self.max_steps, self.verbose)
         self.symplectic_integrator = self.__init_symplectic_integrator(matrix)
@@ -265,11 +266,10 @@ class Optimizer:
 
         while self.run:
 
-            if self.heated: position_stash = self.position.clone().detach()
+            if self.heated: position_stash = self.symplectic_integrator.position.clone().detach()
 
             momentum_coefficient, position_coefficient, quadratic_coefficient = self.compute_symplectic_coefficients()
             self.symplectic_integrator.step(momentum_coefficient, position_coefficient, quadratic_coefficient, matrix)
-            self.confine()
 
             if self.heated: self.heat(position_stash)
 

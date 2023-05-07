@@ -301,5 +301,3 @@ class Ising:
         
         if self.linear_term: self.computed_spins = spins[-1] * spins[:-1, :]
         else: self.computed_spins = spins
-
-
