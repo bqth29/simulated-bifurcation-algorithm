@@ -25,7 +25,142 @@ class OptimizerMode(Enum):
     def activation_function(self) -> str: return self.value[1]
 
 
-class Optimizer():
+class SymplecticIntegrator:
+
+    def __init__(self, shape: Tuple[int, int], mode: OptimizerMode, dtype: torch.dtype, device: str):
+        self.momentum = SymplecticIntegrator.__init_oscillator(shape, dtype, device)
+        self.position = SymplecticIntegrator.__init_oscillator(shape, dtype, device)
+        self.activation_function = mode.activation_function
+
+    @classmethod
+    def __init_oscillator(cls, shape: Tuple[int, int], dtype: torch.dtype, device: str):
+        return 2 * torch.rand(size=shape, device=device, dtype=dtype) - 1
+
+    def momentum_update(self, coefficient: float) -> None:
+        torch.add(self.momentum, coefficient * self.position, out=self.momentum)
+    
+    def position_update(self, coefficient: float) -> None:
+        torch.add(self.position, coefficient * self.momentum, out=self.position)
+
+    def quadratic_position_update(self, coefficient: float, matrix: torch.Tensor) -> None:
+        torch.add(self.position, coefficient * matrix @ self.activation_function(self.momentum), out=self.position)
+
+    def step(self, momentum_coefficient: float, position_coefficient: float, quadratic_coefficient: float, matrix: torch.Tensor) -> None:
+        self.momentum_update(momentum_coefficient)
+        self.position_update(position_coefficient)
+        self.quadratic_position_update(quadratic_coefficient, matrix)
+
+    def sample_spins(self) -> torch.Tensor:
+        return torch.sign(self.momentum)
+
+
+class StopWindow:
+
+    def __init__(self, n_spins: int, n_agents: int, convergence_threshold: int, sampling_period: int, dtype: torch.dtype, device: str, verbose: bool) -> None:
+        self.n_spins = n_spins
+        self.n_agents = n_agents
+        self.convergence_threshold = convergence_threshold
+        self.sampling_period = sampling_period
+        self.dtype = dtype
+        self.device = device
+        self.__init_tensors()
+        self.current_spins = self.__init_spins()
+        self.final_spins = self.__init_spins()
+        self.progress = self.__init_progress_bar(verbose)
+
+    @property
+    def shape(self) -> Tuple[int, int]:
+        return (self.n_spins, self.n_agents)
+    
+    def __init_progress_bar(self, verbose: bool) -> tqdm:
+        return tqdm(
+            total=self.n_agents,
+            desc='Bifurcated agents',
+            disable=not verbose,
+            smoothing=0
+        )
+    
+    def __init_tensor(self, dtype: torch.dtype) -> torch.Tensor:
+        return torch.zeros(self.n_agents, device=self.device, dtype=dtype)
+
+    def __init_tensors(self) -> None:
+        self.stability = self.__init_tensor(self.dtype)
+        self.newly_bifurcated = self.__init_tensor(bool)
+        self.previously_bifurcated = self.__init_tensor(bool)
+        self.bifurcated = self.__init_tensor(bool)
+        self.equal = self.__init_tensor(bool)
+
+    def __init_spins(self) -> torch.Tensor:
+        return torch.zeros(size=self.shape, dtype=self.dtype, device=self.device)
+
+    def update(self, sampled_spins: torch.Tensor):
+        self.compare_spins(sampled_spins)
+        self.update_stability_streak()
+        self.update_bifurcated_spins()
+        self.set_newly_bifurcated_spins()
+        self.set_previously_bifurcated_spins()
+        self.update_final_spins(sampled_spins)
+        self.store_spins(sampled_spins)
+        self.progress.update(self.get_number_newly_bifurcated_agents())
+
+    def update_final_spins(self, sampled_spins) -> None:
+        self.final_spins[:, self.newly_bifurcated] = torch.sign(
+            sampled_spins[:, self.newly_bifurcated]
+        )
+
+    def set_previously_bifurcated_spins(self) -> None:
+        self.previously_bifurcated = self.bifurcated * 1.
+
+    def set_newly_bifurcated_spins(self) -> None:
+        torch.logical_xor(
+            self.bifurcated,
+            self.previously_bifurcated,
+            out=self.newly_bifurcated
+        )
+
+    def update_bifurcated_spins(self) -> None:
+        torch.eq(
+            self.stability,
+            self.convergence_threshold - 1,
+            out=self.bifurcated
+        )
+
+    def update_stability_streak(self) -> None:
+        self.stability[torch.logical_and(self.equal, self.not_bifurcated)] += 1
+        self.stability[torch.logical_and(self.not_equal, self.not_bifurcated)] = 0
+
+    @property
+    def not_equal(self) -> torch.Tensor:
+        return torch.logical_not(self.equal)
+
+    @property
+    def not_bifurcated(self) -> torch.Tensor:
+        return torch.logical_not(self.bifurcated)
+
+    def compare_spins(self, sampled_spins: torch.Tensor) -> None:
+        torch.eq(
+            torch.einsum('ik, ik -> k', self.current_spins, sampled_spins),
+            self.n_spins,
+            out=self.equal
+        )
+
+    def store_spins(self, sampled_spins: torch.Tensor) -> None:
+        torch.sign(sampled_spins, out=self.current_spins)
+
+    def get_number_newly_bifurcated_agents(self) -> int:
+        return self.newly_bifurcated.sum().item()
+    
+    def must_stop(self) -> bool:
+        return torch.any(self.stability < self.convergence_threshold - 1)
+    
+    def has_bifurcated_spins(self) -> bool:
+        torch.any(self.bifurcated)
+
+    def get_bifurcated_spins(self) -> torch.Tensor:
+        return self.final_spins[:, self.bifurcated]
+
+
+class Optimizer:
 
     def __init__(
         self,
@@ -41,22 +176,18 @@ class Optimizer():
         verbose: bool
     ) -> None:
 
-        self.agents_progress = tqdm(total=agents, desc='Bifurcated agents',
-                                    disable=not verbose, smoothing=0)
-        self.iterations_progress = tqdm(total=max_steps, desc='Iterations',
-                                        disable=not verbose, smoothing=0.1,
-                                        mininterval=0.5)
-
         # Optimizer setting
         self.mode = OptimizerMode.BALLISTIC if ballistic else OptimizerMode.DISCRETE
-
+        self.window = None
+        self.symplectic_integrator = None
         self.heat_parameter = heat_parameter
         self.heated = heat_parameter is not None
+        self.verbose = verbose
 
         # Simulation parameters
-        self.initialized = False
         self.time_step = time_step
         self.agents = agents
+        self.pressure_slope = pressure_slope
 
         # Stopping criterion parameters
         self.convergence_threshold = convergence_threshold
@@ -65,167 +196,112 @@ class Optimizer():
 
         # Quantum parameters
         self.gerschgorin = gerschgorin
-        self.pressure = lambda t: minimum(
-                pressure_slope * t, 1.)
 
-        # Evolutive parameters
-        self.X, self.Y = None, None
-        self.dimension = None
-        self.ising_model = None
-        self.current_spins = None
-        self.final_spins = None
-        self.stability = None
-        self.bifurcated = None
-        self.previously_bifurcated = None
-        self.new_bifurcated = None
-        self.equal = None
-        self.run = True
-        self.xi0 = None
-        self.step = 0
-        self.time = 0
-
-    @property
-    def shape(self) -> Tuple[Union[int, None], int]:
-        if self.initialized: return (self.dimension, self.agents)
-        else: return (None, self.agents)
-
-    def set_ballistic(self) -> None:
-        if self.ballistic: pass
-        else:
-            self.discrete = False
-            self.ballistic = True
-            self.mode = OptimizerMode.BALLISTIC
-    
-    def set_discrete(self) -> None:
-        if self.discrete: pass
-        else:
-            self.discrete = True
-            self.ballistic = False
-            self.mode = OptimizerMode.DISCRETE
+    def __init_progress_bar(self, max_steps: int, verbose: bool) -> tqdm:
+        return tqdm(
+            total=max_steps, desc='Iterations',
+            disable=not verbose, smoothing=0.1,
+            mininterval=0.5
+        )
 
     def confine(self) -> None:
-        self.Y[torch.abs(self.X) > 1.] = 0
-        torch.clip(self.X, -1., 1., out=self.X)
-
-    def update_window(self) -> None:
-        torch.eq(torch.einsum('ik, ik -> k', self.current_spins, torch.sign(self.X)),
-                 self.dimension, out=self.equal)
-        not_bifurcated = torch.logical_not(self.bifurcated)
-        not_equal = torch.logical_not(self.equal)
-        self.stability[torch.logical_and(self.equal, not_bifurcated)] += 1
-        self.stability[torch.logical_and(not_equal, not_bifurcated)] = 0
-
-        torch.eq(self.stability, self.convergence_threshold - 1,
-                 out=self.bifurcated)
-
-        torch.logical_xor(self.bifurcated, self.previously_bifurcated,
-                       out=self.new_bifurcated)
-
-        self.previously_bifurcated = self.bifurcated * 1.
-
-        self.final_spins[:, self.new_bifurcated] = torch.sign(
-            self.X[:, self.new_bifurcated])
-
-        torch.sign(self.X, out=self.current_spins)
-
-        self.agents_progress.update(self.new_bifurcated.sum().item())
+        self.symplectic_integrator.position[torch.abs(self.symplectic_integrator.momentum) > 1.] = 0
+        torch.clip(self.symplectic_integrator.momentum, -1., 1., out=self.symplectic_integrator.momentum)
 
     def reset(self, matrix: torch.Tensor) -> None:
-        self.dimension = matrix.shape[0]
-        self.ising_model = matrix
-
-        self.X = 2 * torch.rand(size=(self.dimension, self.agents), 
-                device = matrix.device, dtype=matrix.dtype) - 1
-        self.Y = 2 * torch.rand(size=(self.dimension, self.agents),
-                device = matrix.device, dtype=matrix.dtype) - 1
-
-        # Stopping window
-
-        self.current_spins = torch.zeros((self.dimension, self.agents),
-                device = matrix.device, dtype=matrix.dtype)
-        self.final_spins = torch.zeros((self.dimension, self.agents),
-                device = matrix.device, dtype=matrix.dtype)
-
-        self.stability = torch.zeros(self.agents,
-                device = matrix.device, dtype=matrix.dtype)
-        self.new_bifurcated = torch.zeros(self.agents, dtype=bool,
-                device = matrix.device)
-        self.previously_bifurcated = torch.zeros(self.agents, dtype=bool,
-                device = matrix.device)
-        self.bifurcated = torch.zeros(self.agents, dtype=bool,
-                device = matrix.device)
-        self.equal = torch.zeros(self.agents, dtype=bool,
-                device = matrix.device)
-
+        self.iterations_progress = self.__init_progress_bar(self.max_steps, self.verbose)
+        self.symplectic_integrator = self.__init_symplectic_integrator(matrix)
+        self.window = self.__init_window(matrix)
         self.run = True
         self.step = 0
+        self.__init_xi0(matrix)
 
+    def __init_xi0(self, matrix: torch.Tensor):
         if not self.gerschgorin:
             self.xi0 = 0.7 / \
-                (torch.std(self.ising_model) * (self.dimension)**(1/2))
+                (torch.std(matrix) * (matrix.shape[0])**(1/2))
         else:
             self.xi0 = 1. / torch.max(
-                torch.sum(torch.abs(self.ising_model), axis=1))
+                torch.sum(torch.abs(matrix), axis=1))
 
-        self.initialized = True
+    def __init_window(self, matrix: torch.Tensor) -> StopWindow:
+        return StopWindow(
+            matrix.shape[0], self.agents,
+            self.convergence_threshold, self.sampling_period,
+            matrix.dtype, str(matrix.device), self.verbose
+        )
+
+    def __init_symplectic_integrator(self, matrix: torch.Tensor) -> SymplecticIntegrator:
+        return SymplecticIntegrator(
+            (matrix.shape[0], self.agents),
+            self.mode, matrix.dtype, str(matrix.device)
+        )
 
     def step_update(self) -> None:
         self.step += 1
         self.iterations_progress.update()
 
-    def update_X(self) -> None:
-        pressure = self.pressure(self.time_step * self.step)
-        torch.add(self.X, self.time_step * (1. + pressure) * self.Y, out=self.X)
-    
-    def update_Y(self) -> None:
-        pressure = self.pressure(self.time_step * self.step)
-        torch.add(
-            self.Y,
-            self.time_step * (pressure - 1.) * self.X,
-            out=self.Y
-        )
-
-    def quadratic_update(self) -> None:
-        temp = self.ising_model @ self.mode(self.X)
-        torch.add(
-            self.Y,
-            self.time_step * self.xi0 * temp,
-            out=self.Y
-        )
-
     def check_stop(self, use_window: bool) -> None:
-        if use_window and self.step % self.sampling_period == 0:
-            self.update_window()
-            self.run = torch.any(self.stability < self.convergence_threshold - 1)
-
+        if use_window and self.__go_sampling:
+            self.run = self.window.must_stop()
         if self.step >= self.max_steps:
             self.run = False
 
-    def symplectic_update(self, matrix: torch.Tensor, use_window: bool) -> torch.Tensor:
-        
+    @property
+    def __go_sampling(self) -> bool:
+        return self.step % self.sampling_period == 0
+
+    def run_integrator(self, matrix: torch.Tensor, use_window: bool) -> torch.Tensor:
         self.reset(matrix)
+        spins = self.symplectic_update(matrix, use_window)
+        self.close_progress_bars()
+        return self.get_final_spins(spins, use_window)
+
+    def close_progress_bars(self):
+        self.iterations_progress.close()
+        self.window.progress.close()
+
+    def symplectic_update(self, matrix: torch.Tensor, use_window: bool) -> torch.Tensor:
 
         while self.run:
 
-            if self.heated: heatY = self.Y.clone().detach()
+            if self.heated: position_stash = self.position.clone().detach()
 
-            self.update_Y()
-            self.update_X()
-            self.quadratic_update()
+            momentum_coefficient, position_coefficient, quadratic_coefficient = self.compute_symplectic_coefficients()
+            self.symplectic_integrator.step(momentum_coefficient, position_coefficient, quadratic_coefficient, matrix)
             self.confine()
 
-            if self.heated: torch.add(self.Y, self.time_step * self.heat_parameter * heatY, out=self.Y)
+            if self.heated: self.heat(position_stash)
 
             self.step_update()
+            sampled_spins = self.symplectic_integrator.sample_spins()
+            if use_window and self.__go_sampling:
+                self.window.update(sampled_spins)
+
             self.check_stop(use_window)
 
-        self.agents_progress.close()
-        self.iterations_progress.close()
+        return sampled_spins
 
+    def heat(self, position_stash: torch.Tensor) -> None:
+        torch.add(self.symplectic_integrator.position, self.time_step * self.heat_parameter * position_stash, out=self.symplectic_integrator.position)
+
+    def compute_symplectic_coefficients(self) -> Tuple[float, float, float]:
+        pressure = self.pressure
+        momentum_coefficient = self.time_step * (1. + pressure)
+        position_coefficient = self.time_step * (pressure - 1.)
+        quadratic_coefficient = self.time_step * self.xi0
+        return momentum_coefficient, position_coefficient, quadratic_coefficient
+
+    @property
+    def pressure(self):
+        return minimum(self.time_step * self.step * self.pressure_slope, 1.)
+    
+    def get_final_spins(self, spins: torch.Tensor, use_window: bool) -> torch.Tensor:
         if use_window: 
-            if torch.any(self.bifurcated):
-                return self.final_spins[:, self.bifurcated]
+            if self.window.has_bifurcated_spins():
+                return self.window.get_bifurcated_spins()
             else:
-                print('No agent bifurcated. Returned final oscillators instead.')
-                return torch.sign(self.X)
-        else: return torch.sign(self.X)
+                print('No agent bifurcated. Returned final momentums\' signs instead.')
+                return spins
+        else:
+            return spins

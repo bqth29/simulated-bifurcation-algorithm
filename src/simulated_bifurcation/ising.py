@@ -297,7 +297,7 @@ class Ising:
                       heat_parameter, verbose)
         
         matrix = Ising.remove_diagonal(self.matrix)
-        spins = optimizer.symplectic_update(matrix, use_window)
+        spins = optimizer.run_integrator(matrix, use_window)
         
         if self.linear_term: self.computed_spins = spins[-1] * spins[:-1, :]
         else: self.computed_spins = spins
