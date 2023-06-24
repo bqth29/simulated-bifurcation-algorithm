@@ -120,16 +120,16 @@ your_model = YourModel(...)
 your_model.optimize()
 ```
 
-Yet, to make it work, you will first have to overwrite two abstract methods of the `IsingInterface` class (`__to_Ising__` and `__from_Ising__`) that are called by the `optimize` method. Otherwise you will get a `NotImplementedError` error message.
+Yet, to make it work, you will first have to overwrite two abstract methods of the `IsingInterface` class (`to_ising` and `from_ising`) that are called by the `optimize` method. Otherwise you will get a `NotImplementedError` error message.
 
-When the `optimize` method is called, an equivalent Ising model will first be created using `__to_Ising__` and then optimized using the exact same parameters you provided as input for the `IsingInterface.optimize` method. Once it is optimized, information for your own model will be derived from the optimal features of this equivalent Ising model using `__from_Ising__`.
+When the `optimize` method is called, an equivalent Ising model will first be created using `to_ising` and then optimized using the exact same parameters you provided as input for the `IsingInterface.optimize` method. Once it is optimized, information for your own model will be derived from the optimal features of this equivalent Ising model using `from_ising`.
 
-### `__to_Ising__` method
+### `to_ising` method
 
-The `__to_Ising__` is meant to create an instance of an Ising model based on the data of your problem. It takes no argument and must only return an `Ising` object. The idea is to rely on the parameters of your problems to derive an Ising representation of it. At some point in the definition of the method, you will have to create the `J` matrix and the `h` vector and eventually return `Ising(J, h)`.
+The `to_ising` is meant to create an instance of an Ising model based on the data of your problem. It takes no argument and must only return an `Ising` object. The idea is to rely on the parameters of your problems to derive an Ising representation of it. At some point in the definition of the method, you will have to create the `J` matrix and the `h` vector and eventually return `Ising(J, h)`.
 
 ```python
-def __to_Ising__(self) -> sb.Ising:
+def to_ising(self) -> sb.Ising:
     # YOUR CODE HERE
     J = ...
     h = ...
@@ -138,12 +138,12 @@ def __to_Ising__(self) -> sb.Ising:
 
 > Do not forget to set the `device` attribute when you instantiate the class if you are working on a GPU because all the tensors must be set on the same device.
 
-### `__from_Ising__` method
+### `from_ising` method
 
-The `__from_Ising__` is the reciprocal method. Once the equivalent Ising model of your problem has been optimized, you can retrieve information from its ground state and/or energy and adapt them to your own problem. It must only take an `Ising` object for input and return `None`.
+The `from_ising` is the reciprocal method. Once the equivalent Ising model of your problem has been optimized, you can retrieve information from its ground state and/or energy and adapt them to your own problem. It must only take an `Ising` object for input and return `None`.
 
 ```python
-def __from_Ising__(self, ising: sb.Ising) -> None:
+def from_ising(self, ising: sb.Ising) -> None:
     # YOUR CODE HERE
     return 
 ```
@@ -163,7 +163,7 @@ If you are using this code for your own projects please cite our work:
     author = {Ageron, Romain and Bouquet, Thomas and Pugliese, Lorenzo},
     month = {4},
     title = {{Simulated Bifurcation (SB) algorithm for Python}},
-    version = {1.0.2},
+    version = {1.1.0},
     year = {2023}
 }
 ```

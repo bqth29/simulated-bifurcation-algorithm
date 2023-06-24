@@ -15,7 +15,7 @@ class IsingInterface(ABC):
         self.device = device
 
     @abstractmethod
-    def __to_Ising__(self) -> Ising:
+    def to_ising(self) -> Ising:
         """
         Generate an equivalent Ising model of the problem.
         The notion of equivalence means that finding the ground
@@ -31,7 +31,7 @@ class IsingInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def __from_Ising__(self, ising: Ising) -> None:
+    def from_ising(self, ising: Ising) -> None:
         """
         Retrieves information from the optimized equivalent Ising model.
         Modifies the object's attributes in place.
@@ -51,11 +51,9 @@ class IsingInterface(ABC):
         sampling_period: int = 50,
         max_steps: int = 10000,
         agents: int = 128,
-        pressure_slope: float = .01,
-        gerschgorin: bool = False,
         use_window: bool = True,
         ballistic: bool = False,
-        heat_parameter: float = None,
+        heat: bool = False,
         verbose: bool = True
     ) -> None:
         """
@@ -156,18 +154,9 @@ class IsingInterface(ABC):
         For low dimensions, see the `comprehensive_search` method function
         instead that will always find the true optimal ground state.
         """
-        ising_equivalent = self.__to_Ising__()
+        ising_equivalent = self.to_ising()
         ising_equivalent.optimize(
-            time_step,
-            convergence_threshold,
-            sampling_period,
-            max_steps,
-            agents,
-            pressure_slope,
-            gerschgorin,
-            use_window,
-            ballistic,
-            heat_parameter,
-            verbose
+            time_step, convergence_threshold, sampling_period,
+            max_steps, agents, use_window, ballistic, heat, verbose
         )
-        self.__from_Ising__(ising_equivalent)
+        self.from_ising(ising_equivalent)

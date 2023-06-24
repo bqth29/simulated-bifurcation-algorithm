@@ -98,7 +98,7 @@ class Integer(IsingInterface):
 
         return matrix   
 
-    def __to_Ising__(self) -> Ising:
+    def to_ising(self) -> Ising:
         
         J = self.conversion_matrix @ self.matrix @ self.conversion_matrix.t()
         h = 2 * self.conversion_matrix @ self.vector \
@@ -107,5 +107,5 @@ class Integer(IsingInterface):
 
         return Ising(J, h, self.dtype, self.device)
 
-    def __from_Ising__(self, ising: Ising) -> None:
+    def from_ising(self, ising: Ising) -> None:
         self.solution = .5 * self.conversion_matrix.t() @ (ising.ground_state + 1)

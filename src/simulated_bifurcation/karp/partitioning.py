@@ -22,7 +22,7 @@ class NumberPartioning(IsingInterface):
 
     def __len__(self): return len(self.numbers)
 
-    def __to_Ising__(self) -> Ising:
+    def to_ising(self) -> Ising:
         
         tensor_numbers = torch.Tensor(self.numbers, device=self.device)
         J = -2 * tensor_numbers.reshape(-1, 1) @ tensor_numbers.reshape(1, -1)
@@ -30,7 +30,7 @@ class NumberPartioning(IsingInterface):
 
         return Ising(J, h, self.dtype, self.device)
 
-    def __from_Ising__(self, ising: Ising) -> None:
+    def from_ising(self, ising: Ising) -> None:
         
         subset_left = []
         subset_right = []

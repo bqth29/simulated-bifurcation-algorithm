@@ -1,6 +1,6 @@
 from typing import List, Tuple, Union
 import torch
-from numpy import argmin
+from numpy import argmin, ndarray
 from .optimizer import Optimizer
 
 
@@ -31,32 +31,15 @@ class Ising:
     """
 
     def __init__(
-        self, J: torch.Tensor,
-        h: Union[torch.Tensor, None] = None,
+        self, J: Union[torch.Tensor, ndarray],
+        h: Union[torch.Tensor, ndarray, None] = None,
         dtype: torch.dtype=torch.float32,
         device: str = 'cpu'
     ) -> None:
-        """
-        Parameters
-        ----------
-        J : torch.Tensor
-            spin interactions matrix (must be symmetric with zero diagonal)
-        h : torch.Tensor
-            magnectic field effect vector
-        """
-
-        if h is None: 
-            self.matrix = J.to(device=device, dtype=dtype)
-            self.linear_term = False
-
-        elif torch.all(h == 0):
-            self.matrix = J.to(device=device, dtype=dtype)
-            self.linear_term = False
-
-        else: 
-            self.matrix = Ising.attach(J, h, dtype, device)
-            self.linear_term = True
-
+        if isinstance(J, torch.Tensor):
+            self.__init_from_torch(J, h, dtype, device)
+        else:
+            self.__init_from_numpy(J, h, dtype, device)
         self.dimension = J.shape[0]
         self.computed_spins = None
 
@@ -64,77 +47,89 @@ class Ising:
         return self.dimension
 
     def __call__(self, spins: torch.Tensor) -> Union[None, float, List[float]]:
-
         if spins is None: return None
-
         elif not isinstance(spins, torch.Tensor):
             raise TypeError(f"Expected a Tensor but got {type(spins)}.")
-
         elif torch.any(torch.abs(spins) != 1):
             raise ValueError('Spins must be either 1 or -1.')
-
         elif spins.shape in [(self.dimension,), (self.dimension, 1)]:
             spins = spins.reshape((-1, 1))
             J, h = self.J, self.h.reshape((-1, 1))
             energy = -.5 * spins.t() @ J @ spins + spins.t() @ h
             return energy.item()
-
         elif spins.shape[0] == self.dimension:
             J, h = self.J, self.h.reshape((-1, 1))
             energies = torch.einsum('ij, ji -> i', spins.t(), -.5 * J @ spins + h)
             return energies.tolist()
-
         else:
             raise ValueError(f"Expected {self.dimension} rows, got {spins.shape[0]}.")
+        
+    def __init_from_torch(self, J: torch.Tensor, h: Union[torch.Tensor, None],
+                          dtype: torch.dtype, device: str): 
+        if h is None: 
+            self.matrix = J.to(device=device, dtype=dtype)
+            self.linear_term = False
+        elif torch.all(h == 0):
+            self.matrix = J.to(device=device, dtype=dtype)
+            self.linear_term = False
+        else: 
+            self.matrix = Ising.attach(J, h, dtype, device)
+            self.linear_term = True
 
+    def __init_from_numpy(self, J: ndarray, h: Union[ndarray, None],
+                          dtype: torch.dtype, device: str):
+        self.__init_from_torch(
+            torch.from_numpy(J),
+            None if h is None else torch.from_numpy(h),
+            dtype, device
+        )
 
-    @classmethod
+    @staticmethod
     def attach(
-        cls, J: torch.Tensor, h: torch.Tensor,
+        J: torch.Tensor, h: torch.Tensor,
         dtype: torch.dtype=torch.float32,
         device: str='cpu'
     ) -> torch.Tensor:
-
         dimension = J.shape[0]
         matrix = torch.zeros(
             (dimension + 1, dimension + 1),
             dtype=dtype, device=device
         )
-
         matrix[:dimension, :dimension] = J
         matrix[:dimension, dimension] = - h.reshape(-1,)
         matrix[dimension, :dimension] = - h.reshape(-1,)
-
         return matrix
 
-    @classmethod
+    @staticmethod
     def detach(
-        cls, matrix: torch.Tensor,
+        matrix: torch.Tensor,
         dtype: torch.dtype=torch.float32,
         device: str='cpu'
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-
         dimension = matrix.shape[0] - 1
-
         J = matrix[:dimension, :dimension].to(
             dtype=dtype, device=device)
         h = - matrix[:dimension, dimension].to(
             dtype=dtype, device=device)
-
         return J, h
 
-    @classmethod
-    def remove_diagonal(cls, matrix: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def remove_diagonal(matrix: torch.Tensor) -> torch.Tensor:
         return matrix - torch.diag(torch.diag(matrix))
+    
+    @staticmethod
+    def symmetrize(matrix: torch.Tensor) -> torch.Tensor:
+        return .5 * (matrix + matrix.t())
+    
+    @staticmethod
+    def format_matrix(matrix: torch.Tensor) -> torch.Tensor:
+        return Ising.remove_diagonal(Ising.symmetrize(matrix))
 
     @property
     def dtype(self) -> torch.dtype: return self.matrix.dtype
 
     @property
     def device(self) -> torch.device: return self.matrix.device
-
-    @property
-    def shape(self) -> Tuple[int, int]: return self.matrix.shape
 
     @property
     def ground_state(self) -> Union[torch.Tensor, None]:
@@ -170,11 +165,9 @@ class Ising:
             )
 
     def min(self, spins: torch.Tensor) -> torch.Tensor:
-
         """
         Returns the spin vector with the lowest Ising energy.
         """
-
         energies = self(spins)
         best_energy = argmin(energies)
         return spins[:, best_energy]
@@ -186,11 +179,9 @@ class Ising:
         sampling_period: int = 50,
         max_steps: int = 10000,
         agents: int = 128,
-        pressure_slope: float = .01,
-        gerschgorin: bool = False,
         use_window: bool = True,
         ballistic: bool = False,
-        heat_parameter: float = None,
+        heat: bool = False,
         verbose: bool = True
     ):
         """
@@ -293,11 +284,7 @@ class Ising:
         """
         optimizer = Optimizer(time_step, convergence_threshold,
                       sampling_period, max_steps, agents,
-                      pressure_slope, gerschgorin, ballistic, 
-                      heat_parameter, verbose)
-        
-        matrix = Ising.remove_diagonal(self.matrix)
+                      ballistic, heat, verbose)
+        matrix = Ising.format_matrix(self.matrix)
         spins = optimizer.run_integrator(matrix, use_window)
-        
-        if self.linear_term: self.computed_spins = spins[-1] * spins[:-1, :]
-        else: self.computed_spins = spins
+        self.computed_spins = spins[-1] * spins[:-1, :] if self.linear_term else spins
