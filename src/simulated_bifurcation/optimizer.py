@@ -19,6 +19,12 @@ class OptimizerMode(Enum):
 
 class SymplecticIntegrator:
 
+    """
+    Simulates the evolution of spins' momentum and position following
+    the Hamiltonian quantum mechanics equations that drive the 
+    Simulated Bifurcation (SB) algorithm.
+    """
+
     def __init__(self, shape: Tuple[int, int], mode: OptimizerMode, dtype: torch.dtype, device: str):
         self.momentum = SymplecticIntegrator.__init_oscillator(shape, dtype, device)
         self.position = SymplecticIntegrator.__init_oscillator(shape, dtype, device)
@@ -52,6 +58,12 @@ class SymplecticIntegrator:
 
 
 class StopWindow:
+
+    """
+    Optimization tool to monitor spins bifurcation and convergence
+    for the Simulated Bifurcation (SB) algorithm.
+    Allows an early stopping of the iterations and saves computation time.
+    """
 
     def __init__(self, n_spins: int, n_agents: int, convergence_threshold: int, dtype: torch.dtype, device: str, verbose: bool) -> None:
         self.n_spins = n_spins
@@ -157,6 +169,40 @@ class StopWindow:
 
 
 class Optimizer:
+
+    """
+    The Simulated Bifurcation (SB) algorithm relies on
+    Hamiltonian/quantum mechanics to find local minima of
+    Ising problems. The spins dynamics is simulated using
+    a first order symplectic integrator.
+
+    There are different version of the SB algorithm:
+    - the ballistic Simulated Bifurcation (bSB) which uses the particles'
+    position for the matrix computations (usually slower but more accurate)
+    - the discrete Simulated Bifurcation (dSB) which uses the particles'
+    spin for the matrix computations (usually faster but less accurate)
+    - the Heated ballistic Simulated Bifurcation (HbSB) which uses the bSB
+    algorithm with a supplementary non-symplectic term to refine the model
+    - the Heated ballistic Simulated Bifurcation (HdSB) which uses the dSB
+    algorithm with a supplementary non-symplectic term to refine the model
+
+    To stop the iterations of the symplectic integrator, a number of maximum
+    steps needs to be specified. However a refined way to stop is also possible
+    using a window that checks that the spins have not changed among a set
+    number of previous steps. In practice, a every fixed number of steps
+    (called a sampling period) the current spins will be compared to the
+    previous ones. If they remain constant throughout a certain number of
+    consecutive samplings (called the convergence threshold), the spins are
+    considered to have bifurcated and the algorithm stops.
+
+    Finally, it is possible to make several particle vectors at the same
+    time (each one being called an agent). As the vectors are randomly
+    initialized, using several agents helps exploring the solution space
+    and increases the probability of finding a better solution, though it
+    also slightly increases the computation time. In the end, only the best
+    spin vector (energy-wise) is kept and used as the new Ising model's
+    ground state.
+    """
 
     def __init__(
         self,
@@ -269,12 +315,24 @@ class Optimizer:
         return minimum(self.time_step * self.step * self.pressure_slope, 1.)
     
     def run_integrator(self, matrix: torch.Tensor, use_window: bool) -> torch.Tensor:
+        """
+        Runs the Simulated Bifurcation (SB) algorithm.
+        """
         self.__reset(matrix, use_window)
         spins = self.__symplectic_update(matrix, use_window)
         self.__close_progress_bars()
         return self.get_final_spins(spins, use_window)
     
     def get_final_spins(self, spins: torch.Tensor, use_window: bool) -> torch.Tensor:
+        """
+        Returns the final spins retrieved at the end of the
+        Simulated Bifurcation (SB) algorithm.
+
+        If the stop window was used, it returns the bifurcated agents if any,
+        otherwise the actual final spins are returned.
+
+        If the stop window was not used, the final spins are returned.
+        """
         if use_window: 
             if self.window.has_bifurcated_spins():
                 return self.window.get_bifurcated_spins()

@@ -7,7 +7,7 @@ import torch
 class IsingInterface(ABC):
 
     """
-    An abstract class to adapt optimization problems as Ising problems.
+    Abstract class to derive optimization problems from Ising models.
     """
 
     def __init__(self, dtype: torch.dtype, device: str) -> None:
@@ -21,12 +21,6 @@ class IsingInterface(ABC):
         The notion of equivalence means that finding the ground
         state of this new model is strictly equivalent to find
         the ground state of the original problem.
-        Thus, there may be no scientific signification of this
-        equivalent model.
-
-        Returns
-        -------
-        Ising
         """
         raise NotImplementedError
 
@@ -57,13 +51,14 @@ class IsingInterface(ABC):
         verbose: bool = True
     ) -> None:
         """
-        Computes an approximated solution of the Ising problem using the
-        Simulated Bifurcation algorithm. The ground state in modified in place.
-        It should correspond to a local minimum for the Ising energy function.
+        Computes a local extremum of the model by optimizing
+        the equivalent Ising model using the Simulated
+        Simulated Bifurcation (SB) algorithm. 
 
-        The Simulated Bifurcation (SB) algorithm mimics Hamiltonian dynamics to
-        make spins evolve throughout time. It uses a symplectic Euler scheme
-        for this purpose.
+        The Simulated Bifurcation (SB) algorithm relies on
+        Hamiltonian/quantum mechanics to find local minima of
+        Ising problems. The spins dynamics is simulated using
+        a first order symplectic integrator.
 
         There are different version of the SB algorithm:
         - the ballistic Simulated Bifurcation (bSB) which uses the particles'
@@ -75,8 +70,8 @@ class IsingInterface(ABC):
         - the Heated ballistic Simulated Bifurcation (HdSB) which uses the dSB
         algorithm with a supplementary non-symplectic term to refine the model
 
-        To stop the iterations of the Euler scheme, a number of maximum steps
-        needs to be specified. However a refined way to stop is also possible
+        To stop the iterations of the symplectic integrator, a number of maximum
+        steps needs to be specified. However a refined way to stop is also possible
         using a window that checks that the spins have not changed among a set
         number of previous steps. In practice, a every fixed number of steps
         (called a sampling period) the current spins will be compared to the
@@ -89,70 +84,35 @@ class IsingInterface(ABC):
         initialized, using several agents helps exploring the solution space
         and increases the probability of finding a better solution, though it
         also slightly increases the computation time. In the end, only the best
-        spin vector (energy-wise) is kept and used as the new Ising model'
+        spin vector (energy-wise) is kept and used as the new Ising model's
         ground state.
 
         Parameters
         ----------
-
-        - Euler scheme parameters
-
         time_step : float, optional
             step size for the time discretization (default is 0.01)
-        symplectic_parameter : int | 'inf', optional
-            symplectic parameter for the Euler's scheme (default is 2)
         convergence_threshold : int, optional
             number of consecutive identical spin sampling considered as a proof
-            of convergence (default is 35)
+            of convergence (default is 50)
         sampling_period : int, optional
             number of time steps between two spin sampling (default is 50)
         max_steps : int, optional
             number of time steps after which the algorithm will stop inevitably
-            (default is 60000)
+            (default is 10000)
         agents : int, optional
-            number of vectors to make evolve at the same time (default is 20)
+            number of vectors to make evolve at the same time (default is 128)
         use_window : bool, optional
             indicates whether to use the window as a stopping criterion or not
             (default is True)
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
-        heated : bool, optional
+        heat : bool, optional
             if True, the heated SB will be used, else it will be the non-heated
             SB (default is True)
-
-        - Quantum parameters
-
-        detuning_frequency : float, optional
-            detuning frequency of the Hamiltonian (default is 1.0)
-        pressure_slope : float, optional
-            pumping pressure's linear slope allowing adiabatic evolution
-            (default is 0.01)
-        final_pressure : float | None, optional
-            pumping pressure's maximum value; if None, no maximum value is set
-            (default is None)
-        xi0 : float | 'gerschgorin' | None, optional
-            weighting coefficient in the Hamiltonian; if None it will be
-            computed based on the J matrix (default is None)
-        heat_parameter : float, optional
-            heat parameter for the heated SB algorithm (default is 0.06)
-
-        - Others
-
         verbose : bool, optional
-            whether to display evolution information or not (default is True)
-
-        See Also
-        --------
-
-        For more information on the Hamiltonian parameters, check
-        `SymplecticEulerScheme`.
-
-        Notes
-        -----
-
-        For low dimensions, see the `comprehensive_search` method function
-        instead that will always find the true optimal ground state.
+            whether to display a progress bar to monitor the algorithm's
+            evolution (default is True)
         """
         ising_equivalent = self.to_ising()
         ising_equivalent.optimize(
