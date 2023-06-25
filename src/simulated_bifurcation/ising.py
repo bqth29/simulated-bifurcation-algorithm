@@ -37,9 +37,9 @@ class Ising:
         device: str = 'cpu'
     ) -> None:
         if isinstance(J, torch.Tensor):
-            self.__init_from_torch(J, h, dtype, device)
+            self.__init_from_tensor(J, h, dtype, device)
         else:
-            self.__init_from_numpy(J, h, dtype, device)
+            self.__init_from_array(J, h, dtype, device)
         self.dimension = J.shape[0]
         self.computed_spins = None
 
@@ -48,23 +48,25 @@ class Ising:
 
     def __call__(self, spins: torch.Tensor) -> Union[None, float, List[float]]:
         if spins is None: return None
-        elif not isinstance(spins, torch.Tensor):
+        if isinstance(spins, ndarray):
+            spins = torch.from_numpy(spins).to(dtype=self.dtype, device=self.device)
+        if not isinstance(spins, torch.Tensor):
             raise TypeError(f"Expected a Tensor but got {type(spins)}.")
-        elif torch.any(torch.abs(spins) != 1):
+        if torch.any(torch.abs(spins) != 1):
             raise ValueError('Spins must be either 1 or -1.')
-        elif spins.shape in [(self.dimension,), (self.dimension, 1)]:
+        if spins.shape in [(self.dimension,), (self.dimension, 1), (1, self.dimension)]:
             spins = spins.reshape((-1, 1))
             J, h = self.J, self.h.reshape((-1, 1))
             energy = -.5 * spins.t() @ J @ spins + spins.t() @ h
             return energy.item()
-        elif spins.shape[0] == self.dimension:
+        if spins.shape[0] == self.dimension:
             J, h = self.J, self.h.reshape((-1, 1))
             energies = torch.einsum('ij, ji -> i', spins.t(), -.5 * J @ spins + h)
             return energies.tolist()
         else:
             raise ValueError(f"Expected {self.dimension} rows, got {spins.shape[0]}.")
         
-    def __init_from_torch(self, J: torch.Tensor, h: Union[torch.Tensor, None],
+    def __init_from_tensor(self, J: torch.Tensor, h: Union[torch.Tensor, None],
                           dtype: torch.dtype, device: str): 
         if h is None: 
             self.matrix = J.to(device=device, dtype=dtype)
@@ -76,9 +78,9 @@ class Ising:
             self.matrix = Ising.attach(J, h, dtype, device)
             self.linear_term = True
 
-    def __init_from_numpy(self, J: ndarray, h: Union[ndarray, None],
+    def __init_from_array(self, J: ndarray, h: Union[ndarray, None],
                           dtype: torch.dtype, device: str):
-        self.__init_from_torch(
+        self.__init_from_tensor(
             torch.from_numpy(J),
             None if h is None else torch.from_numpy(h),
             dtype, device

@@ -28,24 +28,24 @@ class SymplecticIntegrator:
     def __init_oscillator(shape: Tuple[int, int], dtype: torch.dtype, device: str):
         return 2 * torch.rand(size=shape, device=device, dtype=dtype) - 1
 
-    def __momentum_update(self, coefficient: float) -> None:
+    def momentum_update(self, coefficient: float) -> None:
         torch.add(self.momentum, coefficient * self.position, out=self.momentum)
     
-    def __position_update(self, coefficient: float) -> None:
+    def position_update(self, coefficient: float) -> None:
         torch.add(self.position, coefficient * self.momentum, out=self.position)
 
-    def __quadratic_position_update(self, coefficient: float, matrix: torch.Tensor) -> None:
+    def quadratic_position_update(self, coefficient: float, matrix: torch.Tensor) -> None:
         torch.add(self.position, coefficient * matrix @ self.activation_function(self.momentum), out=self.position)
 
-    def __simulate_inelastic_walls(self) -> None:
+    def simulate_inelastic_walls(self) -> None:
         self.position[torch.abs(self.momentum) > 1.] = 0
         torch.clip(self.momentum, -1., 1., out=self.momentum)
 
     def step(self, momentum_coefficient: float, position_coefficient: float, quadratic_coefficient: float, matrix: torch.Tensor) -> None:
-        self.__momentum_update(momentum_coefficient)
-        self.__position_update(position_coefficient)
-        self.__quadratic_position_update(quadratic_coefficient, matrix)
-        self.__simulate_inelastic_walls()
+        self.momentum_update(momentum_coefficient)
+        self.position_update(position_coefficient)
+        self.quadratic_position_update(quadratic_coefficient, matrix)
+        self.simulate_inelastic_walls()
 
     def sample_spins(self) -> torch.Tensor:
         return torch.sign(self.momentum)
@@ -53,11 +53,10 @@ class SymplecticIntegrator:
 
 class StopWindow:
 
-    def __init__(self, n_spins: int, n_agents: int, convergence_threshold: int, sampling_period: int, dtype: torch.dtype, device: str, verbose: bool) -> None:
+    def __init__(self, n_spins: int, n_agents: int, convergence_threshold: int, dtype: torch.dtype, device: str, verbose: bool) -> None:
         self.n_spins = n_spins
         self.n_agents = n_agents
         self.convergence_threshold = convergence_threshold
-        self.sampling_period = sampling_period
         self.dtype = dtype
         self.device = device
         self.__init_tensors()
@@ -207,8 +206,8 @@ class Optimizer:
     def __init_window(self, matrix: torch.Tensor, use_window: bool) -> None:
         self.window = StopWindow(
             matrix.shape[0], self.agents,
-            self.convergence_threshold, self.sampling_period,
-            matrix.dtype, str(matrix.device), (self.verbose and use_window)
+            self.convergence_threshold, matrix.dtype,
+            str(matrix.device), (self.verbose and use_window)
         )
 
     def __init_symplectic_integrator(self, matrix: torch.Tensor) -> None:
