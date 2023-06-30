@@ -179,7 +179,7 @@ class SpinPolynomial(IsingInterface):
         super().__init__(matrix, vector, constant, [-1, 1], dtype, device)
 
     def to_ising(self) -> Ising:
-        return Ising(self.matrix, self.vector, self.dtype, self.device)
+        return Ising(-2 * self.matrix, self.vector, self.dtype, self.device)
 
     def from_ising(self, ising: Ising) -> torch.Tensor:
         return ising.ground_state
