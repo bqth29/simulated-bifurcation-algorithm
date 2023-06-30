@@ -1,21 +1,23 @@
-from .ising import Ising
+from ..ising import Ising
+from .polynomial import Polynomial
 from abc import ABC, abstractmethod
-from typing import final
+from typing import final, List, Union
 import torch
+import numpy as np
 
 
-class IsingInterface(ABC):
+class IsingInterface(Polynomial):
 
     """
     Abstract class to derive optimization problems from Ising models.
     """
 
-    def __init__(self, dtype: torch.dtype, device: str) -> None:
-        self.dtype = dtype
-        self.device = device
+    def __init__(self, matrix: torch.Tensor, vector: torch.Tensor, constant: Union[int, float], accepted_values: List[int], dtype: torch.dtype, device: str) -> None:
+        super().__init__(matrix, vector, constant, accepted_values, dtype, device)
+        self.sb_result = None
 
     @abstractmethod
-    def to_ising(self) -> Ising:
+    def __to_ising(self) -> Ising:
         """
         Generate an equivalent Ising model of the problem.
         The notion of equivalence means that finding the ground
@@ -25,10 +27,10 @@ class IsingInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def from_ising(self, ising: Ising) -> None:
+    def __from_ising(self, ising: Ising) -> torch.Tensor:
         """
         Retrieves information from the optimized equivalent Ising model.
-        Modifies the object's attributes in place.
+        Returns the best found vector.
 
         Parameters
         ----------
@@ -48,7 +50,7 @@ class IsingInterface(ABC):
         ballistic: bool = False,
         heat: bool = False,
         verbose: bool = True
-    ) -> None:
+    ) -> torch.Tensor:
         """
         Computes a local extremum of the model by optimizing
         the equivalent Ising model using the Simulated
@@ -111,9 +113,10 @@ class IsingInterface(ABC):
             whether to display a progress bar to monitor the algorithm's
             evolution (default is True)
         """
-        ising_equivalent = self.to_ising()
+        ising_equivalent = self.__to_ising()
         ising_equivalent.optimize(
             convergence_threshold, sampling_period,
             max_steps, agents, use_window, ballistic, heat, verbose
         )
-        self.from_ising(ising_equivalent)
+        self.sb_result = self.__from_ising(ising_equivalent)
+        return self.sb_result
