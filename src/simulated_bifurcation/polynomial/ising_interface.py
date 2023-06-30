@@ -17,7 +17,7 @@ class IsingInterface(Polynomial):
         self.sb_result = None
 
     @abstractmethod
-    def __to_ising(self) -> Ising:
+    def to_ising(self) -> Ising:
         """
         Generate an equivalent Ising model of the problem.
         The notion of equivalence means that finding the ground
@@ -27,7 +27,7 @@ class IsingInterface(Polynomial):
         raise NotImplementedError
 
     @abstractmethod
-    def __from_ising(self, ising: Ising) -> torch.Tensor:
+    def from_ising(self, ising: Ising) -> torch.Tensor:
         """
         Retrieves information from the optimized equivalent Ising model.
         Returns the best found vector.
@@ -113,10 +113,10 @@ class IsingInterface(Polynomial):
             whether to display a progress bar to monitor the algorithm's
             evolution (default is True)
         """
-        ising_equivalent = self.__to_ising()
+        ising_equivalent = self.to_ising()
         ising_equivalent.optimize(
             convergence_threshold, sampling_period,
             max_steps, agents, use_window, ballistic, heat, verbose
         )
-        self.sb_result = self.__from_ising(ising_equivalent)
+        self.sb_result = self.from_ising(ising_equivalent)
         return self.sb_result

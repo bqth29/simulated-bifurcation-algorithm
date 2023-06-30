@@ -14,9 +14,8 @@ class NumberPartioning(SpinPolynomial):
     def __init__(self, numbers: list, dtype: torch.dtype=torch.float32,
         device: str = 'cpu') -> None:
         self.numbers = numbers
-        tensor_numbers = torch.Tensor(self.numbers, device=self.device)
-        matrix = -2 * tensor_numbers.reshape(-1, 1) @ tensor_numbers.reshape(1, -1)
-        super().__init__(matrix, None, None, dtype, device)
+        tensor_numbers = torch.Tensor(self.numbers, device=device).reshape(-1, 1)
+        super().__init__(-2 * tensor_numbers @ tensor_numbers.t(), None, None, dtype, device)
 
     @property
     def partition(self) -> Dict[str, Dict[str, Union[List[int], Union[int, None]]]]:
