@@ -1,3 +1,3 @@
 from .markowitz import Markowitz
-from .qubo import QUBO
+from .binary import Binary, QUBO
 from .integer import Integer

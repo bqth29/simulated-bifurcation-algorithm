@@ -5,7 +5,7 @@ import torch
 from numpy import argmin
 
 
-class QUBO(IsingInterface):
+class Binary(IsingInterface):
 
     """
     Quadratic Unconstrained Binary Optimization
@@ -23,7 +23,7 @@ class QUBO(IsingInterface):
     are either `0` or `1`.
     """
 
-    def __init__(self, Q: torch.Tensor, l: Union[torch.Tensor, None], c: Union[float, int, None],
+    def __init__(self, Q: torch.Tensor, l: Union[torch.Tensor, None] = None, c: Union[float, int, None] = None,
                 dtype: torch.dtype=torch.float32, device: str = 'cpu') -> None:
         super().__init__(dtype, device)
         self.__dimension = Q.shape[0]
@@ -91,4 +91,76 @@ class QUBO(IsingInterface):
         return Ising(J, h, self.dtype, self.device)
 
     def from_ising(self, ising: Ising) -> None:
-        self.__best_binary_vector = .5 * (ising.ground_state + 1)
+        if ising.ground_state is not None:
+            self.__best_binary_vector = .5 * (ising.ground_state + 1)
+
+
+class QUBO(Binary):
+
+    """
+    Quadratic Unconstrained Binary Optimization
+
+    Given a matrix `Q` the value to minimize is the quadratic form
+    `ΣΣ Q(i,j)b(i)b(j)` where the `b(i)`'s values are either `0` or `1`.
+    """
+
+    def __init__(self, Q: torch.Tensor,
+                dtype: torch.dtype=torch.float32, device: str = 'cpu') -> None:
+        super().__init__(Q, None, None, dtype, device)
+        self.__dimension = Q.shape[0]
+        self.__quadratic = Q.to(dtype=dtype, device=device)
+        self.__best_binary_vector = None
+
+    @property
+    def Q(self) -> torch.Tensor:
+        return self.__quadratic
+    
+    @property
+    def dimension(self):
+        return self.__dimension
+    
+    @property
+    def best_binary_vector(self) -> Union[torch.Tensor, None]:
+        return self.__best_binary_vector
+    
+    @property
+    def best_objective_value(self) -> Union[float, None]:
+        return self(self.best_binary_vector)
+
+    def __len__(self):
+        return self.dimension
+
+    def __call__(self, binary_vector: torch.Tensor) -> Union[None, float, List[float]]:
+        if binary_vector is None:
+            return None
+        elif not isinstance(binary_vector, torch.Tensor):
+            raise TypeError(f"Expected a Tensor but got {type(binary_vector)}.")
+        elif torch.any(torch.abs(2 * binary_vector - 1) != 1):
+            raise ValueError('Binary values must be either 0 or 1.')
+        elif binary_vector.shape in [(self.dimension,), (self.dimension, 1)]:
+            binary_vector = binary_vector.reshape((-1, 1))
+            value = binary_vector.t() @ self.Q @ binary_vector
+            return value.item()
+        elif binary_vector.shape[0] == self.dimension:
+            values = torch.einsum('ij, ji -> i', binary_vector.t(), self.Q @ binary_vector)
+            return values.tolist()
+        else:
+            raise ValueError(f"Expected {self.dimension} rows, got {binary_vector.shape[0]}.")
+        
+    def min(self, binary_vectors: torch.Tensor) -> torch.Tensor:
+        """
+        Returns the binary vector with the lowest objective value.
+        """
+        values = self(binary_vectors)
+        best_value = argmin(values)
+        return binary_vectors[:, best_value]
+
+    def to_ising(self) -> Ising:
+        symmetrical_Q = self.Q + self.Q.t()
+        J = - .25 * symmetrical_Q
+        h = .25 * symmetrical_Q @ torch.ones((len(self), 1), device=self.device)
+        return Ising(J, h, self.dtype, self.device)
+
+    def from_ising(self, ising: Ising) -> None:
+        if ising.ground_state is not None:
+            self.__best_binary_vector = .5 * (ising.ground_state + 1)

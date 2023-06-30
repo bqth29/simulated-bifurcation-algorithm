@@ -40,7 +40,6 @@ class IsingInterface(ABC):
     @final
     def optimize(
         self,
-        time_step: float = .1,
         convergence_threshold: int = 50,
         sampling_period: int = 50,
         max_steps: int = 10000,
@@ -89,8 +88,6 @@ class IsingInterface(ABC):
 
         Parameters
         ----------
-        time_step : float, optional
-            step size for the time discretization (default is 0.01)
         convergence_threshold : int, optional
             number of consecutive identical spin sampling considered as a proof
             of convergence (default is 50)
@@ -116,7 +113,7 @@ class IsingInterface(ABC):
         """
         ising_equivalent = self.to_ising()
         ising_equivalent.optimize(
-            time_step, convergence_threshold, sampling_period,
+            convergence_threshold, sampling_period,
             max_steps, agents, use_window, ballistic, heat, verbose
         )
         self.from_ising(ising_equivalent)

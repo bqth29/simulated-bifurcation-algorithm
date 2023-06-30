@@ -1,10 +1,15 @@
 # Simulated Bifurcation for Python
 
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?logo=PyTorch&logoColor=white)](https://pytorch.org/)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1xtse4sLIDAh8nsQ6HcIr7BzM7sft88WA?usp=sharing)
+[![PyPI Version](https://img.shields.io/pypi/v/simulated-bifurcation.svg?label=PyPI%20version)](
+https://pypi.org/project/simulated-bifurcation/)
 ![GitHub stars](https://img.shields.io/github/stars/bqth29/simulated-bifurcation-algorithm.svg?style=social&label=Star)
 
-Python implementation of the _Simulated Bifurcation_ algorithm in order to approximize the optimal solution of **Ising problems**. The last accuracy tests showed a median optimality gap of less than 1% on high-dimensional instances.
+The **Simulated Bifurcation** (SB) algorithm is a fast and highly parallelizable state-of-the-art algorithm for combinatorial optimization inspired by quantum physics and spins dynamics. It relies on Hamiltonian quantum mechanics to find local minima of **Ising** problems. The last accuracy tests showed a median optimality gap of less than 1% on high-dimensional instances.
+
+This open-source package is built upon **PyTorch** to allow GPU computations that take advantage of the great possibility of parallelization the SB algorithm, leading to high time performances that can outperform commercial solvers.
+
+It also provides an API to define Ising models or other NP-hard and NP-complete problems (QUBO, Karp problems, ...) that can be solved using the SB algorithm.
 
 ## ⚙️ Install
 
@@ -12,10 +17,211 @@ Python implementation of the _Simulated Bifurcation_ algorithm in order to appro
 pip install simulated-bifurcation
 ```
 
-## 🧪 Scientific background
+## 🧪 Ising problem
+
+An Ising problem, given a square matrix $J$ of size $N \times N$ and a vector $h$ of size $N$, consists in finding the spin vector $\bold{s} = (s_{1}, ... s_{N})$ called the *ground state*, (each $s_{i}$ being equal to either 1 or -1) such that the following value, called *Ising energy*, is minimal:
+
+$$\mathbf{E}_{J,h}(\bold{s}) = -\frac{1}{2}\sum_{i=1}^{N} \sum_{j=1}^{N} J_{ij}s_{i}s_{j} + \sum_{i=1}^{N} h_{i}s_{i}$$
+
+This problem is known to be NP-hard but is very useful since it can be used in many sectors such as finance, transportation or chemistry or derived as other well-know optimization problems (QUBO, Knapsack problem, etc.).
+
+> In the quantum theory behind the SB algorithm, $J$ must be symmetrical with a null diagonal. However, this package handles any square matrix by creating a new symmetrical matrix with null diagonal leading to an equivalent ising problem.
+
+You can, create an Ising model instance as follow:
+
+
+```python
+import torch
+import simulated_bifurcation as sb
+
+
+J = torch.Tensor(
+    [
+        [0, 1, 2],
+        [1, 0, -2],
+        [2, -2, 0]
+    ]
+)
+h = torch.Tensor([-1, 0, 2])
+ising = sb.Ising(J, h)
+```
+
+> If you only wish to use the `J` matrix and not the `h` vector, you can simply call `sb.Ising(J)`.
+
+This Ising model can then be called with spin tensors to compute its energy:
+
+```python
+# Single spin vector
+spins = torch.Tensor([1, 1, -1])
+ising(spins)
+>>> -4.0
+
+# Spin tensor (column-wise)
+spins = torch.Tensor(
+    [
+        [1, -1, 1, -1],
+        [-1, 1, 1, -1],
+        [-1, -1, 1, -1]
+    ]
+)
+ising()
+>>> [2.0, -4.0, 0.0, -2.0]
+```
+
+## 💻 The *Simulated Bifurcation* (SB) algorithm
+
+### Behavior
+
+### Usage on Ising instances
+
+### Parallelization
+
+The Simulated Bifurcation algorithm is highly parallelizable since it only relies on linear matrices computations. To take advantage of this property, this implementation offers the possibility to perform a multi-agent search of the optimal solution by evolving several spin vectors in parallel (each one being called an **agent**). The number of agents is set by the `agents` parameter in the `optimize` method..
+
+> **💡 Tip:** it is faster to run once the algorithm with N agents than to run N times the algorithm with only one agent.
+
+```python
+# Efficient computation ✔️
+ising.optimize(agents=100)
+
+# Slower cumbersome computation ❌
+for _ in range(100):
+    ising.optimize(agents=1)
+```
+
+### Early stopping
+
+The Simulated Bifurcation algorithm stops after a certain number of iterations, defined by the parameter `max_steps` of the `optimize` method. However, this implementation comes with the possibility to perform early stopping and save computation time by defining convergence conditions. 
+
+At regular intervals, the state of the spins is sampled and compared with its previous value to calculate their stability period. If an agent's stability period exceeds a convergence threshold, it is considered to have converged and its value is frozen. If all agents converge before the maximum number of iterations has been reached, the algorithm stops.
+
+> - The sampling period and the convergence threshold are respectively set using the `sampling_period` and `convergence_threshold` parameters of the `optimize` method.
+> - To use early stopping in the SB algorithm, set the `use_window` parameter to `True`.
+> - If only some agents have converged when the maximum number of iterations is reached, the algorithm stops and only the converged agents are considered in the results.
+
+```python
+# Stop with maximal iterations
+ising.optimize(max_steps=10000)
+
+# Early stopping
+ising.optimize(
+    sampling_period=30,
+    convergence_threshold=50,
+    use_window=True
+)
+```
+
+## 🧬 Other optimizable models
+
+Ising's model can be applied to a wide range of NP-complete and NP-hard problems, which can be solved by the SB algorithm.
+
+> RETURN vector ?
+
+### Second Order Unconstrained Polynomial Spin Optimization
+
+$$\sum_{i=1}^{N} \sum_{j=1}^{N} M_{ij}s_{i}s_{j} + \sum_{i=1}^{N} v_{i}s_{i} + c$$
+
+```python
+import torch
+from simulated_bifurcation.models import Spin
+```
+
+```python
+Q = torch.Tensor(
+    [
+        [1, 2, -3],
+        [0, -4, 5],
+        [0, 0, 6]
+    ]
+)
+
+qubo = Spin(M, v, c)
+qubo.optimize()
+
+qubo.best_binary_vector
+>>> torch.Tensor([0., 1., 0.])
+qubo.best_objective_value
+>>> -4.0
+```
+
+### Quadratic Unconstrained Binary Optimization (QUBO)
+
+The QUBO problem consists in minimizing a quadratic form defined by an upper-triangular matrix $Q$ on the set of the binary vectors. This means finding the vector $\bold{x} = (x_{1}, ..., x_{N})$ with all $x_{i}$'s being either 0 or 1 such that the following value is minimal:
+
+$$\sum_{i=1}^{N} \sum_{j=1}^{N} Q_{ij}x_{i}x_{j}$$
+
+A QUBO problem can easily be reformulated as an equivalent Ising model which makes it suitable to be opitmized by the SB algorithm.
+
+#### Usage
+
+```python
+import torch
+from simulated_bifurcation.models import QUBO
+```
+
+```python
+Q = torch.Tensor(
+    [
+        [1, 2, -3],
+        [0, -4, 5],
+        [0, 0, 6]
+    ]
+)
+
+qubo = QUBO(Q)
+qubo.optimize()
+
+qubo.best_binary_vector
+>>> torch.Tensor([0., 1., 0.])
+qubo.best_objective_value
+>>> -4.0
+```
+
+### Second Order Unconstrained Polynomial Binary Optimization 
+
+The QUBO problem can also be extended to second-order polynomial binary optimization by adding a linear form and a constant term to the equation, and can still be handled by the SB algorithm:
+
+$$\sum_{i=1}^{N} \sum_{j=1}^{N} Q_{ij}x_{i}x_{j} + \sum_{i=1}^{N} l_{i}x_{i} + c$$
+
+#### Usage
+
+```python
+import torch
+from simulated_bifurcation.models import Binary
+```
+
+```python
+Q = torch.Tensor(
+    [
+        [1, 2, -3],
+        [0, -4, 5],
+        [0, 0, 6]
+    ]
+)
+l = torch.Tensor([-1, 0, 2])
+c = -5
+
+binary = Binary(Q, l, c)
+binary.optimize()
+
+binary.best_binary_vector
+>>> torch.Tensor([0., 1., 0.])
+binary.best_objective_value
+>>> -9.0
+```
+
+### Second Order Unconstrained Polynomial Integer Optimization 
+
+$$\sum_{i=1}^{N} \sum_{j=1}^{N} M_{ij}n_{i}n_{j} + \sum_{i=1}^{N} v_{i}n_{i} + c$$
+
+### `IsingInterface` API
+
+More generally, the Ising model can be adapted to represent a wider range of NP-hard and NP-complete problems, including the [21 Karp problems](https://arxiv.org/pdf/1302.5843.pdf). To allow the use of the SB algorithm on various problems, this package provides an API to easily transform NP-hard and NP-complete problems to Ising models on which the SB algorithm can be used.
+
+---
 
 _Simulated bifurcation_ is a state-of-the-art algorithm based on quantum physics theory and used to approximize very accurately and quickly the optimal solution of Ising problems. 
->You can read about the scientific theories at stake and the engineering of the algorithm by Goto *et al.* here: https://www.nature.com/articles/s42005-022-00929-9
+> You can read about the scientific theories at stake and the engineering of the algorithm by Goto *et al.* here: https://www.nature.com/articles/s42005-022-00929-9
 
 Ising problems can be used in many sectors such as finance, transportation or chemistry or derived as other well-know optimization problems (QUBO, Knapsack problem, ...).
 
@@ -163,7 +369,7 @@ If you are using this code for your own projects please cite our work:
     author = {Ageron, Romain and Bouquet, Thomas and Pugliese, Lorenzo},
     month = {4},
     title = {{Simulated Bifurcation (SB) algorithm for Python}},
-    version = {1.1.0},
+    version = {1.2.0},
     year = {2023}
 }
 ```
