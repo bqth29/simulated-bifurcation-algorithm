@@ -22,6 +22,10 @@ def test_init_polynomial_from_tensors():
     assert polynomial[0] == 1.
     assert torch.all(polynomial[2] == torch.Tensor(matrix))
     assert torch.all(polynomial[1] == torch.Tensor(vector))
+    assert polynomial.dtype == torch.float32
+    assert polynomial.device == torch.device('cpu')
+    with pytest.raises(ValueError):
+        polynomial[3]
     
 def test_init_polynomial_from_arrays():
     polynomial = Polynomial(np.array(matrix), np.array(vector), constant)

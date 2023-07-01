@@ -3,6 +3,8 @@ from torch import float32
 from src.simulated_bifurcation.polynomial import IsingInterface
 
 
-def test_cannot_init_ising_interface():
-    with pytest.raises(TypeError):
-        IsingInterface(float32, 'cpu')
+def test_ising_interface():
+    with pytest.raises(NotImplementedError):
+        IsingInterface.to_ising(None)
+    with pytest.raises(NotImplementedError):
+        IsingInterface.from_ising(None, None)
