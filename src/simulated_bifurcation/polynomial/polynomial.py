@@ -1,6 +1,4 @@
-from ..ising import Ising
-from abc import ABC, abstractmethod
-from typing import Any, Iterable, final, List, Union
+from typing import Iterable, final, List, Union
 import torch
 import numpy as np
 
@@ -13,13 +11,13 @@ class Polynomial():
     term.
     """
 
-    def __init__(self, matrix: Union[torch.Tensor, np.ndarray], vector: Union[torch.Tensor, np.ndarray, None],
-                 constant: Union[int, float, None], accepted_values: Union[None, List[int]],
-                 dtype: torch.dtype, device: str) -> None:
+    def __init__(self, matrix: Union[torch.Tensor, np.ndarray], vector: Union[torch.Tensor, np.ndarray, None] = None,
+                 constant: Union[int, float, None] = None, accepted_values: Union[None, List[int]] = None,
+                 dtype: torch.dtype = torch.float32, device: str = 'cpu') -> None:
         self.__init_matrix(matrix, dtype, device)
         self.__init_vector(vector, dtype, device)
         self.__init_constant(constant)
-        self.__accepted_values = accepted_values[:]
+        self.__accepted_values = accepted_values[:] if accepted_values is not None else None
 
     @property
     def matrix(self) -> torch.Tensor:
