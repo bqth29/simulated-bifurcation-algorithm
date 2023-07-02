@@ -1,5 +1,5 @@
 from typing import Dict, List, Union
-from ... import BinaryPolynomial
+from ..polynomial import BinaryPolynomial
 import numpy as np
 import torch
 

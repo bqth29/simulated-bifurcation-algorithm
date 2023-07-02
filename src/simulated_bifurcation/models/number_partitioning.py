@@ -1,5 +1,5 @@
 from typing import Dict, List, Union
-from ... import SpinPolynomial
+from ..polynomial import SpinPolynomial
 from numpy import sum
 import torch
 
@@ -7,8 +7,8 @@ import torch
 class NumberPartioning(SpinPolynomial):
 
     """
-    A solver that separates a set of numbers into two subsets whose 
-    respective sums are as close as possible.
+    A solver that separates a set of numbers into two subsets, the 
+    respective sums of which are as close as possible.
     """
 
     def __init__(self, numbers: list, dtype: torch.dtype=torch.float32,

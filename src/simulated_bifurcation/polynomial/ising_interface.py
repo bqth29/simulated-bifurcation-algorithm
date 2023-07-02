@@ -1,9 +1,8 @@
 from ..ising import Ising
 from .polynomial import Polynomial
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import final, List, Union
 import torch
-import numpy as np
 
 
 class IsingInterface(Polynomial):
