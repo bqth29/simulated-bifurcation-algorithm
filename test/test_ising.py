@@ -70,3 +70,12 @@ def test_min():
     ising = Ising(np.array(J), np.array(h))
     spins = torch.Tensor([[1, -1], [1, 1], [-1, -1]])
     assert torch.all(ising.min(spins) == torch.Tensor([-1, 1, -1]))
+
+def test_negative_ising():
+    ising = Ising(torch.Tensor(J), torch.Tensor(h))
+    negative_ising = - ising
+    assert torch.all(negative_ising.J == - torch.Tensor(J))
+    assert torch.all(negative_ising.h == - torch.Tensor(h))
+    assert negative_ising.linear_term
+    assert len(negative_ising) == 3
+    assert negative_ising.dimension == 3

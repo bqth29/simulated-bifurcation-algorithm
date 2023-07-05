@@ -30,6 +30,9 @@ class Ising:
 
     def __len__(self) -> int:
         return self.dimension
+    
+    def __neg__(self):
+        return Ising(- self.J, - self.h, self.dtype, self.device)
 
     def __call__(self, spins: torch.Tensor) -> Union[None, float, List[float]]:
         if spins is None: return None
