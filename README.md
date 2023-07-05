@@ -1,6 +1,7 @@
 # Simulated Bifurcation for Python
 
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?logo=PyTorch&logoColor=white)](https://pytorch.org/)
+![Status](https://github.com/bqth29/simulated-bifurcation-algorithm/actions/workflows/config.yml/badge.svg)
 [![PyPI Version](https://img.shields.io/pypi/v/simulated-bifurcation.svg?label=PyPI%20version)](
 https://pypi.org/project/simulated-bifurcation/)
 ![GitHub stars](https://img.shields.io/github/stars/bqth29/simulated-bifurcation-algorithm.svg?style=social&label=Star)
