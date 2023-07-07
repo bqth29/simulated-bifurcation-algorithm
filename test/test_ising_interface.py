@@ -1,5 +1,4 @@
 import pytest
-from torch import float32
 from src.simulated_bifurcation.polynomial import IsingInterface
 
 
