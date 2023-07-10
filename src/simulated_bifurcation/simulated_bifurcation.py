@@ -34,6 +34,6 @@ def _build_model(matrix: Union[Tensor, ndarray], vector: Union[Tensor, ndarray],
     if input_type == 'binary':
         return BinaryPolynomial(matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device)
     if int_type_regex.match(input_type):
-        number_of_bits = int(int_type_regex.match(input_type)[0])
+        number_of_bits = int(int_type_regex.findall(input_type)[0])
         return IntegerPolynomial(matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device, number_of_bits=number_of_bits)
-    raise ValueError('Input type must match spin, binary or int\d+.')
+    raise ValueError(r'Input type must match spin, binary or int\d+.')
