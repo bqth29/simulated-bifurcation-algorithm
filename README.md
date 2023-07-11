@@ -74,6 +74,14 @@ ising()
 
 ### Usage on Ising instances
 
+### Usage on polynomial instances
+
+The SB algorithm generalizes to a wider range of problems that can be written as the minimization or maximization of multivariable polynomials of degree two, i.e. written as
+
+$$\sum_{i=1}^{N} \sum_{j=1}^{N} M_{ij}x_{i}x_{j} + \sum_{i=1}^{N} v_{i}x_{i} + c$$
+
+for which the $x_{i}$'s can be spins, binary or non-negative integer.
+
 ### Parallelization
 
 The Simulated Bifurcation algorithm is highly parallelizable since it only relies on linear matrices computations. To take advantage of this property, this implementation offers the possibility to perform a multi-agent search of the optimal solution by evolving several spin vectors in parallel (each one being called an **agent**). The number of agents is set by the `agents` parameter in the `optimize` method..

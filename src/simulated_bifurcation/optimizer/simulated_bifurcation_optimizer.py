@@ -5,13 +5,7 @@ from numpy import minimum
 from .optimizer_mode import OptimizerMode
 from .stop_window import StopWindow
 from .symplectic_integrator import SymplecticIntegrator
-
-
-# TODO: read default values from env vraiables
-# TODO: add a static function to set the optimization env
-TIME_STEP = .1
-PRESSURE_SLOPE = .01
-HEAT_COEFFICIENT = .06
+from .optimization_variables import OptimizationVariable
 
 
 class SimulatedBifurcationOptimizer:
@@ -64,13 +58,13 @@ class SimulatedBifurcationOptimizer:
         self.mode = OptimizerMode.BALLISTIC if ballistic else OptimizerMode.DISCRETE
         self.window = None
         self.symplectic_integrator = None
-        self.heat_parameter = HEAT_COEFFICIENT
+        self.heat_coefficient = OptimizationVariable.HEAT_COEFFICIENT.get()
         self.heated = heat
         self.verbose = verbose
         # Simulation parameters
-        self.time_step = TIME_STEP
+        self.time_step = OptimizationVariable.TIME_STEP.get()
         self.agents = agents
-        self.pressure_slope = PRESSURE_SLOPE
+        self.pressure_slope = OptimizationVariable.PRESSURE_SLOPE.get()
         # Stopping criterion parameters
         self.convergence_threshold = convergence_threshold
         self.sampling_period = sampling_period
@@ -146,7 +140,7 @@ class SimulatedBifurcationOptimizer:
         return sampled_spins
 
     def __heat(self, position_stash: torch.Tensor) -> None:
-        torch.add(self.symplectic_integrator.position, self.time_step * self.heat_parameter * position_stash, out=self.symplectic_integrator.position)
+        torch.add(self.symplectic_integrator.position, self.time_step * self.heat_coefficient * position_stash, out=self.symplectic_integrator.position)
 
     def __compute_symplectic_coefficients(self) -> Tuple[float, float, float]:
         pressure = self.__pressure
