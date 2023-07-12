@@ -26,14 +26,14 @@ def reset_env() -> None:
 
 class OptimizationVariable(Enum):
 
-    TIME_STEP = .1, 'time step', 'PYTHON_SB_TIME_STEP'
-    PRESSURE_SLOPE = .01, 'pressure slope','PYTHON_SB_PRESSURE_SLOPE'
-    HEAT_COEFFICIENT = .06, 'heat coefficient', 'PYTHON_SB_HEAT_COEFFICIENT'
+    TIME_STEP = .1, 'PYTHON_SB_TIME_STEP'
+    PRESSURE_SLOPE = .01, 'PYTHON_SB_PRESSURE_SLOPE'
+    HEAT_COEFFICIENT = .06, 'PYTHON_SB_HEAT_COEFFICIENT'
 
-    def __init__(self, default_value: float, name: str, env_name: str) -> None:
+    def __init__(self, default_value: float, env_name: str) -> None:
         super().__init__()
         self.__default_value = default_value
-        self.__name = name
+        self.__name = env_name[10:].replace('_', ' ').lower()
         self.__env_name = env_name
         self.reset()
 
