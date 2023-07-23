@@ -1,6 +1,7 @@
 import pytest
 import torch
 from src.simulated_bifurcation import Ising, SimulatedBifurcationOptimizer, set_env, reset_env
+from src.simulated_bifurcation.optimizer import OptimizerMode
 
 
 torch.manual_seed(42)
@@ -39,7 +40,7 @@ def test_optimizer_with_heating():
 
 def test_set_optimization_environment():
     set_env(time_step=.05, pressure_slope=.005, heat_coefficient=.1)
-    optimizer = SimulatedBifurcationOptimizer(50, 50, 10000, 128, True, True, True)
+    optimizer = SimulatedBifurcationOptimizer(50, 50, 10000, 128, OptimizerMode.BALLISTIC, True, True)
     assert optimizer.heat_coefficient == .1
     assert optimizer.pressure_slope == .005
     assert optimizer.time_step == .05
@@ -47,7 +48,7 @@ def test_set_optimization_environment():
 
 def test_set_only_one_optimization_variable():
     set_env(time_step=.05)
-    optimizer = SimulatedBifurcationOptimizer(50, 50, 10000, 128, True, True, True)
+    optimizer = SimulatedBifurcationOptimizer(50, 50, 10000, 128, OptimizerMode.BALLISTIC, True, True)
     assert optimizer.heat_coefficient == .06
     assert optimizer.pressure_slope == .01
     assert optimizer.time_step == .05
@@ -56,7 +57,7 @@ def test_set_only_one_optimization_variable():
 def test_wrong_value_throws_exception_and_variables_not_updated():
     with pytest.raises(TypeError):
         set_env(heat_coefficient='Hello world!')
-    optimizer = SimulatedBifurcationOptimizer(50, 50, 10000, 128, True, True, True)
+    optimizer = SimulatedBifurcationOptimizer(50, 50, 10000, 128, OptimizerMode.BALLISTIC, True, True)
     assert optimizer.heat_coefficient == .06
     assert optimizer.pressure_slope == .01
     assert optimizer.time_step == .1

@@ -1,7 +1,7 @@
 from typing import List, Tuple, Union
 import torch
 from numpy import argmin, ndarray
-from .optimizer import SimulatedBifurcationOptimizer
+from .optimizer import SimulatedBifurcationOptimizer, OptimizerMode
 
 
 class Ising:
@@ -252,8 +252,9 @@ class Ising:
             evolution (default is True)
         """
         optimizer = SimulatedBifurcationOptimizer(convergence_threshold,
-                      sampling_period, max_steps, agents,
-                      ballistic, heat, verbose)
+                sampling_period, max_steps, agents,
+                OptimizerMode.BALLISTIC if ballistic else OptimizerMode.DISCRETE,
+                heat, verbose)
         matrix = Ising.format_matrix(self.matrix)
         spins = optimizer.run_integrator(matrix, use_window)
         self.computed_spins = spins[-1] * spins[:-1, :] if self.linear_term else spins

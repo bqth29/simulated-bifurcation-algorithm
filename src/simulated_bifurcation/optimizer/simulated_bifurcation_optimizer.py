@@ -50,12 +50,12 @@ class SimulatedBifurcationOptimizer:
         sampling_period: int,
         max_steps: int,
         agents: int,
-        ballistic: bool,
+        mode: OptimizerMode,
         heat: bool,
         verbose: bool
     ) -> None:
         # Optimizer setting
-        self.mode = OptimizerMode.BALLISTIC if ballistic else OptimizerMode.DISCRETE
+        self.mode = mode
         self.window = None
         self.symplectic_integrator = None
         self.heat_coefficient = OptimizationVariable.HEAT_COEFFICIENT.get()
@@ -139,8 +139,8 @@ class SimulatedBifurcationOptimizer:
 
         return sampled_spins
 
-    def __heat(self, position_stash: torch.Tensor) -> None:
-        torch.add(self.symplectic_integrator.position, self.time_step * self.heat_coefficient * position_stash, out=self.symplectic_integrator.position)
+    def __heat(self, position_copy: torch.Tensor) -> None:
+        torch.add(self.symplectic_integrator.position, self.time_step * self.heat_coefficient * position_copy, out=self.symplectic_integrator.position)
 
     def __compute_symplectic_coefficients(self) -> Tuple[float, float, float]:
         pressure = self.__pressure
