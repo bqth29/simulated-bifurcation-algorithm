@@ -224,252 +224,28 @@ sb.reset_env()
 
 ### Custom models
 
-## 🧬 Other optimizable models
+A lot of mathematical problems ([QUBO](https://en.wikipedia.org/wiki/Quadratic_unconstrained_binary_optimization), [TSP](https://en.wikipedia.org/wiki/Travelling_salesman_problem), ...) can be written as order-two multivariate polynomials problems, and thus can be solved using the Simulated Bifurcation algorithm. Some of them are already implemented in the `models` module but you are free to create your own models using our API.
 
-Ising's model can be applied to a wide range of NP-complete and NP-hard problems, which can be solved by the SB algorithm.
+Depending on the type of model you wish to implement, you cen create a subclass of one of the `SpinPolynomial`, `BinaryPolynomial` or `IntegerPolynomial` APIs to quickly and efficiently link your custom model to an Ising problem and solve it using the SB algorithm.
 
-> RETURN vector ?
+The advantage of doing so is that your model can directly call the `optimize` method that it inherits from the `Polynomial` interface without having to redefine it.
 
-### Second Order Unconstrained Polynomial Spin Optimization
+For instance, here is how the QUBO model was implemented:
 
-$$\sum_{i=1}^{N} \sum_{j=1}^{N} M_{ij}s_{i}s_{j} + \sum_{i=1}^{N} v_{i}s_{i} + c$$
-
-```python
-import torch
-from simulated_bifurcation.models import Spin
-```
+> The QUBO problem consists, given an upper triangular matrix $Q$, in finding the binary vector that minimizes  the value
+> $$\sum_{i=1}^{N} \sum_{j=1}^{N} Q_{ij}x_{i}x_{j}$$
 
 ```python
-Q = torch.Tensor(
-    [
-        [1, 2, -3],
-        [0, -4, 5],
-        [0, 0, 6]
-    ]
-)
+from simulated_bifurcation import BinaryPolynomial
 
-qubo = Spin(M, v, c)
-qubo.optimize()
 
-qubo.best_binary_vector
->>> torch.Tensor([0., 1., 0.])
-qubo.best_objective_value
->>> -4.0
+class QUBO(BinaryPolynomial):
+
+    def __init__(self, Q, dtype, device) -> None:
+        super().__init__(matrix=Q, vector=None, constant=None,
+            dtype=dtype, device=device)
+        self.Q = self.matrix
 ```
-
-### Quadratic Unconstrained Binary Optimization (QUBO)
-
-The QUBO problem consists in minimizing a quadratic form defined by an upper-triangular matrix $Q$ on the set of the binary vectors. This means finding the vector $\bold{x} = (x_{1}, ..., x_{N})$ with all $x_{i}$'s being either 0 or 1 such that the following value is minimal:
-
-$$\sum_{i=1}^{N} \sum_{j=1}^{N} Q_{ij}x_{i}x_{j}$$
-
-A QUBO problem can easily be reformulated as an equivalent Ising model which makes it suitable to be opitmized by the SB algorithm.
-
-#### Usage
-
-```python
-import torch
-from simulated_bifurcation.models import QUBO
-```
-
-```python
-Q = torch.Tensor(
-    [
-        [1, 2, -3],
-        [0, -4, 5],
-        [0, 0, 6]
-    ]
-)
-
-qubo = QUBO(Q)
-qubo.optimize()
-
-qubo.best_binary_vector
->>> torch.Tensor([0., 1., 0.])
-qubo.best_objective_value
->>> -4.0
-```
-
-### Second Order Unconstrained Polynomial Binary Optimization 
-
-The QUBO problem can also be extended to second-order polynomial binary optimization by adding a linear form and a constant term to the equation, and can still be handled by the SB algorithm:
-
-$$\sum_{i=1}^{N} \sum_{j=1}^{N} Q_{ij}x_{i}x_{j} + \sum_{i=1}^{N} l_{i}x_{i} + c$$
-
-#### Usage
-
-```python
-import torch
-from simulated_bifurcation.models import Binary
-```
-
-```python
-Q = torch.Tensor(
-    [
-        [1, 2, -3],
-        [0, -4, 5],
-        [0, 0, 6]
-    ]
-)
-l = torch.Tensor([-1, 0, 2])
-c = -5
-
-binary = Binary(Q, l, c)
-binary.optimize()
-
-binary.best_binary_vector
->>> torch.Tensor([0., 1., 0.])
-binary.best_objective_value
->>> -9.0
-```
-
-### Second Order Unconstrained Polynomial Integer Optimization 
-
-$$\sum_{i=1}^{N} \sum_{j=1}^{N} M_{ij}n_{i}n_{j} + \sum_{i=1}^{N} v_{i}n_{i} + c$$
-
-### `IsingInterface` API
-
-More generally, the Ising model can be adapted to represent a wider range of NP-hard and NP-complete problems, including the [21 Karp problems](https://arxiv.org/pdf/1302.5843.pdf). To allow the use of the SB algorithm on various problems, this package provides an API to easily transform NP-hard and NP-complete problems to Ising models on which the SB algorithm can be used.
-
----
-
-_Simulated bifurcation_ is a state-of-the-art algorithm based on quantum physics theory and used to approximize very accurately and quickly the optimal solution of Ising problems. 
-> You can read about the scientific theories at stake and the engineering of the algorithm by Goto *et al.* here: https://www.nature.com/articles/s42005-022-00929-9
-
-Ising problems can be used in many sectors such as finance, transportation or chemistry or derived as other well-know optimization problems (QUBO, Knapsack problem, ...).
-
-## 🚀 Optimization of an Ising model
-
-### Definition
-
-An Ising problem, given a **square symmetric** matrix `J` of size `n x n` and a vector `h` of size `n`, consists in finding the spin vector `s = [s_1, s_2, ..., s_n]`, called the *ground state*, (each `s_i` is either `1` or `-1`) such that the value `E = - 0.5 * ∑∑ J_ij*s_i*s_j + ∑ h_i*s_i`, called *Ising energy*, is minimal.
-
-### Create an instance
-
-Given `J` and `h`, creating an Ising model is done as follows:
-
-```python
-import simulated_bifurcation as sb
-
-ising = sb.Ising(J, h)
-```
-
-### Optimize a model
-
-To optimize an Ising model using the Simulated Bifurcation algorithm, you simply need to run:
-
-```python
-ising.optimize()
-```
-
-The `optimize` methods takes several parameters that are presented in the dedicated section.
-
-### Retrieve the ground state / Ising energy
-
-Once the model is optimized, you can get the best found Ising features using model's attributes
-
-```python
-ising.energy # Ising energy -> float
-ising.ground_state # Ground state (best spin vector) -> torch.Tensor
-```
-
-## 📊 Optimization parameters
-
-The `optimize` methods uses a lot of parameters but only some of them may be changes since the biggest part has been set after reserach and fine-tuning work.
-
-### Quantum parameters
-
-These parameters stem from the quantum theory Their purpose is described in the paper cited above.
-
-> The parameters marked with ⚠️ should not be changed to ensure a good accuracy of the algorithm.
-
-- `pressure_slope` ⚠️
-- `gerschgorin`: if `True` then uses the Gerschgorin's theorem to set the scale value; else uses the uses the value defined by Goto *et al.*
-- `heat_parameter` ⚠️
-- `time_step` ⚠️
-
-### Simulated Bifurcation modes
-
-There are four modes of the algorithm (ballistic v. discrete + heated v. non-heated) that result in small variations in the algorithm general operation. These mode can be selected setting the parameters `ballistic` and `heated` to `True` or `False`.
-
-> The ballistic mode is supposed to give a slighter less satisfying accuracy but to converge faster in comparison to the discrete mode which is generally more accurate but also a bit slower.
-
-### Early stopping
-
-One particularity of our implementation of the Simulated Bifurcation algorithm is the possibility to perform an early stopping and save computation time. The sampling frequence and window size for deciding whether to stop or continue can be set through the parameters `sampling_period` and `convergence_threshold`. 
-
-> Yet, the default parameters have been set as the result of a good trade-off betwwen computation time and accurary so it is not recommanded to change them.
-
-To use early stopping, the `use_window` parameter must be set to `True`. Both ways, the algorithm will stop after a certain number of iterations (if early stopping conditions were not met or if `use_window` was set to `False`) that is defined by the `max_steps` parameter.
-
-### Multi-agent optimization
-
-This version of the Simulated Bifurcation algorithm also allows a multi-agent search of the optimal solution which benefits from the parallelization of the computations. The number of agents is set by the `agents` parameter.
-
-> **💡 Tip:** it is faster to run once the algorithm with N agents than to run N times the algorithm with only one agent.
-
-### Displaying the state of evolution
-
-Finally, you can choose to show or hide the evolution of the algorithm setting the `verbose` parameter to either `True` or `False`.
-
-> If you choose to set `verbose = True`, the evolution will be displayed as `tqdm` progress bar(s) in your terminal.
-
-## 🔀 Derive the algorithm for other problems using the IsingInterface API
-
-A lot of mathematical problems ([QUBO](https://en.wikipedia.org/wiki/Quadratic_unconstrained_binary_optimization), [TSP](https://en.wikipedia.org/wiki/Travelling_salesman_problem), ...) can be written as Ising problems, and thus can be solved using the Simulated Bifurcation algorithm. Some of them are already implemented in the `models` folder but you are free to create your own models using our API.
-
-To do so, you need to create a subclass of the abstract class `IsingInterface` present in the `interface` submodule. The `IsingInterface` has only two attributes `dtype` and `device` which allow you to set the type of the data and the device with which you wish to work.
-
-```python
-from simulated_bifurcation.interface import IsingInterface
-
-
-class YourModel(IsingInterface):
-
-    def __init__(self, dtype, device, *args, **kwargs):
-        super().__init__(dtype, device) # Mandatory
-        # YOUR CODE HERE
-        ...
-```
-
-Once created, such an object can be optimized using the same principle as an `Ising` object, using the `optimize` methods which uses the same parameters as the `Ising`'s one:
-
-```python
-your_model = YourModel(...)
-your_model.optimize()
-```
-
-Yet, to make it work, you will first have to overwrite two abstract methods of the `IsingInterface` class (`to_ising` and `from_ising`) that are called by the `optimize` method. Otherwise you will get a `NotImplementedError` error message.
-
-When the `optimize` method is called, an equivalent Ising model will first be created using `to_ising` and then optimized using the exact same parameters you provided as input for the `IsingInterface.optimize` method. Once it is optimized, information for your own model will be derived from the optimal features of this equivalent Ising model using `from_ising`.
-
-### `to_ising` method
-
-The `to_ising` is meant to create an instance of an Ising model based on the data of your problem. It takes no argument and must only return an `Ising` object. The idea is to rely on the parameters of your problems to derive an Ising representation of it. At some point in the definition of the method, you will have to create the `J` matrix and the `h` vector and eventually return `Ising(J, h)`.
-
-```python
-def to_ising(self) -> sb.Ising:
-    # YOUR CODE HERE
-    J = ...
-    h = ...
-    return sb.Ising(J, h, dtype=self.dtype, device=self.device)
-```
-
-> Do not forget to set the `device` attribute when you instantiate the class if you are working on a GPU because all the tensors must be set on the same device.
-
-### `from_ising` method
-
-The `from_ising` is the reciprocal method. Once the equivalent Ising model of your problem has been optimized, you can retrieve information from its ground state and/or energy and adapt them to your own problem. It must only take an `Ising` object for input and return `None`.
-
-```python
-def from_ising(self, ising: sb.Ising) -> None:
-    # YOUR CODE HERE
-    return 
-```
-
-### Binary and integer formulations
-
-Note that many problems that can be represented as Ising models are not based on spin vectors but rather on binary or integer vectors. The `interface` submodule thus has two additional classes, `Binary` and `Integer`, both of which inherit from `IsingInterface` in order to generalize these cases more easily.
 
 > 🔎 You can check [Andrew Lucas' paper](https://arxiv.org/pdf/1302.5843.pdf) on Ising formulations of NP-complete and NP-hard problems, including all of Karp's 21 NP-complete problems.
 
@@ -480,7 +256,7 @@ If you are using this code for your own projects please cite our work:
 ```bibtex
 @software{Ageron_Simulated_Bifurcation_SB_2022,
     author = {Ageron, Romain and Bouquet, Thomas and Pugliese, Lorenzo},
-    month = {4},
+    month = {7},
     title = {{Simulated Bifurcation (SB) algorithm for Python}},
     version = {1.2.0},
     year = {2023}
