@@ -1,7 +1,8 @@
 import torch
 import pytest
 import numpy as np
-from src.simulated_bifurcation.polynomial import Polynomial
+from simulated_bifurcation.ising_core import IsingCore
+from src.simulated_bifurcation.polynomial import IsingPolynomialInterface
 
 
 matrix = [
@@ -12,8 +13,17 @@ matrix = [
 vector = [[1], [2], [3]]
 constant = 1
 
+
+class IsingPolynomialInterfaceImpl(IsingPolynomialInterface):
+
+    def to_ising(self):
+        pass
+    
+    def from_ising(self, ising: IsingCore):
+        pass
+
 def test_init_polynomial_from_tensors():
-    polynomial = Polynomial(torch.Tensor(matrix), torch.Tensor(vector), constant)
+    polynomial = IsingPolynomialInterfaceImpl(torch.Tensor(matrix), torch.Tensor(vector), constant)
     assert torch.all(polynomial.matrix == torch.Tensor(matrix))
     assert torch.all(polynomial.vector == torch.Tensor(vector))
     assert polynomial.constant == 1.
@@ -28,7 +38,7 @@ def test_init_polynomial_from_tensors():
         polynomial[3]
     
 def test_init_polynomial_from_arrays():
-    polynomial = Polynomial(np.array(matrix), np.array(vector), constant)
+    polynomial = IsingPolynomialInterfaceImpl(np.array(matrix), np.array(vector), constant)
     assert torch.all(polynomial.matrix == torch.Tensor(matrix))
     assert torch.all(polynomial.vector == torch.Tensor(vector))
     assert polynomial.constant == 1.
@@ -39,7 +49,7 @@ def test_init_polynomial_from_arrays():
     assert torch.all(polynomial[1] == torch.Tensor(vector))
 
 def test_init_polynomial_from_lists():
-    polynomial = Polynomial(matrix, vector, constant)
+    polynomial = IsingPolynomialInterfaceImpl(matrix, vector, constant)
     assert torch.all(polynomial.matrix == torch.Tensor(matrix))
     assert torch.all(polynomial.vector == torch.Tensor(vector))
     assert polynomial.constant == 1.
@@ -50,7 +60,7 @@ def test_init_polynomial_from_lists():
     assert torch.all(polynomial[1] == torch.Tensor(vector))
 
 def test_init_polynomial_without_order_one_and_zero():
-    polynomial = Polynomial(torch.Tensor(matrix))
+    polynomial = IsingPolynomialInterfaceImpl(torch.Tensor(matrix))
     assert torch.all(polynomial.matrix == torch.Tensor(matrix))
     assert torch.all(polynomial.vector == 0)
     assert polynomial.constant == 0.
@@ -62,20 +72,20 @@ def test_init_polynomial_without_order_one_and_zero():
 
 def test_init_with_wrong_parameters():
     with pytest.raises(TypeError):
-        Polynomial(None)
+        IsingPolynomialInterfaceImpl(None)
     with pytest.raises(ValueError):
-        Polynomial([matrix])
+        IsingPolynomialInterfaceImpl([matrix])
     with pytest.raises(ValueError):
-        Polynomial([[1, 2, 3], [4, 5, 6]])
+        IsingPolynomialInterfaceImpl([[1, 2, 3], [4, 5, 6]])
     with pytest.raises(TypeError):
-        Polynomial(matrix, ('hello', 'world!'))
+        IsingPolynomialInterfaceImpl(matrix, ('hello', 'world!'))
     with pytest.raises(ValueError):
-        Polynomial(matrix, 1)
+        IsingPolynomialInterfaceImpl(matrix, 1)
     with pytest.raises(TypeError):
-        Polynomial(matrix, constant='hello world!')
+        IsingPolynomialInterfaceImpl(matrix, constant='hello world!')
 
 def test_call_polynomial():
-    polynomial = Polynomial(matrix)
+    polynomial = IsingPolynomialInterfaceImpl(matrix)
     assert polynomial([0, 0, 0]) == 0
     assert polynomial([[0, 1], [0, 2], [0, 3]]) == [0, 228]
     with pytest.raises(TypeError):
@@ -84,7 +94,13 @@ def test_call_polynomial():
         polynomial([1, 2, 3, 4, 5])
 
 def test_call_polynomial_with_accepted_values():
-    polynomial = Polynomial(matrix, accepted_values=[0, 1])
+    polynomial = IsingPolynomialInterfaceImpl(matrix, accepted_values=[0, 1])
     assert polynomial([0, 0, 0]) == 0
     with pytest.raises(ValueError):
         polynomial([0, 1, 2])
+
+def test_ising_interface():
+    with pytest.raises(NotImplementedError):
+        IsingPolynomialInterface.to_ising(None)
+    with pytest.raises(NotImplementedError):
+        IsingPolynomialInterface.from_ising(None, None)

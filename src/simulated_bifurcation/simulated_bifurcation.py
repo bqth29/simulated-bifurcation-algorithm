@@ -1,5 +1,4 @@
-from .polynomial import IsingInterface, SpinPolynomial, BinaryPolynomial, \
-    IntegerPolynomial
+from .polynomial import SpinPolynomial, BinaryPolynomial, IntegerPolynomial, IsingPolynomialInterface
 from numpy import ndarray
 from typing import Tuple, Union
 from torch import Tensor, dtype, float32
@@ -42,7 +41,7 @@ def maximize(matrix: Union[Tensor, ndarray],
 
 def build_model(matrix: Union[Tensor, ndarray],
                 vector: Union[Tensor, ndarray], constant: float,
-                input_type: str, dtype: dtype, device: str) -> IsingInterface:
+                input_type: str, dtype: dtype, device: str) -> IsingPolynomialInterface:
     int_type_regex = compile(r'int(\d+)')
     if input_type == 'spin':
         return SpinPolynomial(matrix=matrix, vector=vector, constant=constant,

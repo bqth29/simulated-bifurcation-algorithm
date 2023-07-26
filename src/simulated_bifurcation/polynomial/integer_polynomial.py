@@ -1,11 +1,11 @@
 from ..ising_core import IsingCore
-from .ising_interface import IsingInterface
+from .ising_polynomial_interface import IsingPolynomialInterface
 from typing import Union
 import torch
 import numpy as np
 
 
-class IntegerPolynomial(IsingInterface):
+class IntegerPolynomial(IsingPolynomialInterface):
 
     """
     Given a matrix `Q` (quadratic form), a vector `l`
