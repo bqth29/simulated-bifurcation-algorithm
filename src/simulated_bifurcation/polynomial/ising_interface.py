@@ -1,4 +1,4 @@
-from ..ising import Ising
+from ..ising_core import IsingCore
 from .polynomial import Polynomial
 from abc import abstractmethod
 from typing import final, List, Union
@@ -16,7 +16,7 @@ class IsingInterface(Polynomial):
         self.sb_result = None
 
     @abstractmethod
-    def to_ising(self) -> Ising:
+    def to_ising(self) -> IsingCore:
         """
         Generate an equivalent Ising model of the problem.
         The notion of equivalence means that finding the ground
@@ -26,7 +26,7 @@ class IsingInterface(Polynomial):
         raise NotImplementedError
 
     @abstractmethod
-    def from_ising(self, ising: Ising) -> torch.Tensor:
+    def from_ising(self, ising: IsingCore) -> torch.Tensor:
         """
         Retrieves information from the optimized equivalent Ising model.
         Returns the best found vector.

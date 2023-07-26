@@ -1,4 +1,4 @@
-from ..ising import Ising
+from ..ising_core import IsingCore
 from .ising_interface import IsingInterface
 from typing import Union
 import torch
@@ -11,8 +11,8 @@ class SpinPolynomial(IsingInterface):
                 dtype: torch.dtype=torch.float32, device: str = 'cpu') -> None:
         super().__init__(matrix, vector, constant, [-1, 1], dtype, device)
 
-    def to_ising(self) -> Ising:
-        return Ising(-2 * self.matrix, self.vector, self.dtype, self.device)
+    def to_ising(self) -> IsingCore:
+        return IsingCore(-2 * self.matrix, self.vector, self.dtype, self.device)
 
-    def from_ising(self, ising: Ising) -> torch.Tensor:
+    def from_ising(self, ising: IsingCore) -> torch.Tensor:
         return ising.ground_state

@@ -1,4 +1,4 @@
-from ..ising import Ising
+from ..ising_core import IsingCore
 from .ising_interface import IsingInterface
 from typing import Union
 import torch
@@ -30,14 +30,14 @@ class IntegerPolynomial(IsingInterface):
                 matrix[row * number_of_bits + col][row] = 2.0**col
         return matrix  
     
-    def to_ising(self) -> Ising:
+    def to_ising(self) -> IsingCore:
         symmetrical_matrix = .5 * (self.matrix + self.matrix.t())
         J = -.5 * self.__int_to_bin_matrix @ symmetrical_matrix @ self.__int_to_bin_matrix.t()
         h = .5 * self.__int_to_bin_matrix @ self.vector \
             + .5 * self.__int_to_bin_matrix @ self.matrix @ self.__int_to_bin_matrix.t() \
             @ torch.ones((self.dimension * self.number_of_bits, 1), device=self.device)
-        return Ising(J, h, self.dtype, self.device)
+        return IsingCore(J, h, self.dtype, self.device)
 
-    def from_ising(self, ising: Ising) -> None:
+    def from_ising(self, ising: IsingCore) -> None:
         if ising.ground_state is not None:
             return .5 * self.__int_to_bin_matrix.t() @ (ising.ground_state + 1)

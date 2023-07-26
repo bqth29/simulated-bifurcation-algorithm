@@ -4,7 +4,7 @@ from numpy import argmin, ndarray
 from .optimizer import SimulatedBifurcationOptimizer, OptimizerMode
 
 
-class Ising:
+class IsingCore:
 
     """
     Implementation of the Ising model.
@@ -21,18 +21,18 @@ class Ising:
         dtype: torch.dtype=torch.float32,
         device: str = 'cpu'
     ) -> None:
+        self.dimension = J.shape[0]
         if isinstance(J, torch.Tensor):
             self.__init_from_tensor(J, h, dtype, device)
         else:
             self.__init_from_array(J, h, dtype, device)
-        self.dimension = J.shape[0]
         self.computed_spins = None
 
     def __len__(self) -> int:
         return self.dimension
     
     def __neg__(self):
-        return Ising(- self.J, - self.h, self.dtype, self.device)
+        return IsingCore(- self.J, - self.h, self.dtype, self.device)
 
     def __call__(self, spins: torch.Tensor) -> Union[None, float, List[float]]:
         if spins is None: return None
@@ -55,15 +55,19 @@ class Ising:
             raise ValueError(f"Expected {self.dimension} rows, got {spins.shape[0]}.")
         
     def __init_from_tensor(self, J: torch.Tensor, h: Union[torch.Tensor, None],
-                          dtype: torch.dtype, device: str): 
+                          dtype: torch.dtype, device: str):
+        null_vector = torch.zeros(self.dimension).to(device=device, dtype=dtype)
         if h is None: 
-            self.matrix = J.to(device=device, dtype=dtype)
+            self.J = J.to(device=device, dtype=dtype)
+            self.h = null_vector
             self.linear_term = False
         elif torch.all(h == 0):
-            self.matrix = J.to(device=device, dtype=dtype)
+            self.J = J.to(device=device, dtype=dtype)
+            self.h = null_vector
             self.linear_term = False
         else: 
-            self.matrix = Ising.attach(J, h, dtype, device)
+            self.J = J.to(device=device, dtype=dtype)
+            self.h = h.reshape(self.dimension).to(device=device, dtype=dtype)
             self.linear_term = True
 
     def __init_from_array(self, J: ndarray, h: Union[ndarray, None],
@@ -74,68 +78,36 @@ class Ising:
             dtype, device
         )
 
-    @staticmethod
-    def attach(
-        J: torch.Tensor, h: torch.Tensor,
-        dtype: torch.dtype=torch.float32,
-        device: str='cpu'
-    ) -> torch.Tensor:
+    def clip_vector_to_tensor(self, tensor: torch.Tensor) -> torch.Tensor:
         """
         Gathers the matrix and the vector of the Ising model
         into a single matrix that can be processed by the
         Simulated Bifurcation (SB) algorithm.
         """
-        dimension = J.shape[0]
-        matrix = torch.zeros(
-            (dimension + 1, dimension + 1),
-            dtype=dtype, device=device
-        )
-        matrix[:dimension, :dimension] = J
-        matrix[:dimension, dimension] = - h.reshape(-1,)
-        matrix[dimension, :dimension] = - h.reshape(-1,)
-        return matrix
+        tensor = torch.zeros((self.dimension + 1, self.dimension + 1),
+            dtype=self.dtype, device=self.device)
+        tensor[:self.dimension, :self.dimension] = self.J
+        tensor[:self.dimension, self.dimension] = - self.h
+        tensor[self.dimension, :self.dimension] = - self.h
+        return tensor
 
     @staticmethod
-    def detach(
-        matrix: torch.Tensor,
-        dtype: torch.dtype=torch.float32,
-        device: str='cpu'
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Splits the Simulated Bifurcation (SB) algorithm's matrix
-        into the initial ising model's matrix and vector.
-        """
-        dimension = matrix.shape[0] - 1
-        J = matrix[:dimension, :dimension].to(
-            dtype=dtype, device=device)
-        h = - matrix[:dimension, dimension].to(
-            dtype=dtype, device=device)
-        return J, h
-
-    @staticmethod
-    def remove_diagonal(matrix: torch.Tensor) -> torch.Tensor:
-        return matrix - torch.diag(torch.diag(matrix))
+    def remove_diagonal(tensor: torch.Tensor) -> torch.Tensor:
+        return tensor - torch.diag(torch.diag(tensor))
     
     @staticmethod
-    def symmetrize(matrix: torch.Tensor) -> torch.Tensor:
-        return .5 * (matrix + matrix.t())
+    def symmetrize(tensor: torch.Tensor) -> torch.Tensor:
+        return .5 * (tensor + tensor.t())
     
-    @staticmethod
-    def format_matrix(matrix: torch.Tensor) -> torch.Tensor:
-        """
-        Transform the Ising's model matrix to an equivalent form
-        that is more suitable to be processed by the 
-        Simulated Bifurcation (SB) algorithm:
-        1. The matrix is averaged with its transpose (symmetrization);
-        2. The matrix's diagonal is removed.
-        """
-        return Ising.remove_diagonal(Ising.symmetrize(matrix))
+    def as_simulated_bifurcation_tensor(self) -> torch.Tensor:
+        tensor = IsingCore.remove_diagonal(IsingCore.symmetrize(self.J))
+        return self.clip_vector_to_tensor(tensor) if self.linear_term else tensor
 
     @property
-    def dtype(self) -> torch.dtype: return self.matrix.dtype
+    def dtype(self) -> torch.dtype: return self.J.dtype
 
     @property
-    def device(self) -> torch.device: return self.matrix.device
+    def device(self) -> torch.device: return self.J.device
 
     @property
     def ground_state(self) -> Union[torch.Tensor, None]:
@@ -144,31 +116,6 @@ class Ising:
 
     @property
     def energy(self) -> Union[float, None]: return self(self.ground_state)
-
-    @property
-    def J(self) -> torch.Tensor: 
-        if self.linear_term:
-            return Ising.detach(
-                self.matrix,
-                self.dtype,
-                self.device
-            )[0]
-        else: return self.matrix
-
-    @property
-    def h(self) -> torch.Tensor: 
-        if self.linear_term:
-            return Ising.detach(
-                self.matrix,
-                self.dtype,
-                self.device
-            )[1]
-        else:
-            return torch.zeros(
-                self.dimension,
-                dtype=self.dtype,
-                device=self.device
-            )
 
     def min(self, spins: torch.Tensor) -> torch.Tensor:
         """
@@ -255,6 +202,6 @@ class Ising:
                 sampling_period, max_steps, agents,
                 OptimizerMode.BALLISTIC if ballistic else OptimizerMode.DISCRETE,
                 heat, verbose)
-        matrix = Ising.format_matrix(self.matrix)
-        spins = optimizer.run_integrator(matrix, use_window)
+        tensor = self.as_simulated_bifurcation_tensor()
+        spins = optimizer.run_integrator(tensor, use_window)
         self.computed_spins = spins[-1] * spins[:-1, :] if self.linear_term else spins
