@@ -136,7 +136,7 @@ class IsingPolynomialInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def from_ising(self, ising: IsingCore) -> torch.Tensor:
+    def convert_spins(self, ising: IsingCore) -> torch.Tensor:
         """
         Retrieves information from the optimized equivalent Ising model.
         Returns the best found vector.
@@ -228,5 +228,5 @@ class IsingPolynomialInterface(ABC):
             convergence_threshold, sampling_period,
             max_steps, agents, use_window, ballistic, heat, verbose
         )
-        self.sb_result = self.from_ising(ising_equivalent)
+        self.sb_result = self.convert_spins(ising_equivalent)
         return self.sb_result

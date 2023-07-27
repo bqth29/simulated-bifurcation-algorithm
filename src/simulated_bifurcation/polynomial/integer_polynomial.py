@@ -38,6 +38,6 @@ class IntegerPolynomial(IsingPolynomialInterface):
             @ torch.ones((self.dimension * self.number_of_bits, 1), device=self.device)
         return IsingCore(J, h, self.dtype, self.device)
 
-    def from_ising(self, ising: IsingCore) -> None:
+    def convert_spins(self, ising: IsingCore) -> None:
         if ising.ground_state is not None:
             return .5 * self.__int_to_bin_matrix.t() @ (ising.ground_state + 1)

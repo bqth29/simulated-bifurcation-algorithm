@@ -24,6 +24,6 @@ class BinaryPolynomial(IsingPolynomialInterface):
         h = .5 * self.vector + .5 * symmetrical_matrix @ torch.ones((len(self), 1), device=self.device)
         return IsingCore(J, h, self.dtype, self.device)
 
-    def from_ising(self, ising: IsingCore) -> torch.Tensor:
+    def convert_spins(self, ising: IsingCore) -> torch.Tensor:
         if ising.ground_state is not None:
             return .5 * (ising.ground_state + 1)

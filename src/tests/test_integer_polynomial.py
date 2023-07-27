@@ -28,7 +28,7 @@ def test_init_integer_polynomial():
         [1, 2, -2, -4, 0, 0]
     ]))
     assert torch.all(ising.h == torch.Tensor([.5, 1, 5.5, 11, 0, 0]))
-    assert torch.all(integer_polynomial.from_ising(ising) == torch.Tensor([1, 1, 2]))
+    assert torch.all(integer_polynomial.convert_spins(ising) == torch.Tensor([1, 1, 2]))
 
 def test_call_integer_polynomial():
     integer_polynomial = IntegerPolynomial(matrix, vector, constant, 2)

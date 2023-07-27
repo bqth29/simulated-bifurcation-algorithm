@@ -19,7 +19,7 @@ class IsingPolynomialInterfaceImpl(IsingPolynomialInterface):
     def to_ising(self):
         pass
     
-    def from_ising(self, ising: IsingCore):
+    def convert_spins(self, ising: IsingCore):
         pass
 
 def test_init_polynomial_from_tensors():
@@ -103,4 +103,4 @@ def test_ising_interface():
     with pytest.raises(NotImplementedError):
         IsingPolynomialInterface.to_ising(None)
     with pytest.raises(NotImplementedError):
-        IsingPolynomialInterface.from_ising(None, None)
+        IsingPolynomialInterface.convert_spins(None, None)

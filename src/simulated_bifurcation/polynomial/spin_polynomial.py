@@ -14,5 +14,5 @@ class SpinPolynomial(IsingPolynomialInterface):
     def to_ising(self) -> IsingCore:
         return IsingCore(-2 * self.matrix, self.vector, self.dtype, self.device)
 
-    def from_ising(self, ising: IsingCore) -> torch.Tensor:
+    def convert_spins(self, ising: IsingCore) -> torch.Tensor:
         return ising.ground_state

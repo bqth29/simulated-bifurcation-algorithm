@@ -21,7 +21,7 @@ def test_init_binary_polynomial():
         [.5, -1, 0]
     ]))
     assert torch.all(ising.h == torch.Tensor([.5, 2.5, -1]))
-    assert torch.all(binary_polynomial.from_ising(ising) == torch.Tensor([1, 0, 1]))
+    assert torch.all(binary_polynomial.convert_spins(ising) == torch.Tensor([1, 0, 1]))
 
 def test_call_binary_polynomial():
     binary_polynomial = BinaryPolynomial(matrix, vector, constant)
