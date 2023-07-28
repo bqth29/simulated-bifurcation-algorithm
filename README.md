@@ -17,7 +17,9 @@ It also provides an API to define Ising models or other NP-hard and NP-complete 
 pip install simulated-bifurcation
 ```
 
-## 🧪 Ising problem
+## 🧪 The *Simulated Bifurcation* (SB) algorithm
+
+### Ising model
 
 An Ising problem, given a null-diagonal square symmetrical matrix $J$ of size $N \times N$ and a vector $h$ of size $N$, consists in finding the spin vector $\mathbf{s} = (s_{1}, ... s_{N})$ called the *ground state*, (each $s_{i}$ being equal to either 1 or -1) such that the following value, called *Ising energy*, is minimal:
 
@@ -25,109 +27,11 @@ $$- \frac{1}{2} \sum_{i=1}^{N} \sum_{j=1}^{N} J_{ij}s_{i}s_{j} + \sum_{i=1}^{N} 
 
 This problem is known to be NP-hard but is very useful since it can be used in many sectors such as finance, transportation or chemistry or derived as other well-know optimization problems (QUBO, MAXCUT, Knapsack problem, etc.).
 
-> In the quantum theory behind the SB algorithm, $J$ must be symmetrical with a null diagonal. However, this package handles any square matrix by creating a new symmetrical matrix with null diagonal leading to an equivalent ising problem.
-
-You can, create an Ising model instance as follow:
-
-
-```python
-import torch
-import simulated_bifurcation as sb
-
-
-J = torch.Tensor([[0, 1, 2], [1, 0, -2], [2, -2, 0]])
-h = torch.Tensor([-1, 0, 2])
-ising = sb.Ising(J, h)
-```
-
-> If you only wish to use the `J` matrix and not the `h` vector, you can simply call `sb.Ising(J)`.
-
-This Ising model can then be called with spin tensors to compute its energy:
-
-```python
-# Single spin vector
-spins = torch.Tensor([1, 1, -1])
-ising(spins)
->>> -4.0
-
-# Spin tensor (column-wise)
-spins = torch.Tensor(
-    [
-        [1, -1, 1, -1],
-        [-1, 1, 1, -1],
-        [-1, -1, 1, -1]
-    ]
-)
-ising(spins)
->>> [2.0, -4.0, 0.0, -2.0]
-```
-
-## 💻 The *Simulated Bifurcation* (SB) algorithm
-
-### Behavior
-
-### Usage on Ising instances
-
-Ising instances can be optimized with the Simulated Bifurcation algorithm using the `optimize` method. Instances are updated in place and the results of the optimization can be retrieved by calling `ising.ground_state` (best vector) and `ising.energy` (best objective value).
-
-```python
-ising.optimize()
-ising.energy
->>> -4.0
-
-ising.ground_state
->>> Tensor([-1.0, 1.0, -1.0])
-```
-
-### Parallelization (multi-agent search)
-
-The Simulated Bifurcation algorithm is highly parallelizable since it only relies on linear matrices equations. To take advantage of this property, this implementation offers the possibility to perform a multi-agent search of the optimal solution by evolving several spin vectors in parallel (each one being called an **agent**). The number of agents is set by the `agents` parameter in the `optimize` method.
-
-> **💡 Tip:** it is faster to run once the algorithm with N agents than to run N times the algorithm with only one agent.
-
-```python
-# Efficient computation ✔️
-ising.optimize(agents=100)
-
-# Slower cumbersome computation ❌
-for _ in range(100):
-    ising.optimize(agents=1)
-```
-
-### GPU computation
-
-This parallelization of the algorithm can also be utilized by performing calculations on GPUs to speed them up significantly. To do this, simply specify the calculation device `cuda` when instantiating an Ising model:
-
-```python
-ising = sb.Ising(J, h, device='cuda')
-ising.optimize()
-```
-
-### Early stopping
-
-The Simulated Bifurcation algorithm stops after a certain number of iterations, defined by the parameter `max_steps` of the `optimize` method. However, this implementation comes with the possibility to perform early stopping and save computation time by defining convergence conditions. 
-
-At regular intervals, the state of the spins is sampled and compared with its previous value to calculate their stability period. If an agent's stability period exceeds a convergence threshold, it is considered to have converged and its value is frozen. If all agents converge before the maximum number of iterations has been reached, the algorithm stops.
-
-> - The sampling period and the convergence threshold are respectively set using the `sampling_period` and `convergence_threshold` parameters of the `optimize` method.
-> - To use early stopping in the SB algorithm, set the `use_window` parameter to `True`.
-> - If only some agents have converged when the maximum number of iterations is reached, the algorithm stops and only the converged agents are considered in the results.
-
-```python
-# Stop with maximal iterations
-ising.optimize(max_steps=10000)
-
-# Early stopping
-ising.optimize(
-    sampling_period=30,
-    convergence_threshold=50,
-    use_window=True
-)
-```
+The Simulated Bifurcation algorithm was originally introduced to solve Ising problems by simulating the adiabatic evolution of spins in a quantum Hamiltonian system, but can also be generalized to a wider range of optimization problems.
 
 ### Usage on polynomial instances
 
-The SB algorithm generalizes to a wider range of problems that can be written as the minimization or maximization of multivariable polynomials of degree two, i.e. written as
+The SB algorithm can be written as the minimization or maximization of multivariable polynomials of degree two, i.e. written as
 
 $$\sum_{i=1}^{N} \sum_{j=1}^{N} M_{ij}x_{i}x_{j} + \sum_{i=1}^{N} v_{i}x_{i} + c$$
 
@@ -135,9 +39,18 @@ for which the $x_{i}$'s can be spins, binary or non-negative integer.
 
 This can also be seen as the sum of a quadratic form, a linear form and a constant term and such such a formulation is the basis of many optimization problems.
 
-The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. 
+The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated input vector.
 
-> For integer values, the number of bits with which the numbers are encoded must be specified. For instance, 9-bits integer correspond to the `'int9'` input type.
+The input types must be passed to the `input_type` argument:
+- `spin` (default value) for a spin optimization: the optimal vector will only have ±1 values
+- `binary` for a binary optimization: the optimal vector will only have 0 or 1 values
+- `intX` for a `X`-bits encoded integer optimization:  the optimal vector will only have integer value encoded with `X` bits or less, i.e. belonging to the range 0 to $2^{X} - 1$.
+
+> For instance, 9-bits integer correspond to the `int9` input type and the accepted values span from 0 to 511.
+
+```python
+import simulated_bifurcation as sb
+```
 
 ```python
 matrix = torch.Tensor([[0, 1, 2], [1, 0, -2], [2, -2, 0]])
@@ -171,23 +84,61 @@ binary_value, binary_vector = sb.maximize(matrix, vector, constant, input_type='
 int_value, int_vector = sb.maximize(matrix, vector, constant, input_type='int10')
 ```
 
-> As for the Ising model, only the matrix is mandatory and the vector and the constant value are optional
+> For both functions, only the matrix is mandatory, the vector and constant terms can be skipped.
 
-The `minimize` and `maximize` functions both inherit from the `optimize` method of the `Ising` class. Thus, the early stopping (`sampling_period`, `convergence_thershold`, `max_steps`, `use_window`), multi-agent search (`agents`) and GPU calculation (`device`) parameters presented earlier can also be used in both these functions.
+
+### Parallelization (multi-agent search)
+
+The Simulated Bifurcation algorithm is highly parallelizable since it only relies on linear matrices equations. To take advantage of this property, this implementation offers the possibility to perform a multi-agent search of the optimal solution by evolving several spin vectors in parallel (each one being called an **agent**). The number of agents is set by the `agents` parameter in the `minimize` and `maximize` functions.
+
+> **💡 Tip:** it is faster to run once the algorithm with N agents than to run N times the algorithm with only one agent.
 
 ```python
-sb.minimize(matrix, vector, constant, input_type='spin',
-    sampling_period=30, convergence_thershold=50, max_steps=10000, use_window=True,
-    agents=128, device='cuda')
+# Efficient computation ✔️
+sb.minimize(matrix, agents=100)
+
+# Slower cumbersome computation ❌
+for _ in range(100):
+    sb.minimize(matrix, agents=1)
+```
+
+### GPU computation
+
+This parallelization of the algorithm can also be utilized by performing calculations on GPUs to speed them up significantly. To do this, simply specify the calculation `device` argument to `cuda` when instantiating an Ising model:
+
+```python
+sb.minimize(matrix, device='cuda')
+```
+
+### Early stopping
+
+The Simulated Bifurcation algorithm stops after a certain number of iterations, defined by the parameter `max_steps` of the `minimize` and `maximize` functions. However, this implementation comes with the possibility to perform early stopping and save computation time by defining convergence conditions. 
+
+At regular intervals, the state of the spins is sampled and compared with its previous value to calculate their stability period. If an agent's stability period exceeds a convergence threshold, it is considered to have converged and its value is frozen. If all agents converge before the maximum number of iterations has been reached, the algorithm stops.
+
+- The sampling period and the convergence threshold are respectively set using the `sampling_period` and `convergence_threshold` parameters of the `minimize` and `maximize` functions.
+- To use early stopping in the SB algorithm, set the `use_window` parameter to `True`.
+- If only some agents have converged when the maximum number of iterations is reached, the algorithm stops and only the converged agents are considered in the results.
+
+```python
+# Stop with maximal iterations
+sb.minimize(matrix, max_steps=10000)
+
+# Early stopping
+sb.minimize(matrix,
+    sampling_period=30,
+    convergence_threshold=50,
+    use_window=True
+)
 ```
 
 ## 💡 Advanced usages
 
 This section deals with a more complex use of the SB algorithm, as it is closer to the quantum theory from which it is derived. To better understand the significance of the subjects at stake, we recommend reading the theory behind the SB algorithm by Goto *et al.*.
 
-- *Combinatorial optimization by simulating adiabatic bifurcations in nonlinear Hamiltonian systems* on [Science Advances](https://www.science.org/doi/pdf/10.1126/sciadv.aav2372);
-- *Simulated bifurcation assisted by thermal fluctuation* on [Nature](https://www.nature.com/articles/s42005-022-00929-9.pdfhttps://www.nature.com/articles/s42005-022-00929-9.pdf);
-- *High-performance combinatorial optimization based on classical mechanics* on [Science Advances](https://www.science.org/doi/full/10.1126/sciadv.abe7953).
+- Goto, H., Tatsumura, K., & Dixon, A. R. (2019). Combinatorial optimization by simulating adiabatic bifurcations in nonlinear Hamiltonian systems. *Science advances, 5*(4), eaav2372.
+- Kanao, T., & Goto, H. (2022). Simulated bifurcation assisted by thermal fluctuation. *Communications Physics, 5*(1), 153.
+- Goto, H., Endo, K., Suzuki, M., Sakai, Y., Kanao, T., Hamakawa, Y., ... & Tatsumura, K. (2021). High-performance combinatorial optimization based on classical mechanics. *Science Advances, 7*(6), eabe7953.
 
 ### SB Algorithm modes
 
@@ -201,20 +152,18 @@ The SB algorithm is available in four different versions (Goto *et al.*) that re
 These mode can be selected setting the parameters `ballistic` and `heat` to either `True` or `False` in the `Ising.optimize` method or the `minimize`/`maximize` functions.
 
 ```python
-ising.optimize(ballistic=True, heat=False) #bSB
-ising.optimize(ballistic=False, heat=True) #HdSB
+sb.minimize(matrix, ballistic=True, heat=False) #bSB
+sb.minimize(matrix, ballistic=False, heat=True) #HdSB
 
-sb.minimize(ballistic=False, heat=False) #dSB
-sb.maximize(ballistic=True, heat=True) #HbSB
+sb.minimize(matrix, ballistic=False, heat=False) #dSB
+sb.maximize(matrix, ballistic=True, heat=True) #HbSB
 ```
 
 ### SB Algorithm's hyperparameters setting
 
-The SB algorithm has a set of hyperparameters corresponding to physical constants derived from quantum theory, which have been fine-tuned (Goto *et al.*) to give the best results most of the time. However, depending on the properties of the instances used, different hyperparameters may be of interest. For this purpose, the A function can be used to modify their value.
+The SB algorithm has a set of hyperparameters corresponding to physical constants derived from quantum theory, which have been fine-tuned (Goto *et al.*) to give the best results most of the time. However, depending on the properties of the instances used, different hyperparameters may be of interest. For this purpose, the `set_env` function can be used to modify their value.
 
 ```python
-import simulated_bifurcation as sb
-
 # Custom hyperparameters values
 sb.set_env(time_step=.1, pressure_slope=.01, heat_coefficient=.06)
 
@@ -222,13 +171,28 @@ sb.set_env(time_step=.1, pressure_slope=.01, heat_coefficient=.06)
 sb.reset_env()
 ```
 
+### Derived optimization models
+
+A lot of mathematical problems (QUBO, Travelling Salesman Problem, MAXCUT, ...) can be written as order-two multivariate polynomials problems, and thus can be solved using the Simulated Bifurcation algorithm. Some of them are already implemented in the `models` module:
+
+**🔬 Physics**
+
+- Ising model
+
+**📐 Mathematics**
+
+- Quadratric Unconstrained Binary Optimization (QUBO)
+- Number partitioning
+
+**💸 Finance**
+
+- Markowitz model
+
 ### Custom models
 
-A lot of mathematical problems ([QUBO](https://en.wikipedia.org/wiki/Quadratic_unconstrained_binary_optimization), [TSP](https://en.wikipedia.org/wiki/Travelling_salesman_problem), ...) can be written as order-two multivariate polynomials problems, and thus can be solved using the Simulated Bifurcation algorithm. Some of them are already implemented in the `models` module but you are free to create your own models using our API.
+You are also free to create your own models using our API. Depending on the type of model you wish to implement, you cen create a subclass of one of the `SpinPolynomial`, `BinaryPolynomial` or `IntegerPolynomial` APIs to quickly and efficiently link your custom model to an Ising problem and solve it using the SB algorithm.
 
-Depending on the type of model you wish to implement, you cen create a subclass of one of the `SpinPolynomial`, `BinaryPolynomial` or `IntegerPolynomial` APIs to quickly and efficiently link your custom model to an Ising problem and solve it using the SB algorithm.
-
-The advantage of doing so is that your model can directly call the `optimize` method that it inherits from the `Polynomial` interface without having to redefine it.
+The advantage of doing so is that your model can directly call the `optimize` method that it inherits from the `IsingPolynomialInterface` interface without having to redefine it.
 
 For instance, here is how the QUBO model was implemented:
 
@@ -247,7 +211,9 @@ class QUBO(BinaryPolynomial):
         self.Q = self.matrix
 ```
 
-> 🔎 You can check [Andrew Lucas' paper](https://arxiv.org/pdf/1302.5843.pdf) on Ising formulations of NP-complete and NP-hard problems, including all of Karp's 21 NP-complete problems.
+> You can check Andrew Lucas' paper on Ising formulations of NP-complete and NP-hard problems, including all of Karp's 21 NP-complete problems.
+> 
+> 🔎 Lucas, A. (2014). Ising formulations of many NP problems. *Frontiers in physics, 2*, 5.
 
 ## 🔗 Cite this work
 
