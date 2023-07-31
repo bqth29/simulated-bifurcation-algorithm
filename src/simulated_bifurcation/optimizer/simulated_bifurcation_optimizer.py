@@ -1,3 +1,4 @@
+from logging import warn
 import torch
 from typing import Tuple
 from tqdm import tqdm
@@ -176,7 +177,7 @@ class SimulatedBifurcationOptimizer:
             if self.window.has_bifurcated_spins():
                 return self.window.get_bifurcated_spins()
             else:
-                print('No agent bifurcated. Returned final momentums\' signs instead.')
+                warn('No agent has converged. Returned final momentums\' signs instead.')
                 return spins
         else:
             return spins
