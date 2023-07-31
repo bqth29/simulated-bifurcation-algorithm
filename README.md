@@ -7,7 +7,7 @@
 
 The **Simulated Bifurcation** (SB) algorithm is a fast and highly parallelizable state-of-the-art algorithm for combinatorial optimization inspired by quantum physics and spins dynamics. It relies on Hamiltonian quantum mechanics to find local minima of **Ising** problems. The last accuracy tests showed a median optimality gap of less than 1% on high-dimensional instances.
 
-This open-source package is built upon **PyTorch** to allow GPU computations that take advantage of the great possibility of parallelization the SB algorithm, leading to high time performances that can outperform commercial solvers.
+This open-source package utilizes **PyTorch** to leverage GPU computations, harnessing the high potential for parallelization offered by the SB algorithm.
 
 It also provides an API to define Ising models or other NP-hard and NP-complete problems (QUBO, Karp problems, ...) that can be solved using the SB algorithm.
 
