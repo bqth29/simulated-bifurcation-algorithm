@@ -84,7 +84,7 @@ binary_value, binary_vector = sb.maximize(matrix, vector, constant, input_type='
 int_value, int_vector = sb.maximize(matrix, vector, constant, input_type='int10')
 ```
 
-> For both functions, only the matrix is mandatory, the vector and constant terms can be skipped.
+> For both functions, only the matrix is required, the vector and constant terms are optional.
 
 
 ### Parallelization (multi-agent search)
@@ -118,7 +118,7 @@ At regular intervals, the state of the spins is sampled and compared with its pr
 
 - The sampling period and the convergence threshold are respectively set using the `sampling_period` and `convergence_threshold` parameters of the `minimize` and `maximize` functions.
 - To use early stopping in the SB algorithm, set the `use_window` parameter to `True`.
-- If only some agents have converged when the maximum number of iterations is reached, the algorithm stops and only the converged agents are considered in the results.
+- If only some agents have converged when the maximum number of iterations is reached, the algorithm stops and only these agents are considered in the results.
 
 ```python
 # Stop with maximal iterations
@@ -144,19 +144,19 @@ This section deals with a more complex use of the SB algorithm, as it is closer 
 
 The SB algorithm is available in four different versions (Goto *et al.*) that result in small variations in the algorithm general operation. The four modes are:
 
-1. **Ballistic SB (bSB)**: uses the particles' position for the SB matrix computations; usually slower but more accurate.
-2. **Discrete SB (dSB)**: uses the sign of the particles' position for the SB matrix computations; usually fasyer but less accurate.
+1. **Ballistic SB (bSB)**: uses the particles' position for the SB matrix computations; usually faster but less accurate.
+2. **Discrete SB (dSB)**: uses the sign of the particles' position for the SB matrix computations; usually slower but more accurate.
 3. **Heated ballistic SB (HbSB)**: uses the bSB algorithm with a supplementary non-symplectic term to allow a higher solution space exploration.
 4. **Heated discrete SB (HdSB)**: uses the dSB algorithm with a supplementary non-symplectic term to allow a higher solution space exploration.
 
 These mode can be selected setting the parameters `ballistic` and `heat` to either `True` or `False` in the `Ising.optimize` method or the `minimize`/`maximize` functions.
 
 ```python
-sb.minimize(matrix, ballistic=True, heat=False) #bSB
-sb.minimize(matrix, ballistic=False, heat=True) #HdSB
+sb.minimize(matrix, ballistic=True, heat=False)  # bSB
+sb.minimize(matrix, ballistic=False, heat=True)  # HdSB
 
-sb.minimize(matrix, ballistic=False, heat=False) #dSB
-sb.maximize(matrix, ballistic=True, heat=True) #HbSB
+sb.maximize(matrix, ballistic=False, heat=False)  # dSB
+sb.maximize(matrix, ballistic=True, heat=True)  # HbSB
 ```
 
 ### SB Algorithm's hyperparameters setting
@@ -181,7 +181,7 @@ A lot of mathematical problems (QUBO, Travelling Salesman Problem, MAXCUT, ...) 
 
 **📐 Mathematics**
 
-- Quadratric Unconstrained Binary Optimization (QUBO)
+- Quadratic Unconstrained Binary Optimization (QUBO)
 - Number partitioning
 
 **💸 Finance**
