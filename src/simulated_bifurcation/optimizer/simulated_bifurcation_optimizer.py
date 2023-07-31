@@ -1,4 +1,4 @@
-from logging import warn
+import logging
 import torch
 from typing import Tuple
 from tqdm import tqdm
@@ -7,6 +7,13 @@ from .optimizer_mode import OptimizerMode
 from .stop_window import StopWindow
 from .symplectic_integrator import SymplecticIntegrator
 from .optimization_variables import OptimizationVariable
+
+
+LOGGER = logging.getLogger('simulated_bifurcation_optimizer')
+CONSOLE_HANDLER = logging.StreamHandler()
+CONSOLE_HANDLER.set_name(logging.WARN)
+CONSOLE_HANDLER.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+LOGGER.addHandler(CONSOLE_HANDLER)
 
 
 class SimulatedBifurcationOptimizer:
@@ -177,7 +184,7 @@ class SimulatedBifurcationOptimizer:
             if self.window.has_bifurcated_spins():
                 return self.window.get_bifurcated_spins()
             else:
-                warn('No agent has converged. Returned final momentums\' signs instead.')
+                LOGGER.warn('No agent has converged. Returned final momentums\' signs instead.')
                 return spins
         else:
             return spins

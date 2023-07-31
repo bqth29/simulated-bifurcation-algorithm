@@ -161,7 +161,7 @@ sb.maximize(matrix, ballistic=True, heat=True)  # HbSB
 
 ### SB Algorithm's hyperparameters setting
 
-The SB algorithm has a set of hyperparameters corresponding to physical constants derived from quantum theory, which have been fine-tuned (Goto *et al.*) to give the best results most of the time. However, depending on the properties of the instances used, different hyperparameters may be of interest. For this purpose, the `set_env` function can be used to modify their value.
+The SB algorithm has a set of hyperparameters corresponding to physical constants derived from quantum theory, which have been fine-tuned (Goto *et al.*) to give the best results most of the time. Nevertheless, the relevance of specific hyperparameters may vary depending on the properties of the instances. For this purpose, the `set_env` function can be used to modify their value.
 
 ```python
 # Custom hyperparameters values
