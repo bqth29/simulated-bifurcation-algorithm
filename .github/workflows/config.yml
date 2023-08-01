@@ -30,9 +30,13 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Run pytest and compute coverage
+      - name: Run tests with Pytest
         run: |
           coverage run -m pytest
+
+      - name: Coverage
+        run: |
+          coverage report
           coverage json
 
       - name: Upload coverage to Codecov
