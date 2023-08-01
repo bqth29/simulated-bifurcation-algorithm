@@ -1,4 +1,4 @@
-name: Publish to TestPyPI on Pull Request
+name: Publish to TestPyPI and upload coverage to CodeCov
 
 on:
   push:
@@ -25,7 +25,24 @@ jobs:
         python-version: 3.x
 
     - name: Install dependencies
-      run: pip install -r requirements.txt
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest
+
+    - name: Run tests with Pytest
+      run: |
+        coverage run -m pytest
+
+    - name: Coverage
+      run: |
+        coverage report
+        coverage json
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Build and publish to TestPyPI
       env:
