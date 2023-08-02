@@ -116,9 +116,11 @@ ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
+# IDEproject settings
 .spyderproject
 .spyproject
+.vscode/
+.idea
 
 # Rope project settings
 .ropeproject
@@ -139,8 +141,6 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-
-.vscode/
 
 # Test file
 __main__.py
