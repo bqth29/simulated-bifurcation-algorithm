@@ -1,4 +1,5 @@
 cmake==3.26.4
+coverage==5.5
 exceptiongroup==1.1.2
 filelock==3.12.2
 iniconfig==2.0.0

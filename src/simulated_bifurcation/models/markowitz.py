@@ -1,8 +1,9 @@
-from .integer import Integer
+from ..polynomial import IntegerPolynomial
 import torch
+import numpy as np
 from typing import Union
 
-class Markowitz(Integer):
+class Markowitz(IntegerPolynomial):
 
     """
     A representation of the Markowitz model for portolio optimization.
@@ -11,8 +12,8 @@ class Markowitz(Integer):
 
     def __init__(
         self, 
-        covariance: torch.Tensor, 
-        expected_return: torch.Tensor, 
+        covariance: Union[torch.Tensor, np.ndarray], 
+        expected_return: Union[torch.Tensor, np.ndarray], 
         risk_coefficient: float = 1, 
         number_of_bits: int = 1,
         dtype: torch.dtype=torch.float32,
@@ -20,16 +21,15 @@ class Markowitz(Integer):
     ) -> None:
 
         # Data
-        self.covariance       = covariance.to(dtype=dtype, device=device)
-        self.expected_return  = expected_return.to(dtype=dtype, device=device)
+        self.covariance = covariance.to(dtype=dtype, device=device)
+        self.expected_return = expected_return.to(dtype=dtype, device=device)
         self.risk_coefficient = risk_coefficient
-        super().__init__(- risk_coefficient * covariance, 
-                        - expected_return, number_of_bits,
-                        dtype, device)
+        super().__init__(- risk_coefficient * covariance, - expected_return, None, number_of_bits, dtype, device)
 
     @property
-    def portfolio(self) -> torch.Tensor: return self.solution
-
+    def portfolio(self) -> Union[torch.Tensor, None]:
+        return self.sb_result
+    
     @property
-    def objective_value(self) -> Union[float, None]:
-        return - super().objective_value
+    def gains(self) -> float:
+        return - self(self.sb_result) if self.sb_result is not None else 0.

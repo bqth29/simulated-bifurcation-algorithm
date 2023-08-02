@@ -1,4 +1,4 @@
-name: Codecov
+name: Build package
 
 on:
   push:
@@ -30,9 +30,14 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Run pytest
+      - name: Run tests with Pytest
         run: |
-          pytest
+          coverage run -m pytest
+
+      - name: Coverage
+        run: |
+          coverage report
+          coverage json
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
