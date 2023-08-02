@@ -1,3 +1,4 @@
+from .ising import Ising
 from .markowitz import Markowitz
-from .qubo import QUBO
 from .number_partitioning import NumberPartioning
+from .qubo import QUBO

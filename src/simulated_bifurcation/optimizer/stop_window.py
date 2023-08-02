@@ -1,6 +1,7 @@
+from typing import Tuple
+
 import torch
 from tqdm import tqdm
-from typing import Tuple
 
 
 class StopWindow:
@@ -11,7 +12,15 @@ class StopWindow:
     Allows an early stopping of the iterations and saves computation time.
     """
 
-    def __init__(self, n_spins: int, n_agents: int, convergence_threshold: int, dtype: torch.dtype, device: str, verbose: bool) -> None:
+    def __init__(
+        self,
+        n_spins: int,
+        n_agents: int,
+        convergence_threshold: int,
+        dtype: torch.dtype,
+        device: str,
+        verbose: bool,
+    ) -> None:
         self.n_spins = n_spins
         self.n_agents = n_agents
         self.convergence_threshold = convergence_threshold
@@ -25,15 +34,15 @@ class StopWindow:
     @property
     def shape(self) -> Tuple[int, int]:
         return (self.n_spins, self.n_agents)
-    
+
     def __init_progress_bar(self, verbose: bool) -> tqdm:
         return tqdm(
             total=self.n_agents,
-            desc='Bifurcated agents',
+            desc="Bifurcated agents",
             disable=not verbose,
             smoothing=0,
         )
-    
+
     def __init_tensor(self, dtype: torch.dtype) -> torch.Tensor:
         return torch.zeros(self.n_agents, device=self.device, dtype=dtype)
 
@@ -53,21 +62,15 @@ class StopWindow:
         )
 
     def __set_previously_bifurcated_spins(self) -> None:
-        self.previously_bifurcated = self.bifurcated * 1.
+        self.previously_bifurcated = self.bifurcated * 1.0
 
     def __set_newly_bifurcated_spins(self) -> None:
         torch.logical_xor(
-            self.bifurcated,
-            self.previously_bifurcated,
-            out=self.newly_bifurcated
+            self.bifurcated, self.previously_bifurcated, out=self.newly_bifurcated
         )
 
     def __update_bifurcated_spins(self) -> None:
-        torch.eq(
-            self.stability,
-            self.convergence_threshold - 1,
-            out=self.bifurcated
-        )
+        torch.eq(self.stability, self.convergence_threshold - 1, out=self.bifurcated)
 
     def __update_stability_streak(self) -> None:
         self.stability[torch.logical_and(self.equal, self.not_bifurcated)] += 1
@@ -83,9 +86,9 @@ class StopWindow:
 
     def __compare_spins(self, sampled_spins: torch.Tensor) -> None:
         torch.eq(
-            torch.einsum('ik, ik -> k', self.current_spins, sampled_spins),
+            torch.einsum("ik, ik -> k", self.current_spins, sampled_spins),
             self.n_spins,
-            out=self.equal
+            out=self.equal,
         )
 
     def __store_spins(self, sampled_spins: torch.Tensor) -> None:
@@ -93,7 +96,7 @@ class StopWindow:
 
     def __get_number_newly_bifurcated_agents(self) -> int:
         return self.newly_bifurcated.sum().item()
-    
+
     def update(self, sampled_spins: torch.Tensor):
         self.__compare_spins(sampled_spins)
         self.__update_stability_streak()
@@ -103,10 +106,10 @@ class StopWindow:
         self.__update_final_spins(sampled_spins)
         self.__store_spins(sampled_spins)
         self.progress.update(self.__get_number_newly_bifurcated_agents())
-    
+
     def must_continue(self) -> bool:
         return torch.any(self.stability < self.convergence_threshold - 1)
-    
+
     def has_bifurcated_spins(self) -> bool:
         return torch.any(self.bifurcated)
 

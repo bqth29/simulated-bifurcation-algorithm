@@ -1,18 +1,21 @@
 import logging
-import torch
 from typing import Tuple
-from tqdm import tqdm
+
+import torch
 from numpy import minimum
+from tqdm import tqdm
+
+from .optimization_variables import OptimizationVariable
 from .optimizer_mode import OptimizerMode
 from .stop_window import StopWindow
 from .symplectic_integrator import SymplecticIntegrator
-from .optimization_variables import OptimizationVariable
 
-
-LOGGER = logging.getLogger('simulated_bifurcation_optimizer')
+LOGGER = logging.getLogger("simulated_bifurcation_optimizer")
 CONSOLE_HANDLER = logging.StreamHandler()
 CONSOLE_HANDLER.set_name(logging.WARN)
-CONSOLE_HANDLER.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+CONSOLE_HANDLER.setFormatter(
+    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+)
 LOGGER.addHandler(CONSOLE_HANDLER)
 
 
@@ -60,7 +63,7 @@ class SimulatedBifurcationOptimizer:
         agents: int,
         mode: OptimizerMode,
         heat: bool,
-        verbose: bool
+        verbose: bool,
     ) -> None:
         # Optimizer setting
         self.mode = mode
@@ -88,25 +91,31 @@ class SimulatedBifurcationOptimizer:
 
     def __init_progress_bar(self, max_steps: int, verbose: bool) -> None:
         self.iterations_progress = tqdm(
-            total=max_steps, desc='Iterations',
-            disable=not verbose, smoothing=0.1,
-            mininterval=0.5
+            total=max_steps,
+            desc="Iterations",
+            disable=not verbose,
+            smoothing=0.1,
+            mininterval=0.5,
         )
 
     def __init_quadratic_scale_parameter(self, matrix: torch.Tensor):
-        self.quadratic_scale_parameter =  0.7 / (torch.std(matrix) * (matrix.shape[0])**(1/2))
+        self.quadratic_scale_parameter = 0.7 / (
+            torch.std(matrix) * (matrix.shape[0]) ** (1 / 2)
+        )
 
     def __init_window(self, matrix: torch.Tensor, use_window: bool) -> None:
         self.window = StopWindow(
-            matrix.shape[0], self.agents,
-            self.convergence_threshold, matrix.dtype,
-            str(matrix.device), (self.verbose and use_window)
+            matrix.shape[0],
+            self.agents,
+            self.convergence_threshold,
+            matrix.dtype,
+            str(matrix.device),
+            (self.verbose and use_window),
         )
 
     def __init_symplectic_integrator(self, matrix: torch.Tensor) -> None:
         self.symplectic_integrator = SymplecticIntegrator(
-            (matrix.shape[0], self.agents),
-            self.mode, matrix.dtype, str(matrix.device)
+            (matrix.shape[0], self.agents), self.mode, matrix.dtype, str(matrix.device)
         )
 
     def __step_update(self) -> None:
@@ -127,16 +136,27 @@ class SimulatedBifurcationOptimizer:
         self.iterations_progress.close()
         self.window.progress.close()
 
-    def __symplectic_update(self, matrix: torch.Tensor, use_window: bool) -> torch.Tensor:
-
+    def __symplectic_update(
+        self, matrix: torch.Tensor, use_window: bool
+    ) -> torch.Tensor:
         while self.run:
+            if self.heated:
+                position_copy = self.symplectic_integrator.position.clone().detach()
 
-            if self.heated: position_copy = self.symplectic_integrator.position.clone().detach()
+            (
+                momentum_coefficient,
+                position_coefficient,
+                quadratic_coefficient,
+            ) = self.__compute_symplectic_coefficients()
+            self.symplectic_integrator.step(
+                momentum_coefficient,
+                position_coefficient,
+                quadratic_coefficient,
+                matrix,
+            )
 
-            momentum_coefficient, position_coefficient, quadratic_coefficient = self.__compute_symplectic_coefficients()
-            self.symplectic_integrator.step(momentum_coefficient, position_coefficient, quadratic_coefficient, matrix)
-
-            if self.heated: self.__heat(position_copy)
+            if self.heated:
+                self.__heat(position_copy)
 
             self.__step_update()
             sampled_spins = self.symplectic_integrator.sample_spins()
@@ -148,19 +168,23 @@ class SimulatedBifurcationOptimizer:
         return sampled_spins
 
     def __heat(self, position_copy: torch.Tensor) -> None:
-        torch.add(self.symplectic_integrator.position, self.time_step * self.heat_coefficient * position_copy, out=self.symplectic_integrator.position)
+        torch.add(
+            self.symplectic_integrator.position,
+            self.time_step * self.heat_coefficient * position_copy,
+            out=self.symplectic_integrator.position,
+        )
 
     def __compute_symplectic_coefficients(self) -> Tuple[float, float, float]:
         pressure = self.__pressure
-        momentum_coefficient = self.time_step * (1. + pressure)
-        position_coefficient = self.time_step * (pressure - 1.)
+        momentum_coefficient = self.time_step * (1.0 + pressure)
+        position_coefficient = self.time_step * (pressure - 1.0)
         quadratic_coefficient = self.time_step * self.quadratic_scale_parameter
         return momentum_coefficient, position_coefficient, quadratic_coefficient
 
     @property
     def __pressure(self):
-        return minimum(self.time_step * self.step * self.pressure_slope, 1.)
-    
+        return minimum(self.time_step * self.step * self.pressure_slope, 1.0)
+
     def run_integrator(self, matrix: torch.Tensor, use_window: bool) -> torch.Tensor:
         """
         Runs the Simulated Bifurcation (SB) algorithm.
@@ -169,7 +193,7 @@ class SimulatedBifurcationOptimizer:
         spins = self.__symplectic_update(matrix, use_window)
         self.__close_progress_bars()
         return self.get_final_spins(spins, use_window)
-    
+
     def get_final_spins(self, spins: torch.Tensor, use_window: bool) -> torch.Tensor:
         """
         Returns the final spins retrieved at the end of the
@@ -180,11 +204,13 @@ class SimulatedBifurcationOptimizer:
 
         If the stop window was not used, the final spins are returned.
         """
-        if use_window: 
+        if use_window:
             if self.window.has_bifurcated_spins():
                 return self.window.get_bifurcated_spins()
             else:
-                LOGGER.warn('No agent has converged. Returned final momentums\' signs instead.')
+                LOGGER.warn(
+                    "No agent has converged. Returned final momentums' signs instead."
+                )
                 return spins
         else:
             return spins

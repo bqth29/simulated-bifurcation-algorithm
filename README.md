@@ -125,10 +125,11 @@ At regular intervals, the state of the spins is sampled and compared with its pr
 sb.minimize(matrix, max_steps=10000)
 
 # Early stopping
-sb.minimize(matrix,
+sb.minimize(
+    matrix,
     sampling_period=30,
     convergence_threshold=50,
-    use_window=True
+    use_window=True,
 )
 ```
 

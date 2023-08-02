@@ -1,7 +1,9 @@
 from typing import List, Tuple, Union
+
 import torch
 from numpy import argmin, ndarray
-from .optimizer import SimulatedBifurcationOptimizer, OptimizerMode
+
+from .optimizer import OptimizerMode, SimulatedBifurcationOptimizer
 
 
 class IsingCore:
@@ -16,10 +18,11 @@ class IsingCore:
     """
 
     def __init__(
-        self, J: Union[torch.Tensor, ndarray],
+        self,
+        J: Union[torch.Tensor, ndarray],
         h: Union[torch.Tensor, ndarray, None] = None,
-        dtype: torch.dtype=torch.float32,
-        device: str = 'cpu'
+        dtype: torch.dtype = torch.float32,
+        device: str = "cpu",
     ) -> None:
         self.dimension = J.shape[0]
         if isinstance(J, torch.Tensor):
@@ -30,34 +33,40 @@ class IsingCore:
 
     def __len__(self) -> int:
         return self.dimension
-    
+
     def __neg__(self):
-        return IsingCore(- self.J, - self.h, self.dtype, self.device)
+        return IsingCore(-self.J, -self.h, self.dtype, self.device)
 
     def __call__(self, spins: torch.Tensor) -> Union[None, float, List[float]]:
-        if spins is None: return None
+        if spins is None:
+            return None
         if isinstance(spins, ndarray):
             spins = torch.from_numpy(spins).to(dtype=self.dtype, device=self.device)
         if not isinstance(spins, torch.Tensor):
             raise TypeError(f"Expected a Tensor but got {type(spins)}.")
         if torch.any(torch.abs(spins) != 1):
-            raise ValueError('Spins must be either 1 or -1.')
+            raise ValueError("Spins must be either 1 or -1.")
         if spins.shape in [(self.dimension,), (self.dimension, 1), (1, self.dimension)]:
             spins = spins.reshape((-1, 1))
             J, h = self.J, self.h.reshape((-1, 1))
-            energy = -.5 * spins.t() @ J @ spins + spins.t() @ h
+            energy = -0.5 * spins.t() @ J @ spins + spins.t() @ h
             return energy.item()
         if spins.shape[0] == self.dimension:
             J, h = self.J, self.h.reshape((-1, 1))
-            energies = torch.einsum('ij, ji -> i', spins.t(), -.5 * J @ spins + h)
+            energies = torch.einsum("ij, ji -> i", spins.t(), -0.5 * J @ spins + h)
             return energies.tolist()
         else:
             raise ValueError(f"Expected {self.dimension} rows, got {spins.shape[0]}.")
-        
-    def __init_from_tensor(self, J: torch.Tensor, h: Union[torch.Tensor, None],
-                          dtype: torch.dtype, device: str):
+
+    def __init_from_tensor(
+        self,
+        J: torch.Tensor,
+        h: Union[torch.Tensor, None],
+        dtype: torch.dtype,
+        device: str,
+    ):
         null_vector = torch.zeros(self.dimension).to(device=device, dtype=dtype)
-        if h is None: 
+        if h is None:
             self.J = J.to(device=device, dtype=dtype)
             self.h = null_vector
             self.linear_term = False
@@ -65,17 +74,19 @@ class IsingCore:
             self.J = J.to(device=device, dtype=dtype)
             self.h = null_vector
             self.linear_term = False
-        else: 
+        else:
             self.J = J.to(device=device, dtype=dtype)
             self.h = h.reshape(self.dimension).to(device=device, dtype=dtype)
             self.linear_term = True
 
-    def __init_from_array(self, J: ndarray, h: Union[ndarray, None],
-                          dtype: torch.dtype, device: str):
+    def __init_from_array(
+        self, J: ndarray, h: Union[ndarray, None], dtype: torch.dtype, device: str
+    ):
         self.__init_from_tensor(
             torch.from_numpy(J),
             None if h is None else torch.from_numpy(h),
-            dtype, device
+            dtype,
+            device,
         )
 
     def clip_vector_to_tensor(self, tensor: torch.Tensor) -> torch.Tensor:
@@ -84,38 +95,46 @@ class IsingCore:
         into a single matrix that can be processed by the
         Simulated Bifurcation (SB) algorithm.
         """
-        tensor = torch.zeros((self.dimension + 1, self.dimension + 1),
-            dtype=self.dtype, device=self.device)
-        tensor[:self.dimension, :self.dimension] = self.J
-        tensor[:self.dimension, self.dimension] = - self.h
-        tensor[self.dimension, :self.dimension] = - self.h
+        tensor = torch.zeros(
+            (self.dimension + 1, self.dimension + 1),
+            dtype=self.dtype,
+            device=self.device,
+        )
+        tensor[: self.dimension, : self.dimension] = self.J
+        tensor[: self.dimension, self.dimension] = -self.h
+        tensor[self.dimension, : self.dimension] = -self.h
         return tensor
 
     @staticmethod
     def remove_diagonal(tensor: torch.Tensor) -> torch.Tensor:
         return tensor - torch.diag(torch.diag(tensor))
-    
+
     @staticmethod
     def symmetrize(tensor: torch.Tensor) -> torch.Tensor:
-        return .5 * (tensor + tensor.t())
-    
+        return 0.5 * (tensor + tensor.t())
+
     def as_simulated_bifurcation_tensor(self) -> torch.Tensor:
         tensor = IsingCore.remove_diagonal(IsingCore.symmetrize(self.J))
         return self.clip_vector_to_tensor(tensor) if self.linear_term else tensor
 
     @property
-    def dtype(self) -> torch.dtype: return self.J.dtype
+    def dtype(self) -> torch.dtype:
+        return self.J.dtype
 
     @property
-    def device(self) -> torch.device: return self.J.device
+    def device(self) -> torch.device:
+        return self.J.device
 
     @property
     def ground_state(self) -> Union[torch.Tensor, None]:
-        if self.computed_spins is None: return None
-        else: return self.min(self.computed_spins)
+        if self.computed_spins is None:
+            return None
+        else:
+            return self.min(self.computed_spins)
 
     @property
-    def energy(self) -> Union[float, None]: return self(self.ground_state)
+    def energy(self) -> Union[float, None]:
+        return self(self.ground_state)
 
     def min(self, spins: torch.Tensor) -> torch.Tensor:
         """
@@ -134,7 +153,7 @@ class IsingCore:
         use_window: bool = True,
         ballistic: bool = False,
         heat: bool = False,
-        verbose: bool = True
+        verbose: bool = True,
     ):
         """
         Computes a local minimum of the Ising problem using the
@@ -198,10 +217,15 @@ class IsingCore:
             whether to display a progress bar to monitor the algorithm's
             evolution (default is True)
         """
-        optimizer = SimulatedBifurcationOptimizer(convergence_threshold,
-                sampling_period, max_steps, agents,
-                OptimizerMode.BALLISTIC if ballistic else OptimizerMode.DISCRETE,
-                heat, verbose)
+        optimizer = SimulatedBifurcationOptimizer(
+            convergence_threshold,
+            sampling_period,
+            max_steps,
+            agents,
+            OptimizerMode.BALLISTIC if ballistic else OptimizerMode.DISCRETE,
+            heat,
+            verbose,
+        )
         tensor = self.as_simulated_bifurcation_tensor()
         spins = optimizer.run_integrator(tensor, use_window)
         self.computed_spins = spins[-1] * spins[:-1, :] if self.linear_term else spins

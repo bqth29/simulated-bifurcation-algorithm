@@ -1,6 +1,6 @@
 import torch
-from src.simulated_bifurcation.optimizer import StopWindow
 
+from src.simulated_bifurcation.optimizer import StopWindow
 
 CONVERGENCE_THRESHOLD = 3
 SPINS = 3
@@ -13,8 +13,16 @@ SCENARIO = [
     torch.Tensor([[-1, 1], [-1, -1], [1, -1]]),
 ]
 
+
 def test_init_window():
-    window = StopWindow(SPINS, AGENTS, CONVERGENCE_THRESHOLD, dtype=torch.float32, device='cpu', verbose=False)
+    window = StopWindow(
+        SPINS,
+        AGENTS,
+        CONVERGENCE_THRESHOLD,
+        dtype=torch.float32,
+        device="cpu",
+        verbose=False,
+    )
     assert window.n_spins == 3
     assert window.n_agents == 2
     assert window.convergence_threshold == 3
@@ -22,9 +30,17 @@ def test_init_window():
     assert torch.all(window.current_spins == torch.zeros((3, 2)))
     assert torch.all(window.final_spins == torch.zeros((3, 2)))
 
+
 def test_use_scenario():
-    window = StopWindow(SPINS, AGENTS, CONVERGENCE_THRESHOLD, dtype=torch.float32, device='cpu', verbose=False)
-    
+    window = StopWindow(
+        SPINS,
+        AGENTS,
+        CONVERGENCE_THRESHOLD,
+        dtype=torch.float32,
+        device="cpu",
+        verbose=False,
+    )
+
     # First update
     assert torch.all(window.previously_bifurcated == torch.Tensor([False, False]))
     window.update(SCENARIO[0])
