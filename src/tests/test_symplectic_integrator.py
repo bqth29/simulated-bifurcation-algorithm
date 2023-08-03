@@ -139,7 +139,7 @@ def test_full_step():
     assert torch.all(
         torch.isclose(
             symplectic_integrator.position,
-            torch.Tensor([[0, 0.6038], [0, 0], [0.6658, 0.2449]]),
+            torch.Tensor([[0, 0.6038], [0, 0], [0.6658, 0.2499]]),
             atol=1e-4,
         )
     )

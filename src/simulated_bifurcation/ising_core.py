@@ -70,7 +70,7 @@ class IsingCore:
             self.J = J.to(device=device, dtype=dtype)
             self.h = null_vector
             self.linear_term = False
-        elif torch.equal(h, null_vector):
+        elif torch.equal(h.reshape(self.dimension).to(device=device, dtype=dtype), null_vector):
             self.J = J.to(device=device, dtype=dtype)
             self.h = null_vector
             self.linear_term = False
