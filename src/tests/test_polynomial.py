@@ -26,14 +26,14 @@ def test_init_polynomial_from_tensors():
     polynomial = IsingPolynomialInterfaceImpl(
         torch.Tensor(matrix), torch.Tensor(vector), constant
     )
-    assert torch.all(polynomial.matrix == torch.Tensor(matrix))
-    assert torch.all(polynomial.vector == torch.Tensor(vector))
+    assert torch.equal(polynomial.matrix, torch.Tensor(matrix))
+    assert torch.equal(polynomial.vector, torch.Tensor(vector))
     assert polynomial.constant == 1.0
     assert polynomial.dimension == 3
     assert len(polynomial) == 3
     assert polynomial[0] == 1.0
-    assert torch.all(polynomial[2] == torch.Tensor(matrix))
-    assert torch.all(polynomial[1] == torch.Tensor(vector))
+    assert torch.equal(polynomial[2], torch.Tensor(matrix))
+    assert torch.equal(polynomial[1], torch.Tensor(vector))
     assert polynomial.dtype == torch.float32
     assert polynomial.device == torch.device("cpu")
     with pytest.raises(ValueError):
@@ -44,38 +44,38 @@ def test_init_polynomial_from_arrays():
     polynomial = IsingPolynomialInterfaceImpl(
         np.array(matrix), np.array(vector), constant
     )
-    assert torch.all(polynomial.matrix == torch.Tensor(matrix))
-    assert torch.all(polynomial.vector == torch.Tensor(vector))
+    assert torch.equal(polynomial.matrix, torch.Tensor(matrix))
+    assert torch.equal(polynomial.vector, torch.Tensor(vector))
     assert polynomial.constant == 1.0
     assert polynomial.dimension == 3
     assert len(polynomial) == 3
     assert polynomial[0] == 1.0
-    assert torch.all(polynomial[2] == torch.Tensor(matrix))
-    assert torch.all(polynomial[1] == torch.Tensor(vector))
+    assert torch.equal(polynomial[2], torch.Tensor(matrix))
+    assert torch.equal(polynomial[1], torch.Tensor(vector))
 
 
 def test_init_polynomial_from_lists():
     polynomial = IsingPolynomialInterfaceImpl(matrix, vector, constant)
-    assert torch.all(polynomial.matrix == torch.Tensor(matrix))
-    assert torch.all(polynomial.vector == torch.Tensor(vector))
+    assert torch.equal(polynomial.matrix, torch.Tensor(matrix))
+    assert torch.equal(polynomial.vector, torch.Tensor(vector))
     assert polynomial.constant == 1.0
     assert polynomial.dimension == 3
     assert len(polynomial) == 3
     assert polynomial[0] == 1.0
-    assert torch.all(polynomial[2] == torch.Tensor(matrix))
-    assert torch.all(polynomial[1] == torch.Tensor(vector))
+    assert torch.equal(polynomial[2], torch.Tensor(matrix))
+    assert torch.equal(polynomial[1], torch.Tensor(vector))
 
 
 def test_init_polynomial_without_order_one_and_zero():
     polynomial = IsingPolynomialInterfaceImpl(torch.Tensor(matrix))
-    assert torch.all(polynomial.matrix == torch.Tensor(matrix))
-    assert torch.all(polynomial.vector == 0)
+    assert torch.equal(polynomial.matrix, torch.Tensor(matrix))
+    assert torch.equal(polynomial.vector, torch.zeros(polynomial.dimension))
     assert polynomial.constant == 0.0
     assert polynomial.dimension == 3
     assert len(polynomial) == 3
     assert polynomial[0] == 0.0
-    assert torch.all(polynomial[2] == torch.Tensor(matrix))
-    assert torch.all(polynomial[1] == 0)
+    assert torch.equal(polynomial[2], torch.Tensor(matrix))
+    assert torch.equal(polynomial[1], torch.zeros(polynomial.dimension))
 
 
 def test_init_with_wrong_parameters():

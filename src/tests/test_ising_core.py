@@ -14,8 +14,8 @@ h = [1, 0, -1]
 
 def test_init_ising_model_from_tensors():
     ising = IsingCore(torch.Tensor(J), torch.Tensor(h))
-    assert torch.all(ising.J == torch.Tensor(J))
-    assert torch.all(ising.h == torch.Tensor(h))
+    assert torch.equal(ising.J, torch.Tensor(J))
+    assert torch.equal(ising.h, torch.Tensor(h))
     assert ising.linear_term
     assert len(ising) == 3
     assert ising.dimension == 3
@@ -23,8 +23,8 @@ def test_init_ising_model_from_tensors():
 
 def test_init_ising_model_from_arrays():
     ising = IsingCore(np.array(J), np.array(h))
-    assert torch.all(ising.J == torch.Tensor(J))
-    assert torch.all(ising.h == torch.Tensor(h))
+    assert torch.equal(ising.J, torch.Tensor(J))
+    assert torch.equal(ising.h, torch.Tensor(h))
     assert ising.linear_term
     assert len(ising) == 3
     assert ising.dimension == 3
@@ -32,8 +32,8 @@ def test_init_ising_model_from_arrays():
 
 def test_ising_without_linear_term():
     ising = IsingCore(torch.Tensor(J))
-    assert torch.all(ising.J == torch.Tensor(J))
-    assert torch.all(ising.h == torch.zeros(3))
+    assert torch.equal(ising.J, torch.Tensor(J))
+    assert torch.equal(ising.h, torch.zeros(3))
     assert not ising.linear_term
     assert len(ising) == 3
     assert ising.dimension == 3
@@ -41,8 +41,8 @@ def test_ising_without_linear_term():
 
 def test_init_ising_with_null_h_vector():
     ising = IsingCore(torch.Tensor(J), torch.zeros(3))
-    assert torch.all(ising.J == torch.Tensor(J))
-    assert torch.all(ising.h == torch.zeros(3))
+    assert torch.equal(ising.J, torch.Tensor(J))
+    assert torch.equal(ising.h, torch.zeros(3))
     assert not ising.linear_term
     assert len(ising) == 3
     assert ising.dimension == 3
@@ -51,16 +51,16 @@ def test_init_ising_with_null_h_vector():
 def test_clip_vector_to_tensor():
     ising = IsingCore(torch.Tensor(J), torch.Tensor(h))
     attached = ising.clip_vector_to_tensor(torch.Tensor(J))
-    assert torch.all(
-        attached
-        == torch.Tensor(
+    assert torch.equal(
+        attached,
+        torch.Tensor(
             [
                 [1, 2, 3, -1],
                 [2, 1, 4, 0],
                 [3, 4, 1, 1],
                 [-1, 0, 1, 0],
             ]
-        )
+        ),
     )
 
 
@@ -99,20 +99,20 @@ def test_simulated_bifurcation_tensor():
             [5, 7, 0],
         ]
     )
-    assert torch.all(expected_result == ising.as_simulated_bifurcation_tensor())
+    assert torch.equal(ising.as_simulated_bifurcation_tensor(), expected_result)
 
 
 def test_min():
     ising = IsingCore(np.array(J), np.array(h))
     spins = torch.Tensor([[1, -1], [1, 1], [-1, -1]])
-    assert torch.all(ising.min(spins) == torch.Tensor([-1, 1, -1]))
+    assert torch.equal(ising.min(spins), torch.Tensor([-1, 1, -1]))
 
 
 def test_negative_ising():
     ising = IsingCore(torch.Tensor(J), torch.Tensor(h))
     negative_ising = -ising
-    assert torch.all(negative_ising.J == -torch.Tensor(J))
-    assert torch.all(negative_ising.h == -torch.Tensor(h))
+    assert torch.equal(negative_ising.J, -torch.Tensor(J))
+    assert torch.equal(negative_ising.h, -torch.Tensor(h))
     assert negative_ising.linear_term
     assert len(negative_ising) == 3
     assert negative_ising.dimension == 3

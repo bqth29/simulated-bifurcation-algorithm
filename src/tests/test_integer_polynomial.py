@@ -22,9 +22,9 @@ def test_init_integer_polynomial():
     ising.computed_spins = torch.Tensor(
         [[1, -1], [-1, 1], [1, 1], [-1, -1], [-1, -1], [1, -1]]
     )
-    assert torch.all(
-        ising.J
-        == torch.Tensor(
+    assert torch.equal(
+        ising.J,
+        torch.Tensor(
             [
                 [0, 0, -0.5, -1, 0.5, 1],
                 [0, 0, -1, -2, 1, 2],
@@ -33,10 +33,10 @@ def test_init_integer_polynomial():
                 [0.5, 1, -1, -2, 0, 0],
                 [1, 2, -2, -4, 0, 0],
             ]
-        )
+        ),
     )
-    assert torch.all(ising.h == torch.Tensor([0.5, 1, 5.5, 11, 0, 0]))
-    assert torch.all(integer_polynomial.convert_spins(ising) == torch.Tensor([1, 1, 2]))
+    assert torch.equal(ising.h, torch.Tensor([0.5, 1, 5.5, 11, 0, 0]))
+    assert torch.equal(integer_polynomial.convert_spins(ising), torch.Tensor([1, 1, 2]))
 
 
 def test_call_integer_polynomial():
@@ -48,6 +48,6 @@ def test_call_integer_polynomial():
 
 def test_optimize_integer_polynomial():
     integer_polynomial = IntegerPolynomial(matrix, vector, constant, 2)
-    assert torch.all(
-        torch.Tensor([3, 0, 3]) == integer_polynomial.optimize(verbose=False)
+    assert torch.equal(
+        integer_polynomial.optimize(verbose=False), torch.Tensor([3, 0, 3])
     )

@@ -16,18 +16,18 @@ def test_init_binary_polynomial():
     binary_polynomial = BinaryPolynomial(matrix, vector, constant)
     ising = binary_polynomial.to_ising()
     ising.computed_spins = torch.Tensor([[1, -1], [-1, 1], [1, 1]])
-    assert torch.all(
-        ising.J
-        == torch.Tensor(
+    assert torch.equal(
+        ising.J,
+        torch.Tensor(
             [
                 [0, -0.5, 0.5],
                 [-0.5, 0, -1],
                 [0.5, -1, 0],
             ]
-        )
+        ),
     )
-    assert torch.all(ising.h == torch.Tensor([0.5, 2.5, -1]))
-    assert torch.all(binary_polynomial.convert_spins(ising) == torch.Tensor([1, 0, 1]))
+    assert torch.equal(ising.h, torch.Tensor([0.5, 2.5, -1]))
+    assert torch.equal(binary_polynomial.convert_spins(ising), torch.Tensor([1, 0, 1]))
 
 
 def test_call_binary_polynomial():
@@ -39,6 +39,6 @@ def test_call_binary_polynomial():
 
 def test_optimize_binary_polynomial():
     binary_polynomial = BinaryPolynomial(matrix, vector, constant)
-    assert torch.all(
-        torch.Tensor([1, 0, 1]) == binary_polynomial.optimize(verbose=False)
+    assert torch.equal(
+        binary_polynomial.optimize(verbose=False), torch.Tensor([1, 0, 1])
     )
