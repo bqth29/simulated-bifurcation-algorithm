@@ -29,16 +29,16 @@ class SimulatedBifurcationOptimizer:
 
     There are different version of the SB algorithm:
     - the ballistic Simulated Bifurcation (bSB) which uses the particles'
-    position for the matrix computations (usually slower but more accurate)
+    position for the matrix computations (usually faster but less accurate)
     - the discrete Simulated Bifurcation (dSB) which uses the particles'
-    spin for the matrix computations (usually faster but less accurate)
+    spin for the matrix computations (usually slower but more accurate)
     - the Heated ballistic Simulated Bifurcation (HbSB) which uses the bSB
     algorithm with a supplementary non-symplectic term to refine the model
     - the Heated ballistic Simulated Bifurcation (HdSB) which uses the dSB
     algorithm with a supplementary non-symplectic term to refine the model
 
     To stop the iterations of the symplectic integrator, a number of maximum
-    steps needs to be specified. However a refined way to stop is also possible
+    steps needs to be specified. However, a refined way to stop is also possible
     using a window that checks that the spins have not changed among a set
     number of previous steps. In practice, a every fixed number of steps
     (called a sampling period) the current spins will be compared to the
@@ -48,7 +48,7 @@ class SimulatedBifurcationOptimizer:
 
     Finally, it is possible to make several particle vectors at the same
     time (each one being called an agent). As the vectors are randomly
-    initialized, using several agents helps exploring the solution space
+    initialized, using several agents helps to explore the solution space
     and increases the probability of finding a better solution, though it
     also slightly increases the computation time. In the end, only the best
     spin vector (energy-wise) is kept and used as the new Ising model's
