@@ -208,7 +208,7 @@ class SimulatedBifurcationOptimizer:
             if self.window.has_bifurcated_spins():
                 return self.window.get_bifurcated_spins()
             else:
-                LOGGER.warn(
+                LOGGER.warning(
                     "No agent has converged. Returned final momentums' signs instead."
                 )
                 return spins
