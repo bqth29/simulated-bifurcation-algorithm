@@ -1,7 +1,8 @@
 from typing import Tuple
 
 import torch
-from optimizer_mode import OptimizerMode
+
+from .optimizer_mode import OptimizerMode
 
 
 class SymplecticIntegrator:
@@ -19,32 +20,32 @@ class SymplecticIntegrator:
         dtype: torch.dtype,
         device: str,
     ):
-        self.momentum = self.__init_oscillator(shape, dtype, device)
-        self.position = self.__init_oscillator(shape, dtype, device)
+        self.position = SymplecticIntegrator.__init_oscillator(shape, dtype, device)
+        self.momentum = SymplecticIntegrator.__init_oscillator(shape, dtype, device)
         self.activation_function = mode.activation_function
 
     @staticmethod
     def __init_oscillator(shape: Tuple[int, int], dtype: torch.dtype, device: str):
         return 2 * torch.rand(size=shape, device=device, dtype=dtype) - 1
 
-    def momentum_update(self, coefficient: float) -> None:
-        torch.add(self.momentum, coefficient * self.position, out=self.momentum)
-
     def position_update(self, coefficient: float) -> None:
         torch.add(self.position, coefficient * self.momentum, out=self.position)
 
-    def quadratic_position_update(
+    def momentum_update(self, coefficient: float) -> None:
+        torch.add(self.momentum, coefficient * self.position, out=self.momentum)
+
+    def quadratic_momentum_update(
         self, coefficient: float, matrix: torch.Tensor
     ) -> None:
         torch.add(
-            self.position,
-            coefficient * matrix @ self.activation_function(self.momentum),
-            out=self.position,
+            self.momentum,
+            coefficient * matrix @ self.activation_function(self.position),
+            out=self.momentum,
         )
 
     def simulate_inelastic_walls(self) -> None:
-        self.position[torch.abs(self.momentum) > 1.0] = 0
-        torch.clip(self.momentum, -1.0, 1.0, out=self.momentum)
+        self.momentum[torch.abs(self.position) > 1.0] = 0
+        torch.clip(self.position, -1.0, 1.0, out=self.position)
 
     def step(
         self,
@@ -55,8 +56,8 @@ class SymplecticIntegrator:
     ) -> None:
         self.momentum_update(momentum_coefficient)
         self.position_update(position_coefficient)
-        self.quadratic_position_update(quadratic_coefficient, matrix)
+        self.quadratic_momentum_update(quadratic_coefficient, matrix)
         self.simulate_inelastic_walls()
 
     def sample_spins(self) -> torch.Tensor:
-        return torch.sign(self.momentum)
+        return torch.sign(self.position)

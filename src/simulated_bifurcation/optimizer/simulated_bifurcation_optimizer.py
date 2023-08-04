@@ -141,7 +141,7 @@ class SimulatedBifurcationOptimizer:
     ) -> torch.Tensor:
         while self.run:
             if self.heated:
-                position_copy = self.symplectic_integrator.position.clone().detach()
+                momentum_copy = self.symplectic_integrator.momentum.clone().detach()
 
             (
                 momentum_coefficient,
@@ -156,7 +156,7 @@ class SimulatedBifurcationOptimizer:
             )
 
             if self.heated:
-                self.__heat(position_copy)
+                self.__heat(momentum_copy)
 
             self.__step_update()
             sampled_spins = self.symplectic_integrator.sample_spins()
@@ -167,17 +167,17 @@ class SimulatedBifurcationOptimizer:
 
         return sampled_spins
 
-    def __heat(self, position_copy: torch.Tensor) -> None:
+    def __heat(self, momentum_copy: torch.Tensor) -> None:
         torch.add(
-            self.symplectic_integrator.position,
-            self.time_step * self.heat_coefficient * position_copy,
-            out=self.symplectic_integrator.position,
+            self.symplectic_integrator.momentum,
+            self.time_step * self.heat_coefficient * momentum_copy,
+            out=self.symplectic_integrator.momentum,
         )
 
     def __compute_symplectic_coefficients(self) -> Tuple[float, float, float]:
         pressure = self.__pressure
-        momentum_coefficient = self.time_step * (1.0 + pressure)
-        position_coefficient = self.time_step * (pressure - 1.0)
+        position_coefficient = self.time_step * (1.0 + pressure)
+        momentum_coefficient = self.time_step * (pressure - 1.0)
         quadratic_coefficient = self.time_step * self.quadratic_scale_parameter
         return momentum_coefficient, position_coefficient, quadratic_coefficient
 
@@ -209,7 +209,7 @@ class SimulatedBifurcationOptimizer:
                 return self.window.get_bifurcated_spins()
             else:
                 LOGGER.warning(
-                    "No agent has converged. Returned final momentums' signs instead."
+                    "No agent has converged. Returned final positions' signs instead."
                 )
                 return spins
         else:
