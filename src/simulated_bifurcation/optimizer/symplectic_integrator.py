@@ -29,18 +29,20 @@ class SymplecticIntegrator:
         return 2 * torch.rand(size=shape, device=device, dtype=dtype) - 1
 
     def position_update(self, coefficient: float) -> None:
-        torch.add(self.position, coefficient * self.momentum, out=self.position)
+        torch.add(self.position, self.momentum, alpha=coefficient, out=self.position)
 
     def momentum_update(self, coefficient: float) -> None:
-        torch.add(self.momentum, coefficient * self.position, out=self.momentum)
+        torch.add(self.momentum, self.position, alpha=coefficient, out=self.momentum)
 
     def quadratic_momentum_update(
         self, coefficient: float, matrix: torch.Tensor
     ) -> None:
-        torch.add(
+        # do not use out=self.position because of side effects
+        self.momentum = torch.addmm(
             self.momentum,
-            coefficient * matrix @ self.activation_function(self.position),
-            out=self.momentum,
+            matrix,
+            self.activation_function(self.position),
+            alpha=coefficient,
         )
 
     def simulate_inelastic_walls(self) -> None:
