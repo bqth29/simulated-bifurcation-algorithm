@@ -170,7 +170,8 @@ class SimulatedBifurcationOptimizer:
     def __heat(self, momentum_copy: torch.Tensor) -> None:
         torch.add(
             self.symplectic_integrator.momentum,
-            self.time_step * self.heat_coefficient * momentum_copy,
+            momentum_copy,
+            alpha=self.time_step * self.heat_coefficient,
             out=self.symplectic_integrator.momentum,
         )
 
