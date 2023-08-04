@@ -6,20 +6,20 @@ from symplectic_integrator import SymplecticIntegrator
 
 
 class FasterSymplecticIntegrator(SymplecticIntegrator):
-    def momentum_update(self, coefficient: float) -> None:
-        torch.add(self.momentum, self.position, alpha=coefficient, out=self.momentum)
-
     def position_update(self, coefficient: float) -> None:
         torch.add(self.position, self.momentum, alpha=coefficient, out=self.position)
 
-    def quadratic_position_update(
+    def momentum_update(self, coefficient: float) -> None:
+        torch.add(self.momentum, self.position, alpha=coefficient, out=self.momentum)
+
+    def quadratic_momentum_update(
         self, coefficient: float, matrix: torch.Tensor
     ) -> None:
         # do not use out=self.position because of side effects
-        self.position = torch.addmm(
-            self.position,
+        self.momentum = torch.addmm(
+            self.momentum,
             matrix,
-            self.activation_function(self.momentum),
+            self.activation_function(self.position),
             alpha=coefficient,
         )
 
@@ -113,8 +113,8 @@ def main():
                 #     momentum_coefficient,
                 # )
                 t_1, t_2 = runtime_comparison(
-                    faster_integrator.quadratic_position_update,
-                    reference_integrator.quadratic_position_update,
+                    faster_integrator.quadratic_momentum_update,
+                    reference_integrator.quadratic_momentum_update,
                     round(n_slow_repeats / dim**1.5),
                     quadratic_coefficient,
                     matrix,
