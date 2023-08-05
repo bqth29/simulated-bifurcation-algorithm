@@ -1,13 +1,12 @@
 import pytest
 import torch
 
-from src.simulated_bifurcation import (
-    IsingCore,
+from src.simulated_bifurcation import reset_env, set_env
+from src.simulated_bifurcation.ising_core import IsingCore
+from src.simulated_bifurcation.optimizer import (
+    OptimizerMode,
     SimulatedBifurcationOptimizer,
-    reset_env,
-    set_env,
 )
-from src.simulated_bifurcation.optimizer import OptimizerMode
 
 torch.manual_seed(42)
 

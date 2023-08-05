@@ -1,6 +1,5 @@
-from .ising_core import IsingCore
-from .optimizer import SimulatedBifurcationOptimizer, get_env, reset_env, set_env
+from .optimizer import get_env, reset_env, set_env
 from .polynomial import BinaryPolynomial, IntegerPolynomial, SpinPolynomial
-from .simulated_bifurcation import maximize, minimize
+from .simulated_bifurcation import build_model, maximize, minimize
 
 reset_env()

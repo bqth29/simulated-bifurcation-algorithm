@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from src.simulated_bifurcation import IsingCore
+from src.simulated_bifurcation.ising_core import IsingCore
 
 J = torch.Tensor(
     [
