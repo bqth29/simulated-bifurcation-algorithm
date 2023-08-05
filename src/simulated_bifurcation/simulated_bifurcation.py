@@ -1,8 +1,8 @@
-from re import compile
+import re
 from typing import Tuple, Union
 
+import torch
 from numpy import ndarray
-from torch import Tensor, dtype, float32
 
 from .polynomial import (
     BinaryPolynomial,
@@ -13,11 +13,11 @@ from .polynomial import (
 
 
 def minimize(
-    matrix: Union[Tensor, ndarray],
-    vector: Union[Tensor, ndarray] = None,
+    matrix: Union[torch.Tensor, ndarray],
+    vector: Union[torch.Tensor, ndarray] = None,
     constant: float = None,
     input_type: str = "spin",
-    dtype: dtype = float32,
+    dtype: torch.dtype = torch.float32,
     device: str = "cpu",
     convergence_threshold: int = 50,
     sampling_period: int = 50,
@@ -27,7 +27,7 @@ def minimize(
     ballistic: bool = False,
     heat: bool = False,
     verbose: bool = True,
-) -> Tuple[Tensor, float]:
+) -> Tuple[torch.Tensor, float]:
     model = build_model(
         matrix=matrix,
         vector=vector,
@@ -52,11 +52,11 @@ def minimize(
 
 
 def maximize(
-    matrix: Union[Tensor, ndarray],
-    vector: Union[Tensor, ndarray] = None,
+    matrix: Union[torch.Tensor, ndarray],
+    vector: Union[torch.Tensor, ndarray] = None,
     constant: float = None,
     input_type: str = "spin",
-    dtype: dtype = float32,
+    dtype: torch.dtype = torch.float32,
     device: str = "cpu",
     convergence_threshold: int = 50,
     sampling_period: int = 50,
@@ -66,7 +66,7 @@ def maximize(
     ballistic: bool = False,
     heat: bool = False,
     verbose: bool = True,
-) -> Tuple[Tensor, float]:
+) -> Tuple[torch.Tensor, float]:
     model = build_model(
         matrix=matrix,
         vector=vector,
@@ -91,14 +91,14 @@ def maximize(
 
 
 def build_model(
-    matrix: Union[Tensor, ndarray],
-    vector: Union[Tensor, ndarray],
+    matrix: Union[torch.Tensor, ndarray],
+    vector: Union[torch.Tensor, ndarray],
     constant: float,
     input_type: str,
-    dtype: dtype,
+    dtype: torch.dtype,
     device: str,
 ) -> IsingPolynomialInterface:
-    int_type_regex = compile(r"int(\d+)")
+    int_type_regex = re.compile(r"int(\d+)")
     if input_type == "spin":
         return SpinPolynomial(
             matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device

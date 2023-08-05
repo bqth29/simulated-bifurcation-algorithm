@@ -37,14 +37,16 @@ class IsingCore:
     def __neg__(self):
         return IsingCore(-self.J, -self.h, self.dtype, self.device)
 
-    def __call__(self, spins: torch.Tensor) -> Union[None, float, List[float]]:
+    def __call__(
+        self, spins: Union[None, ndarray, torch.Tensor]
+    ) -> Union[None, float, List[float]]:
         if spins is None:
             return None
         if isinstance(spins, ndarray):
             spins = torch.from_numpy(spins).to(dtype=self.dtype, device=self.device)
         if not isinstance(spins, torch.Tensor):
             raise TypeError(f"Expected a Tensor but got {type(spins)}.")
-        if torch.any(torch.abs(spins) != 1):
+        if not torch.equal(torch.abs(spins), torch.ones_like(spins)):
             raise ValueError("Spins must be either 1 or -1.")
         if spins.shape in [(self.dimension,), (self.dimension, 1), (1, self.dimension)]:
             spins = spins.reshape((-1, 1))
@@ -70,7 +72,9 @@ class IsingCore:
             self.J = J.to(device=device, dtype=dtype)
             self.h = null_vector
             self.linear_term = False
-        elif torch.equal(h.reshape(self.dimension).to(device=device, dtype=dtype), null_vector):
+        elif torch.equal(
+            h.reshape(self.dimension).to(device=device, dtype=dtype), null_vector
+        ):
             self.J = J.to(device=device, dtype=dtype)
             self.h = null_vector
             self.linear_term = False

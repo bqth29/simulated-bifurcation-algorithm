@@ -21,6 +21,7 @@ def test_set_and_reset_variable():
 
 def test_set_variable_with_wrong_type_throws_error():
     with pytest.raises(TypeError):
+        # noinspection PyTypeChecker
         OptimizationVariable.TIME_STEP.set("Hello world!")
 
 

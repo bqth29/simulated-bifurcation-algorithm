@@ -20,8 +20,8 @@ class SymplecticIntegrator:
         dtype: torch.dtype,
         device: str,
     ):
-        self.position = SymplecticIntegrator.__init_oscillator(shape, dtype, device)
-        self.momentum = SymplecticIntegrator.__init_oscillator(shape, dtype, device)
+        self.position = self.__init_oscillator(shape, dtype, device)
+        self.momentum = self.__init_oscillator(shape, dtype, device)
         self.activation_function = mode.activation_function
 
     @staticmethod

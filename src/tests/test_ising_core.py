@@ -4,12 +4,14 @@ import torch
 
 from src.simulated_bifurcation import IsingCore
 
-J = [
-    [1, 2, 3],
-    [2, 1, 4],
-    [3, 4, 1],
-]
-h = [1, 0, -1]
+J = torch.Tensor(
+    [
+        [1, 2, 3],
+        [2, 1, 4],
+        [3, 4, 1],
+    ]
+)
+h = torch.Tensor([1, 0, -1])
 
 
 def test_init_ising_model_from_tensors():
@@ -76,6 +78,7 @@ def test_call():
     assert ising(np.array([[1, 1, -1]])) == 5.5
     assert ising(np.array([[1, -1], [1, 1], [-1, -1]])) == [5.5, 1.5]
     with pytest.raises(TypeError):
+        # noinspection PyTypeChecker
         ising([1, 1, -1])
     with pytest.raises(ValueError):
         ising(torch.Tensor([1, 2, -1]))

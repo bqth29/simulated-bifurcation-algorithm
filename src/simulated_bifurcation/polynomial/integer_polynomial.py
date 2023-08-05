@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import torch
@@ -63,6 +63,7 @@ class IntegerPolynomial(IsingPolynomialInterface):
         )
         return IsingCore(J, h, self.dtype, self.device)
 
-    def convert_spins(self, ising: IsingCore) -> None:
+    def convert_spins(self, ising: IsingCore) -> Optional[torch.Tensor]:
         if ising.ground_state is not None:
             return 0.5 * self.__int_to_bin_matrix.t() @ (ising.ground_state + 1)
+        return None

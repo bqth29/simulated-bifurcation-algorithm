@@ -33,7 +33,7 @@ class StopWindow:
 
     @property
     def shape(self) -> Tuple[int, int]:
-        return (self.n_spins, self.n_agents)
+        return self.n_spins, self.n_agents
 
     def __init_progress_bar(self, verbose: bool) -> tqdm:
         return tqdm(
@@ -48,10 +48,10 @@ class StopWindow:
 
     def __init_tensors(self) -> None:
         self.stability = self.__init_tensor(self.dtype)
-        self.newly_bifurcated = self.__init_tensor(bool)
-        self.previously_bifurcated = self.__init_tensor(bool)
-        self.bifurcated = self.__init_tensor(bool)
-        self.equal = self.__init_tensor(bool)
+        self.newly_bifurcated = self.__init_tensor(torch.bool)
+        self.previously_bifurcated = self.__init_tensor(torch.bool)
+        self.bifurcated = self.__init_tensor(torch.bool)
+        self.equal = self.__init_tensor(torch.bool)
 
     def __init_spins(self) -> torch.Tensor:
         return torch.zeros(size=self.shape, dtype=self.dtype, device=self.device)

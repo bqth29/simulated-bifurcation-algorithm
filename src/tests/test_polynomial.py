@@ -2,15 +2,17 @@ import numpy as np
 import pytest
 import torch
 
-from simulated_bifurcation.ising_core import IsingCore
+from src.simulated_bifurcation.ising_core import IsingCore
 from src.simulated_bifurcation.polynomial import IsingPolynomialInterface
 
-matrix = [
-    [1, 2, 3],
-    [4, 5, 6],
-    [7, 8, 9],
-]
-vector = [[1], [2], [3]]
+matrix = torch.Tensor(
+    [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+    ]
+)
+vector = torch.Tensor([[1], [2], [3]])
 constant = 1
 
 
@@ -37,6 +39,7 @@ def test_init_polynomial_from_tensors():
     assert polynomial.dtype == torch.float32
     assert polynomial.device == torch.device("cpu")
     with pytest.raises(ValueError):
+        # noinspection PyStatementEffect
         polynomial[3]
 
 
@@ -80,43 +83,51 @@ def test_init_polynomial_without_order_one_and_zero():
 
 def test_init_with_wrong_parameters():
     with pytest.raises(TypeError):
+        # noinspection PyTypeChecker
         IsingPolynomialInterfaceImpl(None)
     with pytest.raises(ValueError):
-        IsingPolynomialInterfaceImpl([matrix])
+        IsingPolynomialInterfaceImpl(torch.unsqueeze(matrix, 0))
     with pytest.raises(ValueError):
         IsingPolynomialInterfaceImpl(
-            [
-                [1, 2, 3],
-                [4, 5, 6],
-            ]
+            torch.Tensor(
+                [
+                    [1, 2, 3],
+                    [4, 5, 6],
+                ]
+            )
         )
     with pytest.raises(TypeError):
+        # noinspection PyTypeChecker
         IsingPolynomialInterfaceImpl(matrix, ("hello", "world!"))
     with pytest.raises(ValueError):
         IsingPolynomialInterfaceImpl(matrix, 1)
     with pytest.raises(TypeError):
+        # noinspection PyTypeChecker
         IsingPolynomialInterfaceImpl(matrix, constant="hello world!")
 
 
 def test_call_polynomial():
     polynomial = IsingPolynomialInterfaceImpl(matrix)
-    assert polynomial([0, 0, 0]) == 0
+    assert polynomial(torch.Tensor([0, 0, 0])) == 0
     assert polynomial([[0, 1], [0, 2], [0, 3]]) == [0, 228]
     with pytest.raises(TypeError):
+        # noinspection PyTypeChecker
         polynomial("hello world!")
     with pytest.raises(ValueError):
-        polynomial([1, 2, 3, 4, 5])
+        polynomial(torch.Tensor([1, 2, 3, 4, 5]))
 
 
 def test_call_polynomial_with_accepted_values():
     polynomial = IsingPolynomialInterfaceImpl(matrix, accepted_values=[0, 1])
-    assert polynomial([0, 0, 0]) == 0
+    assert polynomial(torch.Tensor([0, 0, 0])) == 0
     with pytest.raises(ValueError):
-        polynomial([0, 1, 2])
+        polynomial(torch.Tensor([0, 1, 2]))
 
 
 def test_ising_interface():
     with pytest.raises(NotImplementedError):
+        # noinspection PyTypeChecker
         IsingPolynomialInterface.to_ising(None)
     with pytest.raises(NotImplementedError):
+        # noinspection PyTypeChecker
         IsingPolynomialInterface.convert_spins(None, None)

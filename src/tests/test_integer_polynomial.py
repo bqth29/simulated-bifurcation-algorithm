@@ -3,12 +3,14 @@ import torch
 
 from src.simulated_bifurcation.polynomial import IntegerPolynomial
 
-matrix = [
-    [0, 1, -1],
-    [1, 0, 2],
-    [-1, 2, 0],
-]
-vector = [1, 2, -3]
+matrix = torch.Tensor(
+    [
+        [0, 1, -1],
+        [1, 0, 2],
+        [-1, 2, 0],
+    ]
+)
+vector = torch.Tensor([1, 2, -3])
 constant = 1
 
 
@@ -16,6 +18,7 @@ def test_init_integer_polynomial():
     with pytest.raises(ValueError):
         IntegerPolynomial(matrix, vector, constant, 0)
     with pytest.raises(ValueError):
+        # noinspection PyTypeChecker
         IntegerPolynomial(matrix, vector, constant, 2.5)
     integer_polynomial = IntegerPolynomial(matrix, vector, constant, 2)
     ising = integer_polynomial.to_ising()
@@ -41,9 +44,9 @@ def test_init_integer_polynomial():
 
 def test_call_integer_polynomial():
     integer_polynomial = IntegerPolynomial(matrix, vector, constant, 2)
-    assert integer_polynomial([2, 3, 0]) == 21
+    assert integer_polynomial(torch.Tensor([2, 3, 0])) == 21
     with pytest.raises(ValueError):
-        integer_polynomial([1, 2, 8])
+        integer_polynomial(torch.Tensor([1, 2, 8]))
 
 
 def test_optimize_integer_polynomial():

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, List, Union, final
+from typing import Iterable, List, Optional, Union, final
 
 import numpy as np
 import torch
@@ -117,15 +117,17 @@ class IsingPolynomialInterface(ABC):
     def __init_constant(self, constant: Union[float, int, None]) -> None:
         self.__constant = self.__cast_constant_to_float(constant)
 
+    @staticmethod
     def __cast_matrix_to_tensor(
-        self, matrix: Iterable, dtype: torch.dtype, device: str
+        matrix: Iterable, dtype: torch.dtype, device: str
     ) -> torch.Tensor:
         try:
             return torch.Tensor(matrix).to(device=device, dtype=dtype)
         except:
             raise TypeError("Matrix cannot be cast to tensor.")
 
-    def __check_square_matrix(self, matrix: torch.Tensor) -> None:
+    @staticmethod
+    def __check_square_matrix(matrix: torch.Tensor) -> None:
         if len(matrix.shape) != 2:
             raise ValueError(f"Matrix requires two dimension, got {len(matrix.shape)}.")
         if matrix.shape[0] != matrix.shape[1]:
@@ -167,10 +169,11 @@ class IsingPolynomialInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def convert_spins(self, ising: IsingCore) -> torch.Tensor:
+    def convert_spins(self, ising: IsingCore) -> Optional[torch.Tensor]:
         """
         Retrieves information from the optimized equivalent Ising model.
-        Returns the best found vector.
+        Returns the best found vector if ising.ground_state is not None.
+        Returns None otherwise.
 
         Parameters
         ----------

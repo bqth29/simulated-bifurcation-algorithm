@@ -96,6 +96,7 @@ def test_set_only_one_optimization_variable():
 
 def test_wrong_value_throws_exception_and_variables_not_updated():
     with pytest.raises(TypeError):
+        # noinspection PyTypeChecker
         set_env(heat_coefficient="Hello world!")
     optimizer = SimulatedBifurcationOptimizer(
         50, 50, 10000, 128, OptimizerMode.BALLISTIC, True, True
