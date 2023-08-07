@@ -10,9 +10,16 @@ from ..ising_core import IsingCore
 class IsingPolynomialInterface(ABC):
 
     """
-    Order two multivariate polynomial. Sum of a
-    quadratic form, a linear form and a constant
-    term.
+    Abstract class to implement an order two multivariate polynomial that can
+    be translated as an equivalent Ising problem to be solved with the
+    Simulated Bifurcation algorithm.
+
+    The polynomial is the combination of a quadratic and a linear form plus a
+    constant term:
+
+    `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
+
+    where `Q` is a square matrix, `l` a vector a `c` a constant.
     """
 
     def __init__(
@@ -24,6 +31,30 @@ class IsingPolynomialInterface(ABC):
         dtype: torch.dtype = torch.float32,
         device: str = "cpu",
     ) -> None:
+        """
+        Parameters
+        ----------
+        matrix : Tensor | ndarray
+            the square matrix that manages the order-two terms in the
+            polynomial (quadratic form matrix).
+        vector : Tensor | ndarray | None, optional
+            the vector that manages the order-one terms in the polynomial
+            (linear form vector). `None` means no vector (default is `None`)
+        constant : float | int | None, optional
+            the constant term of the polynomial. `None` means no constant term
+            (default is `None`)
+        accepted_values : List[int] | None, optional
+            the values accepted as input values of the polynomial. Input with
+            wrong values lead to a `ValueError` when evaluating the
+            polynomial. `None` means no restriction in input values 
+            (default is `None`)
+        dtype : torch.dtype, optional
+            the dtype used to encode polynomial's coefficients (default is 
+            `float32`)
+        device : str, optional
+            the device on which to perform the computations of the Simulated
+            Bifurcation algorithm (default `"cpu"`)
+        """
         self.__init_matrix(matrix, dtype, device)
         self.__init_vector(vector, dtype, device)
         self.__init_constant(constant)
@@ -165,6 +196,10 @@ class IsingPolynomialInterface(ABC):
         The notion of equivalence means that finding the ground
         state of this new model is strictly equivalent to find
         the ground state of the original problem.
+
+        Returns
+        -------
+        IsingCore
         """
         raise NotImplementedError
 
@@ -172,13 +207,17 @@ class IsingPolynomialInterface(ABC):
     def convert_spins(self, ising: IsingCore) -> Optional[torch.Tensor]:
         """
         Retrieves information from the optimized equivalent Ising model.
-        Returns the best found vector if ising.ground_state is not None.
-        Returns None otherwise.
+        Returns the best found vector if `ising.ground_state` is not `None`.
+        Returns `None` otherwise.
 
         Parameters
         ----------
-        ising : Ising
-            equivalent Ising model of the problem
+        ising : IsingCore
+            Equivalent Ising model of the problem.
+
+        Returns
+        -------
+        Tensor
         """
         raise NotImplementedError
 
@@ -256,6 +295,13 @@ class IsingPolynomialInterface(ABC):
         verbose : bool, optional
             whether to display a progress bar to monitor the algorithm's
             evolution (default is True)
+        minimize : bool, optional
+            if `True` the optimization direction is minimization, otherwise it
+            is maximization (default is True)
+
+        Returns
+        -------
+        Tensor
         """
         ising_equivalent = self.to_ising() if minimize else -self.to_ising()
         ising_equivalent.optimize(

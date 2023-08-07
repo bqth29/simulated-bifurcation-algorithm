@@ -10,10 +10,17 @@ from .ising_polynomial_interface import IsingPolynomialInterface
 class IntegerPolynomial(IsingPolynomialInterface):
 
     """
-    Given a matrix `Q` (quadratic form), a vector `l`
-    (linear form) and a constant `c`, the value to minimize is
-    `ΣΣ Q(i,j)n(i)n(j) + Σ l(i)n(i) + c` where the `n(i)`'s values
-    are integers.
+    Order two multivariate polynomial that can be translated as an equivalent
+    Ising problem to be solved with the Simulated Bifurcation algorithm.
+
+    The polynomial is the combination of a quadratic and a linear form plus a
+    constant term:
+
+    `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
+
+    where `Q` is a square matrix, `l` a vector a `c` a constant.
+
+    The `n(i)`'s values must be integers.
     """
 
     def __init__(
@@ -25,6 +32,28 @@ class IntegerPolynomial(IsingPolynomialInterface):
         dtype: torch.dtype = torch.float32,
         device: str = "cpu",
     ) -> None:
+        """
+        Parameters
+        ----------
+        matrix : Tensor | ndarray
+            the square matrix that manages the order-two terms in the
+            polynomial (quadratic form matrix).
+        vector : Tensor | ndarray | None, optional
+            the vector that manages the order-one terms in the polynomial
+            (linear form vector). `None` means no vector (default is `None`)
+        constant : float | int | None, optional
+            the constant term of the polynomial. `None` means no constant term
+            (default is `None`)
+        number_of_bits : int, optional
+            the number of bits on which the input values are encoded (default
+            is `1`)
+        dtype : torch.dtype, optional
+            the dtype used to encode polynomial's coefficients (default is 
+            `float32`)
+        device : str, optional
+            the device on which to perform the computations of the Simulated
+            Bifurcation algorithm (default `"cpu"`)
+        """
         if not isinstance(number_of_bits, int) or number_of_bits < 1:
             raise ValueError("The number of bits must be a non-negative integer.")
         super().__init__(
