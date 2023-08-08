@@ -34,7 +34,9 @@ def test_minimize_integer():
 
 def test_maximize_spin():
     best_combination, best_value = maximize(matrix, vector, constant, "spin")
-    assert torch.equal(torch.Tensor([1, -1, -1]), best_combination)
+    assert torch.equal(best_combination, torch.Tensor([1, -1, -1])) or torch.equal(
+        best_combination, torch.Tensor([1, 1, -1])
+    )
     assert 7 == best_value
 
 

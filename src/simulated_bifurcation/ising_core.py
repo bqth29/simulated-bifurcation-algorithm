@@ -22,7 +22,7 @@ class IsingCore:
         J: Union[torch.Tensor, ndarray],
         h: Union[torch.Tensor, ndarray, None] = None,
         dtype: torch.dtype = torch.float32,
-        device: str = "cpu",
+        device: Union[str, torch.device] = "cpu",
     ) -> None:
         self.dimension = J.shape[0]
         if isinstance(J, torch.Tensor):
@@ -35,7 +35,7 @@ class IsingCore:
         return self.dimension
 
     def __neg__(self):
-        return IsingCore(-self.J, -self.h, self.dtype, self.device)
+        return self.__class__(-self.J, -self.h, self.dtype, self.device)
 
     def __call__(
         self, spins: Union[None, ndarray, torch.Tensor]
@@ -93,7 +93,7 @@ class IsingCore:
             device,
         )
 
-    def clip_vector_to_tensor(self, tensor: torch.Tensor) -> torch.Tensor:
+    def clip_vector_to_tensor(self) -> torch.Tensor:
         """
         Gathers the matrix and the vector of the Ising model
         into a single matrix that can be processed by the
@@ -118,8 +118,12 @@ class IsingCore:
         return 0.5 * (tensor + tensor.t())
 
     def as_simulated_bifurcation_tensor(self) -> torch.Tensor:
-        tensor = IsingCore.remove_diagonal(IsingCore.symmetrize(self.J))
-        return self.clip_vector_to_tensor(tensor) if self.linear_term else tensor
+        tensor = self.remove_diagonal(self.symmetrize(self.J))
+        if self.linear_term:
+            sb_tensor = self.clip_vector_to_tensor()
+        else:
+            sb_tensor = tensor
+        return sb_tensor
 
     @property
     def dtype(self) -> torch.dtype:
@@ -131,14 +135,15 @@ class IsingCore:
 
     @property
     def ground_state(self) -> Union[torch.Tensor, None]:
-        if self.computed_spins is None:
-            return None
-        else:
-            return self.min(self.computed_spins)
+        return self.computed_spins
 
     @property
     def energy(self) -> Union[float, None]:
-        return self(self.ground_state)
+        if self.computed_spins is None:
+            return None
+        else:
+            energies = self(self.computed_spins)
+            return min(energies)
 
     def min(self, spins: torch.Tensor) -> torch.Tensor:
         """
@@ -232,4 +237,7 @@ class IsingCore:
         )
         tensor = self.as_simulated_bifurcation_tensor()
         spins = optimizer.run_integrator(tensor, use_window)
-        self.computed_spins = spins[-1] * spins[:-1, :] if self.linear_term else spins
+        if self.linear_term:
+            self.computed_spins = spins[-1] * spins[:-1]
+        else:
+            self.computed_spins = spins

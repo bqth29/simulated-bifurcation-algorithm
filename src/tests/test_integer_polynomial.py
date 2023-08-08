@@ -39,7 +39,10 @@ def test_init_integer_polynomial():
         ),
     )
     assert torch.equal(ising.h, torch.Tensor([0.5, 1, 5.5, 11, 0, 0]))
-    assert torch.equal(integer_polynomial.convert_spins(ising), torch.Tensor([1, 1, 2]))
+    print(integer_polynomial.convert_spins(ising))
+    assert torch.equal(
+        integer_polynomial.convert_spins(ising), torch.Tensor([[1, 2], [1, 1], [2, 0]])
+    )
 
 
 def test_call_integer_polynomial():

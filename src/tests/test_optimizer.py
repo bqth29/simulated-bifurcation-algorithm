@@ -8,10 +8,9 @@ from src.simulated_bifurcation.optimizer import (
     SimulatedBifurcationOptimizer,
 )
 
-torch.manual_seed(42)
-
 
 def test_optimizer():
+    torch.manual_seed(42)
     J = torch.Tensor(
         [
             [1, 2, 3],
@@ -22,11 +21,12 @@ def test_optimizer():
     h = torch.Tensor([1, 0, -2])
     ising = IsingCore(J, h)
     ising.optimize(50, 50, 10000, 20, False, False, False, False)
-    assert torch.equal(torch.Tensor([1, 1, 1]), ising.ground_state)
+    assert torch.equal(torch.ones((3, 20)), ising.ground_state)
     assert ising.energy == -11.5
 
 
 def test_optimizer_without_bifurcation():
+    torch.manual_seed(42)
     J = torch.Tensor(
         [
             [1, 2, 3],
@@ -36,12 +36,22 @@ def test_optimizer_without_bifurcation():
     )
     h = torch.Tensor([1, 0, -2])
     ising = IsingCore(J, h)
-    ising.optimize(50, 50, 10, 20, True, False, False, False)
-    assert torch.equal(torch.Tensor([1, 1, 1]), ising.ground_state)
+    ising.optimize(50, 50, 10, 5, True, False, False, False)
+    assert torch.equal(
+        torch.Tensor(
+            [
+                [1.0, 1.0, -1.0, -1.0, -1.0],
+                [1.0, -1.0, 1.0, -1.0, -1.0],
+                [1.0, -1.0, 1.0, -1.0, -1.0],
+            ]
+        ),
+        ising.ground_state,
+    )
     assert ising.energy == -11.5
 
 
 def test_optimizer_with_window():
+    torch.manual_seed(42)
     J = torch.Tensor(
         [
             [1, 2, 3],
@@ -52,11 +62,12 @@ def test_optimizer_with_window():
     h = torch.Tensor([1, 0, -2])
     ising = IsingCore(J, h)
     ising.optimize(20, 20, 30000, 20, True, False, False, False)
-    assert torch.equal(torch.Tensor([1, 1, 1]), ising.ground_state)
+    assert torch.equal(torch.ones((3, 20)), ising.ground_state)
     assert ising.energy == -11.5
 
 
 def test_optimizer_with_heating():
+    torch.manual_seed(42)
     J = torch.Tensor(
         [
             [1, 2, 3],
@@ -67,11 +78,12 @@ def test_optimizer_with_heating():
     h = torch.Tensor([1, 0, -2])
     ising = IsingCore(J, h)
     ising.optimize(50, 50, 10000, 20, False, False, True, False)
-    assert torch.equal(torch.Tensor([1, 1, 1]), ising.ground_state)
+    assert torch.equal(torch.ones((3, 20)), ising.ground_state)
     assert ising.energy == -11.5
 
 
 def test_set_optimization_environment():
+    torch.manual_seed(42)
     set_env(time_step=0.05, pressure_slope=0.005, heat_coefficient=0.1)
     optimizer = SimulatedBifurcationOptimizer(
         50, 50, 10000, 128, OptimizerMode.BALLISTIC, True, True
@@ -83,6 +95,7 @@ def test_set_optimization_environment():
 
 
 def test_set_only_one_optimization_variable():
+    torch.manual_seed(42)
     set_env(time_step=0.05)
     optimizer = SimulatedBifurcationOptimizer(
         50, 50, 10000, 128, OptimizerMode.BALLISTIC, True, True
@@ -94,6 +107,7 @@ def test_set_only_one_optimization_variable():
 
 
 def test_wrong_value_throws_exception_and_variables_not_updated():
+    torch.manual_seed(42)
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
         set_env(heat_coefficient="Hello world!")

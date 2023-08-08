@@ -29,7 +29,9 @@ def test_init_spin_polynomial():
         ),
     )
     assert torch.equal(ising.h, torch.Tensor([1, 2, -3]))
-    assert torch.equal(spin_polynomial.convert_spins(ising), torch.Tensor([1, -1, 1]))
+    assert torch.equal(
+        spin_polynomial.convert_spins(ising), torch.Tensor([[1, -1], [-1, 1], [1, 1]])
+    )
 
 
 def test_call_spin_polynomial():

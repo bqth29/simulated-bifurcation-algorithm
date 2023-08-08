@@ -27,6 +27,7 @@ def minimize(
     ballistic: bool = False,
     heat: bool = False,
     verbose: bool = True,
+    best_only=True,
 ) -> Tuple[torch.Tensor, float]:
     model = build_model(
         matrix=matrix,
@@ -36,7 +37,7 @@ def minimize(
         dtype=dtype,
         device=device,
     )
-    best_vector = model.optimize(
+    result = model.optimize(
         convergence_threshold=convergence_threshold,
         sampling_period=sampling_period,
         max_steps=max_steps,
@@ -46,9 +47,10 @@ def minimize(
         heat=heat,
         verbose=verbose,
         minimize=True,
+        best_only=best_only,
     )
-    best_value = model(best_vector)
-    return best_vector, best_value
+    evaluation = model(result)
+    return result, evaluation
 
 
 def maximize(
@@ -66,6 +68,7 @@ def maximize(
     ballistic: bool = False,
     heat: bool = False,
     verbose: bool = True,
+    best_only=True,
 ) -> Tuple[torch.Tensor, float]:
     model = build_model(
         matrix=matrix,
@@ -75,7 +78,7 @@ def maximize(
         dtype=dtype,
         device=device,
     )
-    best_vector = model.optimize(
+    result = model.optimize(
         convergence_threshold=convergence_threshold,
         sampling_period=sampling_period,
         max_steps=max_steps,
@@ -85,9 +88,10 @@ def maximize(
         heat=heat,
         verbose=verbose,
         minimize=False,
+        best_only=best_only,
     )
-    best_value = model(best_vector)
-    return best_vector, best_value
+    evaluation = model(result)
+    return result, evaluation
 
 
 def build_model(

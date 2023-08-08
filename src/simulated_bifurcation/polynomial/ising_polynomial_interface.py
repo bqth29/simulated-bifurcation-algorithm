@@ -118,7 +118,10 @@ class IsingPolynomialInterface(ABC):
             affine_term = value @ self.vector + self.constant
             evaluation = torch.squeeze(quadratic_term, -1) + affine_term
             return evaluation
-        raise ValueError(f"Expected {self.dimension} rows, got {value.shape[0]}.")
+        raise ValueError(
+            f"Size of the input along the last axis should be "
+            f"{self.dimension}, it is {value.shape[-1]}."
+        )
 
     @final
     def __getitem__(self, coefficient: int) -> Union[torch.Tensor, float]:
@@ -241,6 +244,7 @@ class IsingPolynomialInterface(ABC):
         heat: bool = False,
         verbose: bool = True,
         minimize: bool = True,
+        best_only: bool = True,
     ) -> torch.Tensor:
         """
         Computes a local extremum of the model by optimizing
@@ -306,12 +310,19 @@ class IsingPolynomialInterface(ABC):
         minimize : bool, optional
             if `True` the optimization direction is minimization, otherwise it
             is maximization (default is True)
+        best_only : bool, optional
+            if `True` only the best found solution to the optimization problem
+            is returned, otherwise all the solutions found by the simulated
+            bifurcation algorithm.
 
         Returns
         -------
         Tensor
         """
-        ising_equivalent = self.to_ising() if minimize else -self.to_ising()
+        if minimize:
+            ising_equivalent = self.to_ising()
+        else:
+            ising_equivalent = -self.to_ising()
         ising_equivalent.optimize(
             convergence_threshold,
             sampling_period,
@@ -323,4 +334,9 @@ class IsingPolynomialInterface(ABC):
             verbose,
         )
         self.sb_result = self.convert_spins(ising_equivalent)
-        return self.sb_result
+        if best_only:
+            i_min = torch.argmin(self(self.sb_result.t()))
+            result = self.sb_result[:, i_min]
+        else:
+            result = self.sb_result
+        return result

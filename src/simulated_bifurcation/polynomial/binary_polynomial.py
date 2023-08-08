@@ -53,7 +53,7 @@ class BinaryPolynomial(IsingPolynomialInterface):
         super().__init__(matrix, vector, constant, [0, 1], dtype, device)
 
     def to_ising(self) -> IsingCore:
-        symmetrical_matrix = 0.5 * (self.matrix + self.matrix.t())
+        symmetrical_matrix = IsingCore.symmetrize(self.matrix)
         J = -0.5 * symmetrical_matrix
         h = 0.5 * self.vector + 0.5 * symmetrical_matrix @ torch.ones(
             len(self), dtype=self.dtype, device=self.device
@@ -62,5 +62,7 @@ class BinaryPolynomial(IsingPolynomialInterface):
 
     def convert_spins(self, ising: IsingCore) -> Optional[torch.Tensor]:
         if ising.ground_state is not None:
-            return 0.5 * (ising.ground_state + 1)
-        return None
+            binary_vars = (ising.ground_state + 1) / 2
+        else:
+            binary_vars = None
+        return binary_vars

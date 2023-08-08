@@ -52,7 +52,7 @@ def test_init_ising_with_null_h_vector():
 
 def test_clip_vector_to_tensor():
     ising = IsingCore(torch.Tensor(J), torch.Tensor(h))
-    attached = ising.clip_vector_to_tensor(torch.Tensor(J))
+    attached = ising.clip_vector_to_tensor()
     assert torch.equal(
         attached,
         torch.Tensor(
