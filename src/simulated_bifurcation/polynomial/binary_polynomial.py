@@ -44,7 +44,7 @@ class BinaryPolynomial(IsingPolynomialInterface):
             the constant term of the polynomial. `None` means no constant term
             (default is `None`)
         dtype : torch.dtype, optional
-            the dtype used to encode polynomial's coefficients (default is 
+            the dtype used to encode polynomial's coefficients (default is
             `float32`)
         device : str, optional
             the device on which to perform the computations of the Simulated
@@ -56,7 +56,7 @@ class BinaryPolynomial(IsingPolynomialInterface):
         symmetrical_matrix = 0.5 * (self.matrix + self.matrix.t())
         J = -0.5 * symmetrical_matrix
         h = 0.5 * self.vector + 0.5 * symmetrical_matrix @ torch.ones(
-            (len(self), 1), device=self.device
+            len(self), dtype=self.dtype, device=self.device
         )
         return IsingCore(J, h, self.dtype, self.device)
 

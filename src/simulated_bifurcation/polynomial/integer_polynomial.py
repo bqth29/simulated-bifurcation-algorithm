@@ -48,7 +48,7 @@ class IntegerPolynomial(IsingPolynomialInterface):
             the number of bits on which the input values are encoded (default
             is `1`)
         dtype : torch.dtype, optional
-            the dtype used to encode polynomial's coefficients (default is 
+            the dtype used to encode polynomial's coefficients (default is
             `float32`)
         device : str, optional
             the device on which to perform the computations of the Simulated
@@ -88,7 +88,11 @@ class IntegerPolynomial(IsingPolynomialInterface):
             * self.__int_to_bin_matrix
             @ self.matrix
             @ self.__int_to_bin_matrix.t()
-            @ torch.ones((self.dimension * self.number_of_bits, 1), device=self.device)
+            @ torch.ones(
+                (self.dimension * self.number_of_bits),
+                dtype=self.dtype,
+                device=self.device,
+            )
         )
         return IsingCore(J, h, self.dtype, self.device)
 

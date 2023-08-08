@@ -72,13 +72,13 @@ def test_init_polynomial_from_lists():
 def test_init_polynomial_without_order_one_and_zero():
     polynomial = IsingPolynomialInterfaceImpl(torch.Tensor(matrix))
     assert torch.equal(polynomial.matrix, torch.Tensor(matrix))
-    assert torch.equal(polynomial.vector, torch.zeros((polynomial.dimension, 1)))
+    assert torch.equal(polynomial.vector, torch.zeros(polynomial.dimension))
     assert polynomial.constant == 0.0
     assert polynomial.dimension == 3
     assert len(polynomial) == 3
-    assert polynomial[0] == 0.0
     assert torch.equal(polynomial[2], torch.Tensor(matrix))
-    assert torch.equal(polynomial[1], torch.zeros((polynomial.dimension, 1)))
+    assert torch.equal(polynomial[1], torch.zeros(polynomial.dimension))
+    assert polynomial[0] == 0.0
 
 
 def test_init_with_wrong_parameters():
@@ -109,7 +109,10 @@ def test_init_with_wrong_parameters():
 def test_call_polynomial():
     polynomial = IsingPolynomialInterfaceImpl(matrix)
     assert polynomial(torch.Tensor([0, 0, 0])) == 0
-    assert polynomial([[0, 1], [0, 2], [0, 3]]) == [0, 228]
+    assert torch.equal(
+        polynomial(torch.Tensor([[0, 0, 0], [1, 2, 3]])), torch.Tensor([0, 228])
+    )
+    assert polynomial(torch.zeros((1, 5, 3, 1, 2, 1, 3))).shape == (1, 5, 3, 1, 2, 1)
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
         polynomial("hello world!")

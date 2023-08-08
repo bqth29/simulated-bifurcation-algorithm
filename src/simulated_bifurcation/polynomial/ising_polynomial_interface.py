@@ -46,10 +46,10 @@ class IsingPolynomialInterface(ABC):
         accepted_values : List[int] | None, optional
             the values accepted as input values of the polynomial. Input with
             wrong values lead to a `ValueError` when evaluating the
-            polynomial. `None` means no restriction in input values 
+            polynomial. `None` means no restriction in input values
             (default is `None`)
         dtype : torch.dtype, optional
-            the dtype used to encode polynomial's coefficients (default is 
+            the dtype used to encode polynomial's coefficients (default is
             `float32`)
         device : str, optional
             the device on which to perform the computations of the Simulated
@@ -57,10 +57,11 @@ class IsingPolynomialInterface(ABC):
         """
         self.__init_matrix(matrix, dtype, device)
         self.__init_vector(vector, dtype, device)
-        self.__init_constant(constant)
-        self.__accepted_values = (
-            accepted_values[:] if accepted_values is not None else None
-        )
+        self.__init_constant(constant, dtype, device)
+        if accepted_values is not None:
+            self.__accepted_values = accepted_values.copy()
+        else:
+            self.__accepted_values = None
         self.sb_result = None
 
     @property
@@ -69,11 +70,11 @@ class IsingPolynomialInterface(ABC):
 
     @property
     def vector(self) -> torch.Tensor:
-        return self.__vector.reshape(-1, 1)
+        return self.__vector
 
     @property
-    def constant(self) -> float:
-        return float(self.__constant)
+    def constant(self) -> torch.Tensor:
+        return self.__constant
 
     @property
     def dimension(self) -> int:
@@ -89,35 +90,34 @@ class IsingPolynomialInterface(ABC):
 
     @final
     def __call__(
-        self, value: Union[torch.Tensor, np.ndarray, List[List[float]]]
-    ) -> Union[float, List[float]]:
+        self, value: Union[torch.Tensor, np.ndarray]
+    ) -> Union[float, torch.Tensor]:
         if not isinstance(value, torch.Tensor):
             try:
                 value = torch.Tensor(value)
-            except:
-                raise TypeError(f"Input value cannot be cast to Tensor.")
+            except Exception as err:
+                raise TypeError(f"Input value cannot be cast to Tensor.") from err
         if (self.__accepted_values is not None) and (
             not np.all(np.isin(value.numpy(), self.__accepted_values))
         ):
             raise ValueError(
                 f"Input values must all belong to {self.__accepted_values}."
             )
-        if value.shape in [(self.dimension,), (self.dimension, 1), (1, self.dimension)]:
-            value = value.reshape((-1, 1))
-            value = (
-                value.t() @ self.matrix @ value
-                + value.t() @ self.vector
+        if value.shape == (self.dimension,):
+            evaluation = (
+                torch.vdot(value, torch.addmv(self.vector, self.matrix, value))
                 + self.constant
             )
-            return value.item()
-        if value.shape[0] == self.dimension:
-            values = (
-                torch.einsum(
-                    "ij, ji -> i", value.t(), self.matrix @ value + self.vector
-                )
-                + self.constant
+            return evaluation.item()
+        if value.shape[-1] == self.dimension:
+            quadratic_term = torch.nn.functional.bilinear(
+                value,
+                value,
+                torch.unsqueeze(self.matrix, 0),
             )
-            return values.tolist()
+            affine_term = value @ self.vector + self.constant
+            evaluation = torch.squeeze(quadratic_term, -1) + affine_term
+            return evaluation
         raise ValueError(f"Expected {self.dimension} rows, got {value.shape[0]}.")
 
     @final
@@ -145,8 +145,13 @@ class IsingPolynomialInterface(ABC):
         self.__check_vector_shape(tensor_vector)
         self.__vector = tensor_vector
 
-    def __init_constant(self, constant: Union[float, int, None]) -> None:
-        self.__constant = self.__cast_constant_to_float(constant)
+    def __init_constant(
+        self,
+        constant: Union[float, int, None],
+        dtype: torch.dtype,
+        device: Union[str, torch.device],
+    ) -> None:
+        self.__constant = self.__cast_constant_to_float(constant, dtype, device)
 
     @staticmethod
     def __cast_matrix_to_tensor(
@@ -154,15 +159,8 @@ class IsingPolynomialInterface(ABC):
     ) -> torch.Tensor:
         try:
             return torch.Tensor(matrix).to(device=device, dtype=dtype)
-        except:
-            raise TypeError("Matrix cannot be cast to tensor.")
-
-    @staticmethod
-    def __check_square_matrix(matrix: torch.Tensor) -> None:
-        if len(matrix.shape) != 2:
-            raise ValueError(f"Matrix requires two dimension, got {len(matrix.shape)}.")
-        if matrix.shape[0] != matrix.shape[1]:
-            raise ValueError("Matrix must be square.")
+        except Exception as err:
+            raise TypeError("Matrix cannot be cast to tensor.") from err
 
     def __cast_vector_to_tensor(
         self, vector: Union[Iterable, None], dtype: torch.dtype, device: str
@@ -171,8 +169,26 @@ class IsingPolynomialInterface(ABC):
             return torch.zeros(self.dimension, dtype=dtype, device=device)
         try:
             return torch.Tensor(vector).to(device=device, dtype=dtype)
-        except:
-            raise TypeError("Vector cannot be cast to tensor.")
+        except Exception as err:
+            raise TypeError("Vector cannot be cast to tensor.") from err
+
+    @staticmethod
+    def __cast_constant_to_float(
+        constant: Union[float, int, None], dtype, device
+    ) -> torch.Tensor:
+        if constant is None:
+            return torch.tensor(0.0, dtype=dtype, device=device)
+        try:
+            return torch.tensor(float(constant), dtype=dtype, device=device)
+        except Exception as err:
+            raise TypeError("Constant cannot be cast to float.") from err
+
+    @staticmethod
+    def __check_square_matrix(matrix: torch.Tensor) -> None:
+        if len(matrix.shape) != 2:
+            raise ValueError(f"Matrix requires two dimension, got {len(matrix.shape)}.")
+        if matrix.shape[0] != matrix.shape[1]:
+            raise ValueError("Matrix must be square.")
 
     def __check_vector_shape(self, vector: torch.Tensor) -> None:
         allowed_shapes = [(self.dimension,), (self.dimension, 1), (1, self.dimension)]
@@ -180,14 +196,6 @@ class IsingPolynomialInterface(ABC):
             raise ValueError(
                 f"Vector must be of size {self.dimension}, got {vector.shape}."
             )
-
-    def __cast_constant_to_float(self, constant: Union[float, int, None]) -> float:
-        if constant is None:
-            return 0.0
-        try:
-            return float(constant)
-        except:
-            raise TypeError("Constant cannot be cast to float.")
 
     @abstractmethod
     def to_ising(self) -> IsingCore:
