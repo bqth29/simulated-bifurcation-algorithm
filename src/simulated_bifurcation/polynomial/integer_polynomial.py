@@ -98,5 +98,5 @@ class IntegerPolynomial(IsingPolynomialInterface):
 
     def convert_spins(self, ising: IsingCore) -> Optional[torch.Tensor]:
         if ising.ground_state is not None:
-            return 0.5 * self.__int_to_bin_matrix.t() @ (ising.ground_state + 1)
+            return 0.5 * self.__int_to_bin_matrix.t() @ (ising.computed_spins + 1)
         return None
