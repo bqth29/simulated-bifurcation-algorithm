@@ -61,7 +61,7 @@ class BinaryPolynomial(IsingPolynomialInterface):
         return IsingCore(J, h, self.dtype, self.device)
 
     def convert_spins(self, ising: IsingCore) -> Optional[torch.Tensor]:
-        if ising.ground_state is not None:
+        if ising.computed_spins is not None:
             binary_vars = (ising.computed_spins + 1) / 2
         else:
             binary_vars = None

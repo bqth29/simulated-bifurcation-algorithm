@@ -21,8 +21,7 @@ def test_optimizer():
     h = torch.Tensor([1, 0, -2])
     ising = IsingCore(J, h)
     ising.optimize(50, 50, 10000, 20, False, False, False, False)
-    assert torch.equal(torch.ones((3, 20)), ising.ground_state)
-    assert ising.energy == -11.5
+    assert torch.equal(torch.ones((3, 20)), ising.computed_spins)
 
 
 def test_optimizer_without_bifurcation():
@@ -45,9 +44,8 @@ def test_optimizer_without_bifurcation():
                 [1.0, -1.0, 1.0, -1.0, -1.0],
             ]
         ),
-        ising.ground_state,
+        ising.computed_spins,
     )
-    assert ising.energy == -11.5
 
 
 def test_optimizer_with_window():
@@ -62,8 +60,7 @@ def test_optimizer_with_window():
     h = torch.Tensor([1, 0, -2])
     ising = IsingCore(J, h)
     ising.optimize(20, 20, 30000, 20, True, False, False, False)
-    assert torch.equal(torch.ones((3, 20)), ising.ground_state)
-    assert ising.energy == -11.5
+    assert torch.equal(torch.ones((3, 20)), ising.computed_spins)
 
 
 def test_optimizer_with_heating():
@@ -78,8 +75,7 @@ def test_optimizer_with_heating():
     h = torch.Tensor([1, 0, -2])
     ising = IsingCore(J, h)
     ising.optimize(50, 50, 10000, 20, False, False, True, False)
-    assert torch.equal(torch.ones((3, 20)), ising.ground_state)
-    assert ising.energy == -11.5
+    assert torch.equal(torch.ones((3, 20)), ising.computed_spins)
 
 
 def test_set_optimization_environment():

@@ -25,10 +25,11 @@ class IsingCore:
         device: Union[str, torch.device] = "cpu",
     ) -> None:
         self.dimension = J.shape[0]
-        if isinstance(J, torch.Tensor):
-            self.__init_from_tensor(J, h, dtype, device)
-        else:
-            self.__init_from_array(J, h, dtype, device)
+        if isinstance(J, ndarray):
+            J = torch.from_numpy(J)
+        if isinstance(h, ndarray):
+            h = torch.from_numpy(h)
+        self.__init_from_tensor(J, h, dtype, device)
         self.computed_spins = None
 
     def __len__(self) -> int:
@@ -36,29 +37,6 @@ class IsingCore:
 
     def __neg__(self):
         return self.__class__(-self.J, -self.h, self.dtype, self.device)
-
-    def __call__(
-        self, spins: Union[None, ndarray, torch.Tensor]
-    ) -> Union[None, float, List[float]]:
-        if spins is None:
-            return None
-        if isinstance(spins, ndarray):
-            spins = torch.from_numpy(spins).to(dtype=self.dtype, device=self.device)
-        if not isinstance(spins, torch.Tensor):
-            raise TypeError(f"Expected a Tensor but got {type(spins)}.")
-        if not torch.equal(torch.abs(spins), torch.ones_like(spins)):
-            raise ValueError("Spins must be either 1 or -1.")
-        if spins.shape in [(self.dimension,), (self.dimension, 1), (1, self.dimension)]:
-            spins = spins.reshape((-1, 1))
-            J, h = self.J, self.h.reshape((-1, 1))
-            energy = -0.5 * spins.t() @ J @ spins + spins.t() @ h
-            return energy.item()
-        if spins.shape[0] == self.dimension:
-            J, h = self.J, self.h.reshape((-1, 1))
-            energies = torch.einsum("ij, ji -> i", spins.t(), -0.5 * J @ spins + h)
-            return energies.tolist()
-        else:
-            raise ValueError(f"Expected {self.dimension} rows, got {spins.shape[0]}.")
 
     def __init_from_tensor(
         self,
@@ -82,16 +60,6 @@ class IsingCore:
             self.J = J.to(device=device, dtype=dtype)
             self.h = h.reshape(self.dimension).to(device=device, dtype=dtype)
             self.linear_term = True
-
-    def __init_from_array(
-        self, J: ndarray, h: Optional[ndarray], dtype: torch.dtype, device: str
-    ):
-        self.__init_from_tensor(
-            torch.from_numpy(J),
-            None if h is None else torch.from_numpy(h),
-            dtype,
-            device,
-        )
 
     def clip_vector_to_tensor(self) -> torch.Tensor:
         """
@@ -132,26 +100,6 @@ class IsingCore:
     @property
     def device(self) -> torch.device:
         return self.J.device
-
-    @property
-    def ground_state(self) -> Optional[torch.Tensor]:
-        return self.computed_spins
-
-    @property
-    def energy(self) -> Optional[float]:
-        if self.computed_spins is None:
-            return None
-        else:
-            energies = self(self.computed_spins)
-            return min(energies)
-
-    def min(self, spins: torch.Tensor) -> torch.Tensor:
-        """
-        Returns the spin vector with the lowest Ising energy.
-        """
-        energies = self(spins)
-        best_energy = argmin(energies)
-        return spins[:, best_energy]
 
     def optimize(
         self,

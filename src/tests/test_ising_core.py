@@ -66,26 +66,6 @@ def test_clip_vector_to_tensor():
     )
 
 
-def test_call():
-    ising = IsingCore(np.array(J), np.array(h))
-    assert ising(None) is None
-    assert ising(torch.Tensor([1, 1, -1])) == 5.5
-    assert ising(torch.Tensor([[1], [1], [-1]])) == 5.5
-    assert ising(torch.Tensor([[1, 1, -1]])) == 5.5
-    assert ising(torch.Tensor([[1, -1], [1, 1], [-1, -1]])) == [5.5, 1.5]
-    assert ising(np.array([1, 1, -1])) == 5.5
-    assert ising(np.array([[1], [1], [-1]])) == 5.5
-    assert ising(np.array([[1, 1, -1]])) == 5.5
-    assert ising(np.array([[1, -1], [1, 1], [-1, -1]])) == [5.5, 1.5]
-    with pytest.raises(TypeError):
-        # noinspection PyTypeChecker
-        ising([1, 1, -1])
-    with pytest.raises(ValueError):
-        ising(torch.Tensor([1, 2, -1]))
-    with pytest.raises(ValueError):
-        ising(torch.Tensor([1, 1, -1, 1]))
-
-
 def test_simulated_bifurcation_tensor():
     original = torch.Tensor(
         [
@@ -103,12 +83,6 @@ def test_simulated_bifurcation_tensor():
         ]
     )
     assert torch.equal(ising.as_simulated_bifurcation_tensor(), expected_result)
-
-
-def test_min():
-    ising = IsingCore(np.array(J), np.array(h))
-    spins = torch.Tensor([[1, -1], [1, 1], [-1, -1]])
-    assert torch.equal(ising.min(spins), torch.Tensor([-1, 1, -1]))
 
 
 def test_negative_ising():
