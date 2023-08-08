@@ -1,6 +1,6 @@
 import os
 from enum import Enum
-from typing import Dict, Union
+from typing import Dict, Optional
 
 
 def get_env() -> Dict[str, float]:
@@ -41,7 +41,7 @@ class OptimizationVariable(Enum):
         self.__env_name = env_name
         self.reset()
 
-    def set(self, value: Union[float, None]) -> None:
+    def set(self, value: Optional[float]) -> None:
         if value is None:
             return
         if not isinstance(value, float):

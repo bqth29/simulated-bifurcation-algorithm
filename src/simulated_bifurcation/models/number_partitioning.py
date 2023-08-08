@@ -21,7 +21,7 @@ class NumberPartioning(SpinPolynomial):
         super().__init__(tensor_numbers @ tensor_numbers.t(), None, None, dtype, device)
 
     @property
-    def partition(self) -> Dict[str, Dict[str, Union[List[int], Union[int, None]]]]:
+    def partition(self) -> Dict[str, Dict[str, Union[List[int], int, None]]]:
         result = {
             "left": {"values": [], "sum": None},
             "right": {"values": [], "sum": None},

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import torch
@@ -36,7 +36,7 @@ class Markowitz(IntegerPolynomial):
         )
 
     @property
-    def portfolio(self) -> Union[torch.Tensor, None]:
+    def portfolio(self) -> Optional[torch.Tensor]:
         return self.sb_result
 
     @property

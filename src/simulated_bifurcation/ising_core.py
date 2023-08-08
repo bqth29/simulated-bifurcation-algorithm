@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 import torch
 from numpy import argmin, ndarray
@@ -63,7 +63,7 @@ class IsingCore:
     def __init_from_tensor(
         self,
         J: torch.Tensor,
-        h: Union[torch.Tensor, None],
+        h: Optional[torch.Tensor],
         dtype: torch.dtype,
         device: str,
     ):
@@ -84,7 +84,7 @@ class IsingCore:
             self.linear_term = True
 
     def __init_from_array(
-        self, J: ndarray, h: Union[ndarray, None], dtype: torch.dtype, device: str
+        self, J: ndarray, h: Optional[ndarray], dtype: torch.dtype, device: str
     ):
         self.__init_from_tensor(
             torch.from_numpy(J),
@@ -134,11 +134,11 @@ class IsingCore:
         return self.J.device
 
     @property
-    def ground_state(self) -> Union[torch.Tensor, None]:
+    def ground_state(self) -> Optional[torch.Tensor]:
         return self.computed_spins
 
     @property
-    def energy(self) -> Union[float, None]:
+    def energy(self) -> Optional[float]:
         if self.computed_spins is None:
             return None
         else:

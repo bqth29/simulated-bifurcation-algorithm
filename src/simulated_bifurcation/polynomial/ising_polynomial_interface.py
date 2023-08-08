@@ -27,7 +27,7 @@ class IsingPolynomialInterface(ABC):
         matrix: Union[torch.Tensor, np.ndarray],
         vector: Union[torch.Tensor, np.ndarray, None] = None,
         constant: Union[int, float, None] = None,
-        accepted_values: Union[None, List[int]] = None,
+        accepted_values: Optional[List[int]] = None,
         dtype: torch.dtype = torch.float32,
         device: str = "cpu",
     ) -> None:
@@ -166,7 +166,7 @@ class IsingPolynomialInterface(ABC):
             raise TypeError("Matrix cannot be cast to tensor.") from err
 
     def __cast_vector_to_tensor(
-        self, vector: Union[Iterable, None], dtype: torch.dtype, device: str
+        self, vector: Optional[Iterable], dtype: torch.dtype, device: str
     ) -> torch.Tensor:
         if vector is None:
             return torch.zeros(self.dimension, dtype=dtype, device=device)
