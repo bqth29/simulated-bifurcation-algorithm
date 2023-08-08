@@ -38,7 +38,7 @@ $$\sum_{i=1}^{N} \sum_{j=1}^{N} M_{ij}x_{i}x_{j} + \sum_{i=1}^{N} v_{i}x_{i} + c
 
 for which the $x_{i}$'s can be spins, binary or non-negative integer.
 
-This can also be seen as the sum of a quadratic form, a linear form and a constant term and such such a formulation is the basis of many optimization problems.
+This can also be seen as the sum of a quadratic form, a linear form and a constant term and such a formulation is the basis of many optimization problems.
 
 The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated input vector.
 
@@ -132,6 +132,15 @@ sb.minimize(
     convergence_threshold=50,
     use_window=True,
 )
+```
+
+### Optimization results
+
+By default, SB returns the best vector and objective value found. However, it is also possible to configure it to so it returns all the vectors for each agent with the associated objective value. To do so, the `best_only` parameter of the `minimize` and `maximize` functions must be set to `False` (default is `True`).
+
+```python
+best_vector, best_value = sb.minimize(matrix, best_only=True)
+vectors, values = sb.maximize(matrix, best_only=False)
 ```
 
 ## 💡 Advanced usages
