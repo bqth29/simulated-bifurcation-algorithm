@@ -57,12 +57,12 @@ class StopWindow:
         return torch.zeros(size=self.shape, dtype=self.dtype, device=self.device)
 
     def __update_final_spins(self, sampled_spins) -> None:
-        self.final_spins[:, self.newly_bifurcated] = torch.sign(
-            sampled_spins[:, self.newly_bifurcated]
-        )
+        self.final_spins[:, self.newly_bifurcated] = sampled_spins[
+            :, self.newly_bifurcated
+        ]
 
     def __set_previously_bifurcated_spins(self) -> None:
-        self.previously_bifurcated = self.bifurcated * 1.0
+        self.previously_bifurcated = torch.clone(self.bifurcated)
 
     def __set_newly_bifurcated_spins(self) -> None:
         torch.logical_xor(
@@ -92,7 +92,7 @@ class StopWindow:
         )
 
     def __store_spins(self, sampled_spins: torch.Tensor) -> None:
-        torch.sign(sampled_spins, out=self.current_spins)
+        out = self.current_spins = sampled_spins.clone()
 
     def __get_number_newly_bifurcated_agents(self) -> int:
         return self.newly_bifurcated.sum().item()
@@ -108,10 +108,12 @@ class StopWindow:
         self.progress.update(self.__get_number_newly_bifurcated_agents())
 
     def must_continue(self) -> bool:
-        return torch.any(self.stability < self.convergence_threshold - 1)
+        return torch.any(
+            torch.lt(self.stability, self.convergence_threshold - 1)
+        ).item()
 
     def has_bifurcated_spins(self) -> bool:
-        return torch.any(self.bifurcated)
+        return torch.any(self.bifurcated).item()
 
-    def get_bifurcated_spins(self) -> torch.Tensor:
-        return self.final_spins[:, self.bifurcated]
+    def get_bifurcated_spins(self, spins: torch.Tensor) -> torch.Tensor:
+        return torch.where(self.bifurcated, self.final_spins, spins)

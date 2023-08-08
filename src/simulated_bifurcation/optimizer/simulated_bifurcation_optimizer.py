@@ -141,7 +141,7 @@ class SimulatedBifurcationOptimizer:
     ) -> torch.Tensor:
         while self.run:
             if self.heated:
-                momentum_copy = self.symplectic_integrator.momentum.clone().detach()
+                momentum_copy = self.symplectic_integrator.momentum.clone()
 
             (
                 momentum_coefficient,
@@ -206,12 +206,10 @@ class SimulatedBifurcationOptimizer:
         If the stop window was not used, the final spins are returned.
         """
         if use_window:
-            if self.window.has_bifurcated_spins():
-                return self.window.get_bifurcated_spins()
-            else:
+            if not self.window.has_bifurcated_spins():
                 LOGGER.warning(
                     "No agent has converged. Returned final positions' signs instead."
                 )
-                return spins
+            return self.window.get_bifurcated_spins(spins)
         else:
             return spins

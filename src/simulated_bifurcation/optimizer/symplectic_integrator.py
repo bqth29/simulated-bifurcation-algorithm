@@ -46,7 +46,7 @@ class SymplecticIntegrator:
         )
 
     def simulate_inelastic_walls(self) -> None:
-        self.momentum[torch.abs(self.position) > 1.0] = 0
+        self.momentum[torch.abs(self.position) > 1.0] = 0.0
         torch.clip(self.position, -1.0, 1.0, out=self.position)
 
     def step(
@@ -62,4 +62,4 @@ class SymplecticIntegrator:
         self.simulate_inelastic_walls()
 
     def sample_spins(self) -> torch.Tensor:
-        return torch.sign(self.position)
+        return torch.where(self.position >= 0.0, 1.0, -1.0)
