@@ -17,6 +17,7 @@ constant = 1
 def test_init_binary_polynomial():
     binary_polynomial = BinaryPolynomial(matrix, vector, constant)
     ising = binary_polynomial.to_ising()
+    assert binary_polynomial.convert_spins(ising) is None
     ising.computed_spins = torch.Tensor([[1, -1], [-1, 1], [1, 1]])
     assert torch.equal(
         ising.J,

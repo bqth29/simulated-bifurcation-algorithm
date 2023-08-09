@@ -57,18 +57,6 @@ def test_init_polynomial_from_arrays():
     assert torch.equal(polynomial[1], torch.Tensor(vector))
 
 
-def test_init_polynomial_from_lists():
-    polynomial = IsingPolynomialInterfaceImpl(matrix, vector, constant)
-    assert torch.equal(polynomial.matrix, torch.Tensor(matrix))
-    assert torch.equal(polynomial.vector, torch.Tensor(vector))
-    assert polynomial.constant == 1.0
-    assert polynomial.dimension == 3
-    assert len(polynomial) == 3
-    assert polynomial[0] == 1.0
-    assert torch.equal(polynomial[2], torch.Tensor(matrix))
-    assert torch.equal(polynomial[1], torch.Tensor(vector))
-
-
 def test_init_polynomial_without_order_one_and_zero():
     polynomial = IsingPolynomialInterfaceImpl(torch.Tensor(matrix))
     assert torch.equal(polynomial.matrix, torch.Tensor(matrix))

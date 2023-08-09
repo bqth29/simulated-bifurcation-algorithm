@@ -246,8 +246,8 @@ class IsingPolynomialInterface(ABC):
         ballistic: bool = False,
         heat: bool = False,
         verbose: bool = True,
-        minimize: bool = True,
         best_only: bool = True,
+        minimize: bool = True,
     ) -> torch.Tensor:
         """
         Computes a local extremum of the model by optimizing
@@ -310,13 +310,13 @@ class IsingPolynomialInterface(ABC):
         verbose : bool, optional
             whether to display a progress bar to monitor the algorithm's
             evolution (default is True)
-        minimize : bool, optional
-            if `True` the optimization direction is minimization, otherwise it
-            is maximization (default is True)
         best_only : bool, optional
             if `True` only the best found solution to the optimization problem
             is returned, otherwise all the solutions found by the simulated
             bifurcation algorithm.
+        minimize : bool, optional
+            if `True` the optimization direction is minimization, otherwise it
+            is maximization (default is True)
 
         Returns
         -------
@@ -341,5 +341,5 @@ class IsingPolynomialInterface(ABC):
             i_min = torch.argmin(self(self.sb_result.t()))
             result = self.sb_result[:, i_min]
         else:
-            result = self.sb_result
+            result = self.sb_result.t()
         return result

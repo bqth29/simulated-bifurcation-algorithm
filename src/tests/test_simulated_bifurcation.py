@@ -55,3 +55,15 @@ def test_maximize_integer():
 def test_wrong_input_value_type():
     with pytest.raises(ValueError):
         minimize(matrix, input_type="float")
+
+
+def test_best_only():
+    spins_best_only, energy_best_only = minimize(matrix, agents=42)
+    assert spins_best_only.shape == (3,)
+    assert isinstance(energy_best_only, float)
+    spins_all, energies_all = minimize(matrix, agents=42, best_only=False)
+    assert spins_all.shape == (42, 3)
+    assert isinstance(energies_all, torch.Tensor)
+    assert energies_all.shape == (42,)
+
+    minimize(matrix, best_only=False)

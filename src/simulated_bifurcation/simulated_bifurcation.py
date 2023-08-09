@@ -12,7 +12,7 @@ from .polynomial import (
 )
 
 
-def minimize(
+def __optimize(
     matrix: Union[torch.Tensor, ndarray],
     vector: Union[torch.Tensor, ndarray] = None,
     constant: float = None,
@@ -27,8 +27,9 @@ def minimize(
     ballistic: bool = False,
     heat: bool = False,
     verbose: bool = True,
-    best_only=True,
-) -> Tuple[torch.Tensor, float]:
+    best_only: bool = True,
+    minimize: bool = True,
+) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
     model = build_model(
         matrix=matrix,
         vector=vector,
@@ -46,11 +47,48 @@ def minimize(
         ballistic=ballistic,
         heat=heat,
         verbose=verbose,
-        minimize=True,
+        minimize=minimize,
         best_only=best_only,
     )
     evaluation = model(result)
     return result, evaluation
+
+
+def minimize(
+    matrix: Union[torch.Tensor, ndarray],
+    vector: Union[torch.Tensor, ndarray] = None,
+    constant: float = None,
+    input_type: str = "spin",
+    dtype: torch.dtype = torch.float32,
+    device: str = "cpu",
+    convergence_threshold: int = 50,
+    sampling_period: int = 50,
+    max_steps: int = 10000,
+    agents: int = 128,
+    use_window: bool = True,
+    ballistic: bool = False,
+    heat: bool = False,
+    verbose: bool = True,
+    best_only: bool = True,
+) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
+    return __optimize(
+        matrix,
+        vector,
+        constant,
+        input_type,
+        dtype,
+        device,
+        convergence_threshold,
+        sampling_period,
+        max_steps,
+        agents,
+        use_window,
+        ballistic,
+        heat,
+        verbose,
+        best_only,
+        True,
+    )
 
 
 def maximize(
@@ -68,30 +106,26 @@ def maximize(
     ballistic: bool = False,
     heat: bool = False,
     verbose: bool = True,
-    best_only=True,
-) -> Tuple[torch.Tensor, float]:
-    model = build_model(
-        matrix=matrix,
-        vector=vector,
-        constant=constant,
-        input_type=input_type,
-        dtype=dtype,
-        device=device,
+    best_only: bool = True,
+) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
+    return __optimize(
+        matrix,
+        vector,
+        constant,
+        input_type,
+        dtype,
+        device,
+        convergence_threshold,
+        sampling_period,
+        max_steps,
+        agents,
+        use_window,
+        ballistic,
+        heat,
+        verbose,
+        best_only,
+        False,
     )
-    result = model.optimize(
-        convergence_threshold=convergence_threshold,
-        sampling_period=sampling_period,
-        max_steps=max_steps,
-        agents=agents,
-        use_window=use_window,
-        ballistic=ballistic,
-        heat=heat,
-        verbose=verbose,
-        minimize=False,
-        best_only=best_only,
-    )
-    evaluation = model(result)
-    return result, evaluation
 
 
 def build_model(

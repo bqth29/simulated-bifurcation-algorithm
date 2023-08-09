@@ -22,6 +22,7 @@ def test_init_integer_polynomial():
         IntegerPolynomial(matrix, vector, constant, 2.5)
     integer_polynomial = IntegerPolynomial(matrix, vector, constant, 2)
     ising = integer_polynomial.to_ising()
+    assert integer_polynomial.convert_spins(ising) is None
     ising.computed_spins = torch.Tensor(
         [[1, -1], [-1, 1], [1, 1], [-1, -1], [-1, -1], [1, -1]]
     )
