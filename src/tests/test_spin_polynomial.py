@@ -60,7 +60,6 @@ def test_call_spin_polynomial():
 
 def test_optimize_spin_polynomial():
     spin_polynomial = SpinPolynomial(matrix, vector, constant)
-    assert torch.equal(
-        spin_polynomial.optimize(verbose=False),
-        torch.tensor([1, -1, 1], dtype=torch.float32),
-    )
+    spin_vars, value = spin_polynomial.optimize(verbose=False)
+    assert torch.equal(spin_vars, torch.tensor([1, -1, 1], dtype=torch.float32))
+    assert value == -11.0

@@ -12,7 +12,7 @@ from .polynomial import (
 )
 
 
-def __optimize(
+def optimize(
     matrix: Union[torch.Tensor, ndarray],
     vector: Union[torch.Tensor, ndarray] = None,
     constant: float = None,
@@ -38,7 +38,7 @@ def __optimize(
         dtype=dtype,
         device=device,
     )
-    result = model.optimize(
+    result, evaluation = model.optimize(
         convergence_threshold=convergence_threshold,
         sampling_period=sampling_period,
         max_steps=max_steps,
@@ -50,7 +50,6 @@ def __optimize(
         minimize=minimize,
         best_only=best_only,
     )
-    evaluation = model(result)
     return result, evaluation
 
 
@@ -71,7 +70,7 @@ def minimize(
     verbose: bool = True,
     best_only: bool = True,
 ) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
-    return __optimize(
+    return optimize(
         matrix,
         vector,
         constant,
@@ -108,7 +107,7 @@ def maximize(
     verbose: bool = True,
     best_only: bool = True,
 ) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
-    return __optimize(
+    return optimize(
         matrix,
         vector,
         constant,

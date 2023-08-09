@@ -66,5 +66,3 @@ def test_best_only():
     assert spins_all.shape == (42, 3)
     assert isinstance(energies_all, torch.Tensor)
     assert energies_all.shape == (42,)
-
-    minimize(matrix, best_only=False)

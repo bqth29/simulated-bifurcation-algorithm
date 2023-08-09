@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, List, Optional, Union, final
+from typing import Iterable, Optional, Tuple, Union, final
 
 import numpy as np
 import torch
@@ -175,9 +175,9 @@ class IsingPolynomialInterface(ABC):
         if vector is None:
             return torch.zeros(self.dimension, dtype=dtype, device=device)
         if isinstance(vector, torch.Tensor):
-            return vector
+            return torch.squeeze(vector)
         try:
-            return torch.tensor(vector, dtype=dtype, device=device)
+            return torch.squeeze(torch.tensor(vector, dtype=dtype, device=device))
         except Exception as err:
             raise TypeError("Vector cannot be cast to tensor.") from err
 
@@ -251,7 +251,7 @@ class IsingPolynomialInterface(ABC):
         verbose: bool = True,
         best_only: bool = True,
         minimize: bool = True,
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, Union[torch.Tensor, float]]:
         """
         Computes a local extremum of the model by optimizing
         the equivalent Ising model using the Simulated Bifurcation (SB)
@@ -340,9 +340,202 @@ class IsingPolynomialInterface(ABC):
             verbose,
         )
         self.sb_result = self.convert_spins(ising_equivalent)
+        result = self.sb_result.t()
+        evaluation = self(result)
         if best_only:
-            i_min = torch.argmin(self(self.sb_result.t()))
-            result = self.sb_result[:, i_min]
-        else:
-            result = self.sb_result.t()
-        return result
+            i_min = torch.argmin(result)
+            result = result[i_min]
+            evaluation = evaluation[i_min].item()
+        return result, evaluation
+
+    @final
+    def minimize(
+        self,
+        convergence_threshold: int = 50,
+        sampling_period: int = 50,
+        max_steps: int = 10000,
+        agents: int = 128,
+        use_window: bool = True,
+        ballistic: bool = False,
+        heat: bool = False,
+        verbose: bool = True,
+        best_only: bool = True,
+    ) -> Tuple[torch.Tensor, Union[torch.Tensor, float]]:
+        """
+        Computes a local minimum of the model by optimizing
+        the equivalent Ising model using the Simulated Bifurcation (SB)
+        algorithm.
+
+        The Simulated Bifurcation (SB) algorithm relies on
+        Hamiltonian/quantum mechanics to find local minima of
+        Ising problems. The spins dynamics is simulated using
+        a first order symplectic integrator.
+
+        There are different version of the SB algorithm:
+        - the ballistic Simulated Bifurcation (bSB) which uses the particles'
+        position for the matrix computations (usually faster but less accurate)
+        - the discrete Simulated Bifurcation (dSB) which uses the particles'
+        spin for the matrix computations (usually slower but more accurate)
+        - the Heated ballistic Simulated Bifurcation (HbSB) which uses the bSB
+        algorithm with a supplementary non-symplectic term to refine the model
+        - the Heated ballistic Simulated Bifurcation (HdSB) which uses the dSB
+        algorithm with a supplementary non-symplectic term to refine the model
+
+        To stop the iterations of the symplectic integrator, a number of maximum
+        steps needs to be specified. However, a refined way to stop is also possible
+        using a window that checks that the spins have not changed among a set
+        number of previous steps. In practice, a every fixed number of steps
+        (called a sampling period) the current spins will be compared to the
+        previous ones. If they remain constant throughout a certain number of
+        consecutive samplings (called the convergence threshold), the spins are
+        considered to have bifurcated and the algorithm stops.
+
+        Finally, it is possible to make several particle vectors at the same
+        time (each one being called an agent). As the vectors are randomly
+        initialized, using several agents helps to explore the solution space
+        and increases the probability of finding a better solution, though it
+        also slightly increases the computation time. In the end, only the best
+        spin vector (energy-wise) is kept and used as the new Ising model's
+        ground state.
+
+        Parameters
+        ----------
+        convergence_threshold : int, optional
+            number of consecutive identical spin sampling considered as a proof
+            of convergence (default is 50)
+        sampling_period : int, optional
+            number of time steps between two spin sampling (default is 50)
+        max_steps : int, optional
+            number of time steps after which the algorithm will stop inevitably
+            (default is 10000)
+        agents : int, optional
+            number of vectors to make evolve at the same time (default is 128)
+        use_window : bool, optional
+            indicates whether to use the window as a stopping criterion or not
+            (default is True)
+        ballistic : bool, optional
+            if True, the ballistic SB will be used, else it will be the
+            discrete SB (default is True)
+        heat : bool, optional
+            if True, the heated SB will be used, else it will be the non-heated
+            SB (default is True)
+        verbose : bool, optional
+            whether to display a progress bar to monitor the algorithm's
+            evolution (default is True)
+        best_only : bool, optional
+            if `True` only the best found solution to the optimization problem
+            is returned, otherwise all the solutions found by the simulated
+            bifurcation algorithm.
+
+        Returns
+        -------
+        Tensor
+        """
+        return self.optimize(
+            convergence_threshold,
+            sampling_period,
+            max_steps,
+            agents,
+            use_window,
+            ballistic,
+            heat,
+            verbose,
+            best_only,
+            True,
+        )
+
+    @final
+    def maximize(
+        self,
+        convergence_threshold: int = 50,
+        sampling_period: int = 50,
+        max_steps: int = 10000,
+        agents: int = 128,
+        use_window: bool = True,
+        ballistic: bool = False,
+        heat: bool = False,
+        verbose: bool = True,
+        best_only: bool = True,
+    ) -> Tuple[torch.Tensor, Union[torch.Tensor, float]]:
+        """
+        Computes a local maximum of the model by optimizing
+        the equivalent Ising model using the Simulated Bifurcation (SB)
+        algorithm.
+
+        The Simulated Bifurcation (SB) algorithm relies on
+        Hamiltonian/quantum mechanics to find local minima of
+        Ising problems. The spins dynamics is simulated using
+        a first order symplectic integrator.
+
+        There are different version of the SB algorithm:
+        - the ballistic Simulated Bifurcation (bSB) which uses the particles'
+        position for the matrix computations (usually faster but less accurate)
+        - the discrete Simulated Bifurcation (dSB) which uses the particles'
+        spin for the matrix computations (usually slower but more accurate)
+        - the Heated ballistic Simulated Bifurcation (HbSB) which uses the bSB
+        algorithm with a supplementary non-symplectic term to refine the model
+        - the Heated ballistic Simulated Bifurcation (HdSB) which uses the dSB
+        algorithm with a supplementary non-symplectic term to refine the model
+
+        To stop the iterations of the symplectic integrator, a number of maximum
+        steps needs to be specified. However, a refined way to stop is also possible
+        using a window that checks that the spins have not changed among a set
+        number of previous steps. In practice, a every fixed number of steps
+        (called a sampling period) the current spins will be compared to the
+        previous ones. If they remain constant throughout a certain number of
+        consecutive samplings (called the convergence threshold), the spins are
+        considered to have bifurcated and the algorithm stops.
+
+        Finally, it is possible to make several particle vectors at the same
+        time (each one being called an agent). As the vectors are randomly
+        initialized, using several agents helps to explore the solution space
+        and increases the probability of finding a better solution, though it
+        also slightly increases the computation time. In the end, only the best
+        spin vector (energy-wise) is kept and used as the new Ising model's
+        ground state.
+
+        Parameters
+        ----------
+        convergence_threshold : int, optional
+            number of consecutive identical spin sampling considered as a proof
+            of convergence (default is 50)
+        sampling_period : int, optional
+            number of time steps between two spin sampling (default is 50)
+        max_steps : int, optional
+            number of time steps after which the algorithm will stop inevitably
+            (default is 10000)
+        agents : int, optional
+            number of vectors to make evolve at the same time (default is 128)
+        use_window : bool, optional
+            indicates whether to use the window as a stopping criterion or not
+            (default is True)
+        ballistic : bool, optional
+            if True, the ballistic SB will be used, else it will be the
+            discrete SB (default is True)
+        heat : bool, optional
+            if True, the heated SB will be used, else it will be the non-heated
+            SB (default is True)
+        verbose : bool, optional
+            whether to display a progress bar to monitor the algorithm's
+            evolution (default is True)
+        best_only : bool, optional
+            if `True` only the best found solution to the optimization problem
+            is returned, otherwise all the solutions found by the simulated
+            bifurcation algorithm.
+
+        Returns
+        -------
+        Tensor
+        """
+        return self.optimize(
+            convergence_threshold,
+            sampling_period,
+            max_steps,
+            agents,
+            use_window,
+            ballistic,
+            heat,
+            verbose,
+            best_only,
+            False,
+        )

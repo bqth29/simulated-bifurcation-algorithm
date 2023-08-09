@@ -75,7 +75,6 @@ def test_call_integer_polynomial():
 
 def test_optimize_integer_polynomial():
     integer_polynomial = IntegerPolynomial(matrix, vector, constant, 2)
-    assert torch.equal(
-        integer_polynomial.optimize(verbose=False),
-        torch.tensor([3, 0, 3], dtype=torch.float32),
-    )
+    int_vars, value = integer_polynomial.optimize(verbose=False)
+    assert torch.equal(int_vars, torch.tensor([3, 0, 3], dtype=torch.float32))
+    assert value == -23.0

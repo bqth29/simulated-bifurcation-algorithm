@@ -61,7 +61,6 @@ def test_call_binary_polynomial():
 
 def test_optimize_binary_polynomial():
     binary_polynomial = BinaryPolynomial(matrix, vector, constant)
-    assert torch.equal(
-        binary_polynomial.optimize(verbose=False),
-        torch.tensor([1, 0, 1], dtype=torch.float32),
-    )
+    binary_vars, value = binary_polynomial.optimize(verbose=False)
+    assert torch.equal(binary_vars, torch.tensor([1, 0, 1], dtype=torch.float32))
+    assert value == -3.0

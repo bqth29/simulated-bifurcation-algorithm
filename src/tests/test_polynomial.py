@@ -1,6 +1,7 @@
 import pytest
 import torch
 
+from src.simulated_bifurcation import build_model
 from src.simulated_bifurcation.ising_core import IsingCore
 from src.simulated_bifurcation.polynomial import IsingPolynomialInterface
 
@@ -27,13 +28,13 @@ class IsingPolynomialInterfaceImpl(IsingPolynomialInterface):
 def test_init_polynomial_from_tensors():
     polynomial = IsingPolynomialInterfaceImpl(matrix, vector, constant)
     assert torch.equal(polynomial.matrix, matrix)
-    assert torch.equal(polynomial.vector, vector)
+    assert torch.equal(polynomial.vector, vector.reshape(3))
     assert polynomial.constant == 1.0
     assert polynomial.dimension == 3
     assert len(polynomial) == 3
     assert polynomial[0] == 1.0
     assert torch.equal(polynomial[2], matrix)
-    assert torch.equal(polynomial[1], vector)
+    assert torch.equal(polynomial[1], vector.reshape(3))
     assert polynomial.dtype == torch.float32
     assert polynomial.device == torch.device("cpu")
     with pytest.raises(ValueError):
@@ -44,13 +45,13 @@ def test_init_polynomial_from_tensors():
 def test_init_polynomial_from_arrays():
     polynomial = IsingPolynomialInterfaceImpl(matrix.numpy(), vector.numpy(), constant)
     assert torch.equal(polynomial.matrix, matrix)
-    assert torch.equal(polynomial.vector, vector)
+    assert torch.equal(polynomial.vector, vector.reshape(3))
     assert polynomial.constant == 1.0
     assert polynomial.dimension == 3
     assert len(polynomial) == 3
     assert polynomial[0] == 1.0
     assert torch.equal(polynomial[2], matrix)
-    assert torch.equal(polynomial[1], vector)
+    assert torch.equal(polynomial[1], vector.reshape(3))
 
 
 def test_init_polynomial_without_order_one_and_zero():
@@ -94,7 +95,8 @@ def test_init_with_wrong_parameters():
 
 def test_call_polynomial():
     polynomial = IsingPolynomialInterfaceImpl(matrix)
-    assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0
+    assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0.0
+    assert isinstance(polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)), float)
     assert torch.equal(
         polynomial(
             torch.tensor(
@@ -129,3 +131,55 @@ def test_ising_interface():
     with pytest.raises(NotImplementedError):
         # noinspection PyTypeChecker
         IsingPolynomialInterface.convert_spins(None, None)
+
+
+def test_best_only():
+    model = build_model(
+        matrix=matrix,
+        vector=vector,
+        constant=constant,
+        input_type="spin",
+        dtype=torch.float32,
+        device="cpu",
+    )
+    spins_best_only, energy_best_only = model.optimize(agents=42, best_only=True)
+    assert model.sb_result.shape == (3, 42)
+    assert spins_best_only.shape == (3,)
+    assert isinstance(energy_best_only, float)
+    spins_all, energies_all = model.optimize(agents=42, best_only=False)
+    assert model.sb_result.shape == (3, 42)
+    assert spins_all.shape == (42, 3)
+    assert isinstance(energies_all, torch.Tensor)
+    assert energies_all.shape == (42,)
+
+
+def test_minimize():
+    model = build_model(
+        matrix=matrix,
+        vector=vector,
+        constant=constant,
+        input_type="spin",
+        dtype=torch.float32,
+        device="cpu",
+    )
+    best_combination, best_value = model.minimize()
+    assert torch.equal(
+        best_combination, torch.tensor([-1.0, 1.0, -1.0], dtype=torch.float32)
+    )
+    assert 4.0 == best_value
+
+
+def test_maximize():
+    model = build_model(
+        matrix=matrix,
+        vector=vector,
+        constant=constant,
+        input_type="spin",
+        dtype=torch.float32,
+        device="cpu",
+    )
+    best_combination, best_value = model.maximize()
+    assert torch.equal(
+        best_combination, torch.tensor([1.0, 1.0, 1.0], dtype=torch.float32)
+    )
+    assert 52.0 == best_value
