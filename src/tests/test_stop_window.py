@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from src.simulated_bifurcation.optimizer import StopWindow
@@ -66,6 +67,22 @@ def test_init_window():
     assert torch.equal(window.final_spins, torch.zeros((3, 2)))
 
 
+def test_wrong_convergence_threshold_value():
+    with pytest.raises(TypeError):
+        # noinspection PyTypeChecker
+        StopWindow(
+            SPINS, AGENTS, 30.0, dtype=torch.float32, device="cpu", verbose=False
+        )
+    with pytest.raises(ValueError):
+        StopWindow(SPINS, AGENTS, 0, dtype=torch.float32, device="cpu", verbose=False)
+    with pytest.raises(ValueError):
+        StopWindow(SPINS, AGENTS, -42, dtype=torch.float32, device="cpu", verbose=False)
+    with pytest.raises(ValueError):
+        StopWindow(
+            SPINS, AGENTS, 2**15, dtype=torch.float32, device="cpu", verbose=False
+        )
+
+
 def test_use_scenario():
     window = StopWindow(
         SPINS,
@@ -86,7 +103,7 @@ def test_use_scenario():
     assert torch.equal(window.get_bifurcated_spins(SCENARIO[0]), SCENARIO[0])
     assert torch.equal(window.current_spins, SCENARIO[0])
     assert torch.equal(window.final_spins, torch.zeros((3, 2)))
-    assert torch.equal(window.stability, torch.Tensor([0, 0]))
+    assert torch.equal(window.stability, torch.tensor([0, 0], dtype=torch.int16))
     assert torch.equal(
         window.newly_bifurcated, torch.tensor([False, False], dtype=torch.bool)
     )
@@ -105,7 +122,7 @@ def test_use_scenario():
     assert torch.equal(window.get_bifurcated_spins(SCENARIO[1]), SCENARIO[1])
     assert torch.equal(window.current_spins, SCENARIO[1])
     assert torch.equal(window.final_spins, torch.zeros((3, 2)))
-    assert torch.equal(window.stability, torch.Tensor([0, 0]))
+    assert torch.equal(window.stability, torch.tensor([0, 0], dtype=torch.int16))
     assert torch.equal(
         window.newly_bifurcated, torch.tensor([False, False], dtype=torch.bool)
     )
@@ -124,7 +141,7 @@ def test_use_scenario():
     assert torch.equal(window.get_bifurcated_spins(SCENARIO[2]), SCENARIO[2])
     assert torch.equal(window.current_spins, SCENARIO[2])
     assert torch.equal(window.final_spins, torch.zeros((3, 2)))
-    assert torch.equal(window.stability, torch.Tensor([1, 0]))
+    assert torch.equal(window.stability, torch.tensor([1, 0], dtype=torch.int16))
     assert torch.equal(
         window.newly_bifurcated, torch.tensor([False, False], dtype=torch.bool)
     )
@@ -170,7 +187,7 @@ def test_use_scenario():
     assert torch.equal(window.get_bifurcated_spins(SCENARIO[4]), SCENARIO[4])
     assert torch.equal(window.current_spins, SCENARIO[4])
     assert torch.equal(window.final_spins, SCENARIO[4])
-    assert torch.equal(window.stability, torch.Tensor([2, 2]))
+    assert torch.equal(window.stability, torch.tensor([2, 2], dtype=torch.int16))
     assert torch.equal(
         window.newly_bifurcated, torch.tensor([False, True], dtype=torch.bool)
     )

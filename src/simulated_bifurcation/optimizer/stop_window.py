@@ -23,7 +23,7 @@ class StopWindow:
     ) -> None:
         self.n_spins = n_spins
         self.n_agents = n_agents
-        self.convergence_threshold = convergence_threshold
+        self.__init_convergence_threshold(convergence_threshold)
         self.dtype = dtype
         self.device = device
         self.__init_tensors()
@@ -43,11 +43,29 @@ class StopWindow:
             smoothing=0,
         )
 
+    def __init_convergence_threshold(self, convergence_threshold: int) -> None:
+        if not isinstance(convergence_threshold, int):
+            raise TypeError(
+                "convergence_threshold should be an integer, "
+                f"received {convergence_threshold}."
+            )
+        if convergence_threshold <= 0:
+            raise ValueError(
+                "convergence_threshold should be a positive integer, "
+                f"received {convergence_threshold}."
+            )
+        if convergence_threshold > torch.iinfo(torch.int16).max:
+            raise ValueError(
+                "convergence_threshold should be less than or equal to "
+                f"{torch.iinfo(torch.int16).max}, received {convergence_threshold}."
+            )
+        self.convergence_threshold = convergence_threshold
+
     def __init_tensor(self, dtype: torch.dtype) -> torch.Tensor:
         return torch.zeros(self.n_agents, device=self.device, dtype=dtype)
 
     def __init_tensors(self) -> None:
-        self.stability = self.__init_tensor(self.dtype)
+        self.stability = self.__init_tensor(torch.int16)
         self.newly_bifurcated = self.__init_tensor(torch.bool)
         self.previously_bifurcated = self.__init_tensor(torch.bool)
         self.bifurcated = self.__init_tensor(torch.bool)
