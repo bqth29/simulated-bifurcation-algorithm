@@ -95,7 +95,7 @@ class StopWindow:
         self.current_spins = sampled_spins.clone()
 
     def __get_number_newly_bifurcated_agents(self) -> int:
-        return self.newly_bifurcated.sum().item()
+        return torch.count_nonzero(self.newly_bifurcated).item()
 
     def update(self, sampled_spins: torch.Tensor):
         self.__compare_spins(sampled_spins)

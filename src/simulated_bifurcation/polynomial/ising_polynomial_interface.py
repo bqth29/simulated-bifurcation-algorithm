@@ -103,7 +103,7 @@ class IsingPolynomialInterface(ABC):
             torch.isin(value, self.__accepted_values, invert=True)
         ):
             raise ValueError(
-                f"Input values must all belong to {self.__accepted_values}."
+                f"Input values must all belong to {self.__accepted_values.tolist()}."
             )
         if value.shape == (self.dimension,):
             evaluation = (
