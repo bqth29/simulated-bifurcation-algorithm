@@ -18,10 +18,10 @@ constant = 1
 
 class IsingPolynomialInterfaceImpl(IsingPolynomialInterface):
     def to_ising(self):
-        pass
+        pass  # pragma: no cover
 
     def convert_spins(self, ising: IsingCore):
-        pass
+        pass  # pragma: no cover
 
 
 def test_init_polynomial_from_tensors():

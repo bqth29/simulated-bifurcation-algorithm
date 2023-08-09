@@ -60,7 +60,7 @@ class IntegerPolynomial(IsingPolynomialInterface):
             matrix, vector, constant, [*range(2**number_of_bits)], dtype, device
         )
         self.number_of_bits = number_of_bits
-        self.__int_to_bin_matrix = IntegerPolynomial.integer_to_binary_matrix(
+        self.__int_to_bin_matrix = self.integer_to_binary_matrix(
             self.dimension, self.number_of_bits, self.device
         )
 

@@ -27,7 +27,7 @@ class IsingPolynomialInterface(ABC):
         matrix: Union[torch.Tensor, np.ndarray],
         vector: Union[torch.Tensor, np.ndarray, None] = None,
         constant: Union[int, float, None] = None,
-        accepted_values: Optional[List[int]] = None,
+        accepted_values: Union[torch.Tensor, np.ndarray, list[int], None] = None,
         dtype: torch.dtype = torch.float32,
         device: str = "cpu",
     ) -> None:
@@ -43,7 +43,7 @@ class IsingPolynomialInterface(ABC):
         constant : float | int | None, optional
             the constant term of the polynomial. `None` means no constant term
             (default is `None`)
-        accepted_values : List[int] | None, optional
+        accepted_values : Tensor | ndarray | List[int] | None, optional
             the values accepted as input values of the polynomial. Input with
             wrong values lead to a `ValueError` when evaluating the
             polynomial. `None` means no restriction in input values
@@ -59,7 +59,9 @@ class IsingPolynomialInterface(ABC):
         self.__init_vector(vector, dtype, device)
         self.__init_constant(constant, dtype, device)
         if accepted_values is not None:
-            self.__accepted_values = accepted_values.copy()
+            self.__accepted_values = torch.Tensor(accepted_values).to(
+                device=device, dtype=dtype
+            )
         else:
             self.__accepted_values = None
         self.sb_result = None
@@ -97,8 +99,9 @@ class IsingPolynomialInterface(ABC):
                 value = torch.Tensor(value)
             except Exception as err:
                 raise TypeError(f"Input value cannot be cast to Tensor.") from err
-        if (self.__accepted_values is not None) and (
-            not np.all(np.isin(value.numpy(), self.__accepted_values))
+        value = value.to(device=self.device, dtype=self.dtype)
+        if (self.__accepted_values is not None) and torch.any(
+            torch.isin(value, self.__accepted_values, invert=True)
         ):
             raise ValueError(
                 f"Input values must all belong to {self.__accepted_values}."

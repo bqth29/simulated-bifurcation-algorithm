@@ -1,7 +1,7 @@
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import torch
-from numpy import argmin, ndarray
+from numpy import ndarray
 
 from .optimizer import OptimizerMode, SimulatedBifurcationOptimizer
 
