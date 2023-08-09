@@ -11,14 +11,15 @@ from src.simulated_bifurcation.optimizer import (
 
 def test_optimizer():
     torch.manual_seed(42)
-    J = torch.Tensor(
+    J = torch.tensor(
         [
             [1, 2, 3],
             [2, 1, 4],
             [3, 4, 1],
-        ]
+        ],
+        dtype=torch.float32,
     )
-    h = torch.Tensor([1, 0, -2])
+    h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
     ising.optimize(50, 50, 10000, 20, False, False, False, False)
     assert torch.equal(torch.ones((3, 20)), ising.computed_spins)
@@ -26,23 +27,25 @@ def test_optimizer():
 
 def test_optimizer_without_bifurcation():
     torch.manual_seed(42)
-    J = torch.Tensor(
+    J = torch.tensor(
         [
             [1, 2, 3],
             [2, 1, 4],
             [3, 4, 1],
-        ]
+        ],
+        dtype=torch.float32,
     )
-    h = torch.Tensor([1, 0, -2])
+    h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
     ising.optimize(50, 50, 10, 5, True, False, False, False)
     assert torch.equal(
-        torch.Tensor(
+        torch.tensor(
             [
                 [1.0, 1.0, -1.0, -1.0, -1.0],
                 [1.0, -1.0, 1.0, -1.0, -1.0],
                 [1.0, -1.0, 1.0, -1.0, -1.0],
-            ]
+            ],
+            dtype=torch.float32,
         ),
         ising.computed_spins,
     )
@@ -50,14 +53,15 @@ def test_optimizer_without_bifurcation():
 
 def test_optimizer_with_window():
     torch.manual_seed(42)
-    J = torch.Tensor(
+    J = torch.tensor(
         [
             [1, 2, 3],
             [2, 1, 4],
             [3, 4, 1],
-        ]
+        ],
+        dtype=torch.float32,
     )
-    h = torch.Tensor([1, 0, -2])
+    h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
     ising.optimize(20, 20, 30000, 20, True, False, False, False)
     assert torch.equal(torch.ones((3, 20)), ising.computed_spins)
@@ -65,14 +69,15 @@ def test_optimizer_with_window():
 
 def test_optimizer_with_heating():
     torch.manual_seed(42)
-    J = torch.Tensor(
+    J = torch.tensor(
         [
             [1, 2, 3],
             [2, 1, 4],
             [3, 4, 1],
-        ]
+        ],
+        dtype=torch.float32,
     )
-    h = torch.Tensor([1, 0, -2])
+    h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
     ising.optimize(50, 50, 10000, 20, False, False, True, False)
     assert torch.equal(torch.ones((3, 20)), ising.computed_spins)

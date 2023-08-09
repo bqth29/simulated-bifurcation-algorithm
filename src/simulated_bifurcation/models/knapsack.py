@@ -44,7 +44,7 @@ class Knapsack(BinaryPolynomial):
                 [-2 * range_array.T @ weights_array, 1 + range_array.T @ range_array],
             ]
         )
-        return torch.Tensor(matrix).to(dtype=dtype, device=device)
+        return torch.tensor(matrix, dtype=dtype, device=device)
 
     def __make_vector(self, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
         dim = self.n_items + self.max_weight + 1
@@ -57,4 +57,4 @@ class Knapsack(BinaryPolynomial):
         unit_array = unit_array.reshape(-1, 1)
         penalty = 0.5 / costs_array.max()
         vector = -2 * unit_array - penalty * extended_cost_array
-        return torch.Tensor(vector).to(dtype=dtype, device=device)
+        return torch.tensor(vector, dtype=dtype, device=device)

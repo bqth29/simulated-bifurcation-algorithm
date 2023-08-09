@@ -54,8 +54,8 @@ import simulated_bifurcation as sb
 ```
 
 ```python
-matrix = torch.Tensor([[0, 1, 2], [1, 0, -2], [2, -2, 0]])
-vector = torch.Tensor([-1, 0, 2])
+matrix = torch.tensor([[0, 1, 2], [1, 0, -2], [2, -2, 0]])
+vector = torch.tensor([-1, 0, 2])
 constant = 2.0
 ```
 

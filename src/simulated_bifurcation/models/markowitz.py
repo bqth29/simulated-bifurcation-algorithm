@@ -9,7 +9,7 @@ from ..polynomial import IntegerPolynomial
 class Markowitz(IntegerPolynomial):
 
     """
-    A representation of the Markowitz model for portolio optimization.
+    A representation of the Markowitz model for portfolio optimization.
     Portfolio only takes integer stocks.
     """
 

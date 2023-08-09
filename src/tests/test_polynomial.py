@@ -1,18 +1,18 @@
-import numpy as np
 import pytest
 import torch
 
 from src.simulated_bifurcation.ising_core import IsingCore
 from src.simulated_bifurcation.polynomial import IsingPolynomialInterface
 
-matrix = torch.Tensor(
+matrix = torch.tensor(
     [
         [1, 2, 3],
         [4, 5, 6],
         [7, 8, 9],
-    ]
+    ],
+    dtype=torch.float32,
 )
-vector = torch.Tensor([[1], [2], [3]])
+vector = torch.tensor([[1], [2], [3]], dtype=torch.float32)
 constant = 1
 
 
@@ -25,17 +25,15 @@ class IsingPolynomialInterfaceImpl(IsingPolynomialInterface):
 
 
 def test_init_polynomial_from_tensors():
-    polynomial = IsingPolynomialInterfaceImpl(
-        torch.Tensor(matrix), torch.Tensor(vector), constant
-    )
-    assert torch.equal(polynomial.matrix, torch.Tensor(matrix))
-    assert torch.equal(polynomial.vector, torch.Tensor(vector))
+    polynomial = IsingPolynomialInterfaceImpl(matrix, vector, constant)
+    assert torch.equal(polynomial.matrix, matrix)
+    assert torch.equal(polynomial.vector, vector)
     assert polynomial.constant == 1.0
     assert polynomial.dimension == 3
     assert len(polynomial) == 3
     assert polynomial[0] == 1.0
-    assert torch.equal(polynomial[2], torch.Tensor(matrix))
-    assert torch.equal(polynomial[1], torch.Tensor(vector))
+    assert torch.equal(polynomial[2], matrix)
+    assert torch.equal(polynomial[1], vector)
     assert polynomial.dtype == torch.float32
     assert polynomial.device == torch.device("cpu")
     with pytest.raises(ValueError):
@@ -44,27 +42,25 @@ def test_init_polynomial_from_tensors():
 
 
 def test_init_polynomial_from_arrays():
-    polynomial = IsingPolynomialInterfaceImpl(
-        np.array(matrix), np.array(vector), constant
-    )
-    assert torch.equal(polynomial.matrix, torch.Tensor(matrix))
-    assert torch.equal(polynomial.vector, torch.Tensor(vector))
+    polynomial = IsingPolynomialInterfaceImpl(matrix.numpy(), vector.numpy(), constant)
+    assert torch.equal(polynomial.matrix, matrix)
+    assert torch.equal(polynomial.vector, vector)
     assert polynomial.constant == 1.0
     assert polynomial.dimension == 3
     assert len(polynomial) == 3
     assert polynomial[0] == 1.0
-    assert torch.equal(polynomial[2], torch.Tensor(matrix))
-    assert torch.equal(polynomial[1], torch.Tensor(vector))
+    assert torch.equal(polynomial[2], matrix)
+    assert torch.equal(polynomial[1], vector)
 
 
 def test_init_polynomial_without_order_one_and_zero():
-    polynomial = IsingPolynomialInterfaceImpl(torch.Tensor(matrix))
-    assert torch.equal(polynomial.matrix, torch.Tensor(matrix))
+    polynomial = IsingPolynomialInterfaceImpl(matrix)
+    assert torch.equal(polynomial.matrix, matrix)
     assert torch.equal(polynomial.vector, torch.zeros(polynomial.dimension))
     assert polynomial.constant == 0.0
     assert polynomial.dimension == 3
     assert len(polynomial) == 3
-    assert torch.equal(polynomial[2], torch.Tensor(matrix))
+    assert torch.equal(polynomial[2], matrix)
     assert torch.equal(polynomial[1], torch.zeros(polynomial.dimension))
     assert polynomial[0] == 0.0
 
@@ -77,17 +73,19 @@ def test_init_with_wrong_parameters():
         IsingPolynomialInterfaceImpl(torch.unsqueeze(matrix, 0))
     with pytest.raises(ValueError):
         IsingPolynomialInterfaceImpl(
-            torch.Tensor(
+            torch.tensor(
                 [
                     [1, 2, 3],
                     [4, 5, 6],
-                ]
+                ],
+                dtype=torch.float32,
             )
         )
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
         IsingPolynomialInterfaceImpl(matrix, ("hello", "world!"))
     with pytest.raises(ValueError):
+        # noinspection PyTypeChecker
         IsingPolynomialInterfaceImpl(matrix, 1)
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
@@ -96,23 +94,32 @@ def test_init_with_wrong_parameters():
 
 def test_call_polynomial():
     polynomial = IsingPolynomialInterfaceImpl(matrix)
-    assert polynomial(torch.Tensor([0, 0, 0])) == 0
+    assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0
     assert torch.equal(
-        polynomial(torch.Tensor([[0, 0, 0], [1, 2, 3]])), torch.Tensor([0, 228])
+        polynomial(
+            torch.tensor(
+                [
+                    [0, 0, 0],
+                    [1, 2, 3],
+                ],
+                dtype=torch.float32,
+            )
+        ),
+        torch.tensor([0, 228], dtype=torch.float32),
     )
     assert polynomial(torch.zeros((1, 5, 3, 1, 2, 1, 3))).shape == (1, 5, 3, 1, 2, 1)
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
         polynomial("hello world!")
     with pytest.raises(ValueError):
-        polynomial(torch.Tensor([1, 2, 3, 4, 5]))
+        polynomial(torch.tensor([1, 2, 3, 4, 5], dtype=torch.float32))
 
 
 def test_call_polynomial_with_accepted_values():
     polynomial = IsingPolynomialInterfaceImpl(matrix, accepted_values=[0, 1])
-    assert polynomial(torch.Tensor([0, 0, 0])) == 0
+    assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0
     with pytest.raises(ValueError):
-        polynomial(torch.Tensor([0, 1, 2]))
+        polynomial(torch.tensor([0, 1, 2], dtype=torch.float32))
 
 
 def test_ising_interface():

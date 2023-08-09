@@ -6,7 +6,7 @@ from numpy import sum
 from ..polynomial import SpinPolynomial
 
 
-class NumberPartioning(SpinPolynomial):
+class NumberPartitioning(SpinPolynomial):
 
     """
     A solver that separates a set of numbers into two subsets, the
@@ -17,7 +17,9 @@ class NumberPartioning(SpinPolynomial):
         self, numbers: list, dtype: torch.dtype = torch.float32, device: str = "cpu"
     ) -> None:
         self.numbers = numbers
-        tensor_numbers = torch.Tensor(self.numbers, device=device).reshape(-1, 1)
+        tensor_numbers = torch.tensor(self.numbers, dtype=dtype, device=device).reshape(
+            -1, 1
+        )
         super().__init__(tensor_numbers @ tensor_numbers.t(), None, None, dtype, device)
 
     @property

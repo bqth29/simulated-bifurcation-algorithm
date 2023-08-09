@@ -3,52 +3,53 @@ import torch
 
 from src.simulated_bifurcation import maximize, minimize
 
-matrix = torch.Tensor(
+matrix = torch.tensor(
     [
         [0, 1, -1],
         [1, 0, 2],
         [-1, 2, 0],
-    ]
+    ],
+    dtype=torch.float32,
 )
-vector = torch.Tensor([1, 2, -3])
+vector = torch.tensor([1, 2, -3], dtype=torch.float32)
 constant = 1
 
 
 def test_minimize_spin():
     best_combination, best_value = minimize(matrix, vector, constant, "spin")
-    assert torch.equal(torch.Tensor([1, -1, 1]), best_combination)
+    assert torch.equal(torch.tensor([1, -1, 1], dtype=torch.float32), best_combination)
     assert -11 == best_value
 
 
 def test_minimize_binary():
     best_combination, best_value = minimize(matrix, vector, constant, "binary")
-    assert torch.equal(torch.Tensor([1, 0, 1]), best_combination)
+    assert torch.equal(torch.tensor([1, 0, 1], dtype=torch.float32), best_combination)
     assert -3 == best_value
 
 
 def test_minimize_integer():
     best_combination, best_value = minimize(matrix, vector, constant, "int3")
-    assert torch.equal(torch.Tensor([7, 0, 7]), best_combination)
+    assert torch.equal(torch.tensor([7, 0, 7], dtype=torch.float32), best_combination)
     assert -111 == best_value
 
 
 def test_maximize_spin():
     best_combination, best_value = maximize(matrix, vector, constant, "spin")
-    assert torch.equal(best_combination, torch.Tensor([1, -1, -1])) or torch.equal(
-        best_combination, torch.Tensor([1, 1, -1])
-    )
+    assert torch.equal(
+        best_combination, torch.tensor([1, -1, -1], dtype=torch.float32)
+    ) or torch.equal(best_combination, torch.tensor([1, 1, -1], dtype=torch.float32))
     assert 7 == best_value
 
 
 def test_maximize_binary():
     best_combination, best_value = maximize(matrix, vector, constant, "binary")
-    assert torch.equal(torch.Tensor([1, 1, 0]), best_combination)
+    assert torch.equal(torch.tensor([1, 1, 0], dtype=torch.float32), best_combination)
     assert 6 == best_value
 
 
 def test_maximize_integer():
     best_combination, best_value = maximize(matrix, vector, constant, "int2")
-    assert torch.equal(torch.Tensor([3, 3, 3]), best_combination)
+    assert torch.equal(torch.tensor([3, 3, 3], dtype=torch.float32), best_combination)
     assert 37 == best_value
 
 

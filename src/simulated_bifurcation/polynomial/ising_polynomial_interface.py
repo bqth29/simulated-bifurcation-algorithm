@@ -59,8 +59,8 @@ class IsingPolynomialInterface(ABC):
         self.__init_vector(vector, dtype, device)
         self.__init_constant(constant, dtype, device)
         if accepted_values is not None:
-            self.__accepted_values = torch.Tensor(accepted_values).to(
-                device=device, dtype=dtype
+            self.__accepted_values = torch.tensor(
+                accepted_values, dtype=dtype, device=device
             )
         else:
             self.__accepted_values = None
@@ -96,10 +96,9 @@ class IsingPolynomialInterface(ABC):
     ) -> Union[float, torch.Tensor]:
         if not isinstance(value, torch.Tensor):
             try:
-                value = torch.Tensor(value)
+                value = torch.tensor(value, dtype=self.dtype, device=self.device)
             except Exception as err:
                 raise TypeError(f"Input value cannot be cast to Tensor.") from err
-        value = value.to(device=self.device, dtype=self.dtype)
         if (self.__accepted_values is not None) and torch.any(
             torch.isin(value, self.__accepted_values, invert=True)
         ):
@@ -163,8 +162,10 @@ class IsingPolynomialInterface(ABC):
     def __cast_matrix_to_tensor(
         matrix: Iterable, dtype: torch.dtype, device: str
     ) -> torch.Tensor:
+        if isinstance(matrix, torch.Tensor):
+            return matrix
         try:
-            return torch.Tensor(matrix).to(device=device, dtype=dtype)
+            return torch.tensor(matrix, dtype=dtype, device=device)
         except Exception as err:
             raise TypeError("Matrix cannot be cast to tensor.") from err
 
@@ -173,8 +174,10 @@ class IsingPolynomialInterface(ABC):
     ) -> torch.Tensor:
         if vector is None:
             return torch.zeros(self.dimension, dtype=dtype, device=device)
+        if isinstance(vector, torch.Tensor):
+            return vector
         try:
-            return torch.Tensor(vector).to(device=device, dtype=dtype)
+            return torch.tensor(vector, dtype=dtype, device=device)
         except Exception as err:
             raise TypeError("Vector cannot be cast to tensor.") from err
 
