@@ -8,9 +8,9 @@ def get_env() -> Dict[str, float]:
 
 
 def set_env(
-    time_step: float = None,
-    pressure_slope: float = None,
-    heat_coefficient: float = None,
+    time_step: Optional[float] = None,
+    pressure_slope: Optional[float] = None,
+    heat_coefficient: Optional[float] = None,
 ):
     if (
         (time_step is None or isinstance(time_step, float))
