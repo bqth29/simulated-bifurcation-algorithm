@@ -99,8 +99,8 @@ class SimulatedBifurcationOptimizer:
         )
 
     def __init_quadratic_scale_parameter(self, matrix: torch.Tensor):
-        self.quadratic_scale_parameter = 0.7 / (
-            torch.std(matrix) * (matrix.shape[0]) ** (1 / 2)
+        self.quadratic_scale_parameter = 0.5 * (matrix.shape[0] - 1) ** .5 / (
+            torch.sqrt(torch.sum(matrix ** 2))
         )
 
     def __init_window(self, matrix: torch.Tensor, use_window: bool) -> None:
@@ -177,7 +177,7 @@ class SimulatedBifurcationOptimizer:
 
     def __compute_symplectic_coefficients(self) -> Tuple[float, float, float]:
         pressure = self.__pressure
-        position_coefficient = self.time_step * (1.0 + pressure)
+        position_coefficient = self.time_step
         momentum_coefficient = self.time_step * (pressure - 1.0)
         quadratic_coefficient = self.time_step * self.quadratic_scale_parameter
         return momentum_coefficient, position_coefficient, quadratic_coefficient
