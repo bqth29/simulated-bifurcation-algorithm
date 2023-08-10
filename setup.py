@@ -17,6 +17,13 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires=[
+        "tqdm",
+        "numpy",
+        "torch>=2.0.1",
+        "coverage",
+        "pytest"
+    ]
     python_requires=">=3.8",
     package_dir={"":"src"}
 )
