@@ -55,6 +55,7 @@ class IsingPolynomialInterface(ABC):
             the device on which to perform the computations of the Simulated
             Bifurcation algorithm (default `"cpu"`)
         """
+        self.__check_device(device)
         self.__init_matrix(matrix, dtype, device)
         self.__init_vector(vector, dtype, device)
         self.__init_constant(constant, dtype, device)
@@ -138,6 +139,21 @@ class IsingPolynomialInterface(ABC):
     @final
     def __len__(self) -> int:
         return self.__dimension
+
+    @staticmethod
+    def __check_device(device: Union[str, torch.device]):
+        if isinstance(device, torch.device):
+            device = device.type
+        elif not isinstance(device, str):
+            raise TypeError(
+                f"device should a string or a torch.device, received {device}"
+            )
+        if "cuda" in device and not torch.cuda.is_available():
+            raise RuntimeError(
+                "CUDA is not available, the SB algorithm cannot be run on GPU.\n"
+                "See https://pytorch.org/get-started/locally/ for further information"
+                "about installing with CUDA support."
+            )  # pragma: no cover
 
     def __init_matrix(self, matrix: Iterable, dtype: torch.dtype, device: str) -> None:
         tensor_matrix = self.__cast_matrix_to_tensor(matrix, dtype, device)

@@ -93,6 +93,16 @@ def test_init_with_wrong_parameters():
         IsingPolynomialInterfaceImpl(matrix, constant="hello world!")
 
 
+def test_check_device():
+    IsingPolynomialInterfaceImpl(matrix, device=torch.device("cpu"))
+    with pytest.raises(TypeError):
+        # noinspection PyTypeChecker
+        IsingPolynomialInterfaceImpl(matrix, device=1)
+    if not torch.cuda.is_available():
+        with pytest.raises(RuntimeError):  # pragma: no cover
+            IsingPolynomialInterfaceImpl(matrix, device="cuda")
+
+
 def test_call_polynomial():
     polynomial = IsingPolynomialInterfaceImpl(matrix)
     assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0.0
