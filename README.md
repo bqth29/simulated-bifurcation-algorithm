@@ -13,10 +13,30 @@ It also provides an API to define Ising models or other NP-hard and NP-complete 
 
 ## ⚙️ Install
 
-| Compute Platform |                 CPU                 |                                                             GPU                                                             |
-|------------------|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
-|   Instructions   | `pip install simulated-bifurcation` | 1. Install [PyTorch](https://pytorch.org/get-started/locally/) with GPU support <br> 2. `pip install simulated-bifurcation` |
+<table>
+<tr>
+<th> Compute Platform </th> <th> CPU </th> <th> GPU </th>
+</tr>
+<tr>
+<th> Instructions </th>
+<td>
 
+```console
+pip install simulated-bifurcation     
+```
+
+</td>
+<td>
+
+&nbsp;&nbsp;&nbsp;
+Install [PyTorch](https://pytorch.org/get-started/locally/) with GPU support
+```console
+pip install simulated-bifurcation     
+```
+
+</td>
+</tr>
+</table>
 
 ## 🧪 The *Simulated Bifurcation* (SB) algorithm
 
