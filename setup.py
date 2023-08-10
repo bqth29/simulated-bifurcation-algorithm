@@ -23,7 +23,7 @@ setuptools.setup(
         "torch>=2.0.1",
         "coverage",
         "pytest"
-    ]
+    ],
     python_requires=">=3.8",
     package_dir={"":"src"}
 )
