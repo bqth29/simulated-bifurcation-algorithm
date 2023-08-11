@@ -99,8 +99,8 @@ class SimulatedBifurcationOptimizer:
         )
 
     def __init_quadratic_scale_parameter(self, matrix: torch.Tensor):
-        self.quadratic_scale_parameter = 0.5 * (matrix.shape[0] - 1) ** 0.5 / (
-            torch.sqrt(torch.sum(matrix ** 2))
+        self.quadratic_scale_parameter = (
+            0.5 * (matrix.shape[0] - 1) ** 0.5 / (torch.sqrt(torch.sum(matrix**2)))
         )
 
     def __init_window(self, matrix: torch.Tensor, use_window: bool) -> None:

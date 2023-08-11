@@ -164,6 +164,7 @@ def test_best_only():
 
 
 def test_minimize():
+    torch.manual_seed(42)
     model = build_model(
         matrix=matrix,
         vector=vector,
@@ -174,9 +175,11 @@ def test_minimize():
     )
     best_combination, best_value = model.minimize()
     assert torch.equal(
-        best_combination, torch.tensor([-1.0, 1.0, -1.0], dtype=torch.float32)
+        best_combination, torch.tensor([1.0, 1.0, -1.0], dtype=torch.float32)
+    ) or torch.equal(
+        best_combination, torch.tensor([-1.0, -1.0, 1.0], dtype=torch.float32)
     )
-    assert 4.0 == best_value
+    assert best_value == -2.0
 
 
 def test_maximize():
