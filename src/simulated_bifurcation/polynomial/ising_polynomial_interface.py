@@ -216,8 +216,8 @@ class IsingPolynomialInterface(ABC):
 
     @staticmethod
     def __check_square_matrix(matrix: torch.Tensor) -> None:
-        if len(matrix.shape) != 2:
-            raise ValueError(f"Matrix requires two dimension, got {len(matrix.shape)}.")
+        if matrix.ndim != 2:
+            raise ValueError(f"Matrix requires two dimension, got {matrix.ndim}.")
         if matrix.shape[0] != matrix.shape[1]:
             raise ValueError("Matrix must be square.")
 
