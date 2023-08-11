@@ -57,20 +57,20 @@ class SimulatedBifurcationOptimizer:
 
     def __init__(
         self,
-        convergence_threshold: int,
-        sampling_period: int,
-        max_steps: int,
         agents: int,
+        max_steps: int,
         mode: OptimizerMode,
-        heat: bool,
+        heated: bool,
         verbose: bool,
+        sampling_period: int,
+        convergence_threshold: int,
     ) -> None:
         # Optimizer setting
         self.mode = mode
         self.window = None
         self.symplectic_integrator = None
         self.heat_coefficient = OptimizationVariable.HEAT_COEFFICIENT.get()
-        self.heated = heat
+        self.heated = heated
         self.verbose = verbose
         # Simulation parameters
         self.time_step = OptimizationVariable.TIME_STEP.get()

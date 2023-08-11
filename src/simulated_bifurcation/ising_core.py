@@ -103,14 +103,15 @@ class IsingCore:
 
     def optimize(
         self,
-        convergence_threshold: int = 50,
-        sampling_period: int = 50,
-        max_steps: int = 10000,
         agents: int = 128,
-        use_window: bool = True,
+        max_steps: int = 10000,
         ballistic: bool = False,
-        heat: bool = False,
+        heated: bool = False,
         verbose: bool = True,
+        *,
+        use_window: bool = True,
+        sampling_period: int = 50,
+        convergence_threshold: int = 50,
     ):
         """
         Computes a local minimum of the Ising problem using the
@@ -151,6 +152,7 @@ class IsingCore:
 
         Parameters
         ----------
+        *
         convergence_threshold : int, optional
             number of consecutive identical spin sampling considered as a proof
             of convergence (default is 50)
@@ -167,7 +169,7 @@ class IsingCore:
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
-        heat : bool, optional
+        heated : bool, optional
             if True, the heated SB will be used, else it will be the non-heated
             SB (default is True)
         verbose : bool, optional
@@ -175,13 +177,13 @@ class IsingCore:
             evolution (default is True)
         """
         optimizer = SimulatedBifurcationOptimizer(
-            convergence_threshold,
-            sampling_period,
-            max_steps,
             agents,
+            max_steps,
             OptimizerMode.BALLISTIC if ballistic else OptimizerMode.DISCRETE,
-            heat,
+            heated,
             verbose,
+            sampling_period,
+            convergence_threshold,
         )
         tensor = self.as_simulated_bifurcation_tensor()
         spins = optimizer.run_integrator(tensor, use_window)

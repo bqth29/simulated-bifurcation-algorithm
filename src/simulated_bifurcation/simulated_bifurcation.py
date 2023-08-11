@@ -25,16 +25,17 @@ def optimize(
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
     device: str = "cpu",
-    convergence_threshold: int = 50,
-    sampling_period: int = 50,
-    max_steps: int = 10_000,
     agents: int = 128,
-    use_window: bool = True,  # TODO : change order of arguments
-    ballistic: bool = False,
-    heat: bool = False,
-    verbose: bool = True,
+    max_steps: int = 10_000,
     best_only: bool = True,
+    ballistic: bool = False,
+    heated: bool = False,
     minimize: bool = True,
+    verbose: bool = True,
+    *,
+    use_window: bool = True,
+    sampling_period: int = 50,
+    convergence_threshold: int = 50,
 ) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
     r"""
     Optimizes a multivariate degree 2 polynomial using the SB algorithm.
@@ -83,22 +84,22 @@ def optimize(
     agents : int, default=128
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
-    ballistic : bool, default=False
-        Whether to use the ballistic or the discrete SB algorithm.
-        See Notes for further information about the variants of the SB
-        algorithm.
-    heat : bool, default=False
-        Whether to use the heated or non-heated SB algorithm.
-        See Notes for further information about the variants of the SB
-        algorithm.
+    max_steps : int, default=10_000
+        Number of iterations after which the algorithm is stopped
+        regardless of whether convergence has been achieved.
     best_only : bool, default=True
         If True, return only the best vector found and the value of the
         polynomial at this vector. Otherwise, returns all the vectors
         found by the SB algorithm and the values of polynomial at these
         points.
-    max_steps : int, default=10_000
-        Number of iterations after which the algorithm is stopped
-        regardless of whether convergence has been achieved.
+    ballistic : bool, default=False
+        Whether to use the ballistic or the discrete SB algorithm.
+        See Notes for further information about the variants of the SB
+        algorithm.
+    heated : bool, default=False
+        Whether to use the heated or non-heated SB algorithm.
+        See Notes for further information about the variants of the SB
+        algorithm.
     minimize : bool, default=True
         If True, minimizes the polynomial over the specified domain.
         Otherwise, the polynomial is maximized.
@@ -229,16 +230,16 @@ def optimize(
         device=device,
     )
     result, evaluation = model.optimize(
-        convergence_threshold=convergence_threshold,
-        sampling_period=sampling_period,
-        max_steps=max_steps,
         agents=agents,
-        use_window=use_window,
-        ballistic=ballistic,
-        heat=heat,
-        verbose=verbose,
-        minimize=minimize,
+        max_steps=max_steps,
         best_only=best_only,
+        ballistic=ballistic,
+        heated=heated,
+        minimize=minimize,
+        verbose=verbose,
+        use_window=use_window,
+        sampling_period=sampling_period,
+        convergence_threshold=convergence_threshold,
     )
     return result, evaluation
 
@@ -250,15 +251,16 @@ def minimize(
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
     device: str = "cpu",
-    convergence_threshold: int = 50,
-    sampling_period: int = 50,
-    max_steps: int = 10_000,
     agents: int = 128,
-    use_window: bool = True,
-    ballistic: bool = False,
-    heat: bool = False,
-    verbose: bool = True,
+    max_steps: int = 10_000,
     best_only: bool = True,
+    ballistic: bool = False,
+    heated: bool = False,
+    verbose: bool = True,
+    *,
+    use_window: bool = True,
+    sampling_period: int = 50,
+    convergence_threshold: int = 50,
 ) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
     r"""
     Minimizes a multivariate degree 2 polynomial using the SB algorithm.
@@ -307,22 +309,22 @@ def minimize(
     agents : int, default=128
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
-    ballistic : bool, default=False
-        Whether to use the ballistic or the discrete SB algorithm.
-        See Notes for further information about the variants of the SB
-        algorithm.
-    heat : bool, default=False
-        Whether to use the heated or non-heated SB algorithm.
-        See Notes for further information about the variants of the SB
-        algorithm.
+    max_steps : int, default=10_000
+        Number of iterations after which the algorithm is stopped
+        regardless of whether convergence has been achieved.
     best_only : bool, default=True
         If True, return only the best vector found and the value of the
         polynomial at this vector. Otherwise, returns all the vectors
         found by the SB algorithm and the values of polynomial at these
         points.
-    max_steps : int, default=10_000
-        Number of iterations after which the algorithm is stopped
-        regardless of whether convergence has been achieved.
+    ballistic : bool, default=False
+        Whether to use the ballistic or the discrete SB algorithm.
+        See Notes for further information about the variants of the SB
+        algorithm.
+    heated : bool, default=False
+        Whether to use the heated or non-heated SB algorithm.
+        See Notes for further information about the variants of the SB
+        algorithm.
     verbose : bool, default=True
         Whether to display a progress bar to monitor the progress of the
         algorithm.
@@ -447,16 +449,16 @@ def minimize(
         input_type,
         dtype,
         device,
-        convergence_threshold,
-        sampling_period,
-        max_steps,
         agents,
-        use_window,
-        ballistic,
-        heat,
-        verbose,
+        max_steps,
         best_only,
+        ballistic,
+        heated,
         True,
+        verbose,
+        use_window=use_window,
+        sampling_period=sampling_period,
+        convergence_threshold=convergence_threshold,
     )
 
 
@@ -467,15 +469,16 @@ def maximize(
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
     device: str = "cpu",
-    convergence_threshold: int = 50,
-    sampling_period: int = 50,
-    max_steps: int = 10_000,
     agents: int = 128,
-    use_window: bool = True,
-    ballistic: bool = False,
-    heat: bool = False,
-    verbose: bool = True,
+    max_steps: int = 10_000,
     best_only: bool = True,
+    ballistic: bool = False,
+    heated: bool = False,
+    verbose: bool = True,
+    *,
+    use_window: bool = True,
+    sampling_period: int = 50,
+    convergence_threshold: int = 50,
 ) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
     r"""
     Maximizes a multivariate degree 2 polynomial using the SB algorithm.
@@ -524,22 +527,22 @@ def maximize(
     agents : int, default=128
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
-    ballistic : bool, default=False
-        Whether to use the ballistic or the discrete SB algorithm.
-        See Notes for further information about the variants of the SB
-        algorithm.
-    heat : bool, default=False
-        Whether to use the heated or non-heated SB algorithm.
-        See Notes for further information about the variants of the SB
-        algorithm.
+    max_steps : int, default=10_000
+        Number of iterations after which the algorithm is stopped
+        regardless of whether convergence has been achieved.
     best_only : bool, default=True
         If True, return only the best vector found and the value of the
         polynomial at this vector. Otherwise, returns all the vectors
         found by the SB algorithm and the values of polynomial at these
         points.
-    max_steps : int, default=10_000
-        Number of iterations after which the algorithm is stopped
-        regardless of whether convergence has been achieved.
+    ballistic : bool, default=False
+        Whether to use the ballistic or the discrete SB algorithm.
+        See Notes for further information about the variants of the SB
+        algorithm.
+    heated : bool, default=False
+        Whether to use the heated or non-heated SB algorithm.
+        See Notes for further information about the variants of the SB
+        algorithm.
     verbose : bool, default=True
         Whether to display a progress bar to monitor the progress of the
         algorithm.
@@ -664,16 +667,16 @@ def maximize(
         input_type,
         dtype,
         device,
-        convergence_threshold,
-        sampling_period,
-        max_steps,
         agents,
-        use_window,
-        ballistic,
-        heat,
-        verbose,
+        max_steps,
         best_only,
+        ballistic,
+        heated,
         False,
+        verbose,
+        use_window=use_window,
+        sampling_period=sampling_period,
+        convergence_threshold=convergence_threshold,
     )
 
 

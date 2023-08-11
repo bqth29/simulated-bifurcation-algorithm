@@ -181,14 +181,14 @@ The SB algorithm is available in four different versions (Goto *et al.*) that re
 3. **Heated ballistic SB (HbSB)**: uses the bSB algorithm with a supplementary non-symplectic term to allow a higher solution space exploration.
 4. **Heated discrete SB (HdSB)**: uses the dSB algorithm with a supplementary non-symplectic term to allow a higher solution space exploration.
 
-These mode can be selected setting the parameters `ballistic` and `heat` to either `True` or `False` in the `Ising.optimize` method or the `minimize`/`maximize` functions.
+These mode can be selected setting the parameters `ballistic` and `heated` to either `True` or `False` in the `Ising.optimize` method or the `minimize`/`maximize` functions.
 
 ```python
-sb.minimize(matrix, ballistic=True, heat=False)  # bSB
-sb.minimize(matrix, ballistic=False, heat=True)  # HdSB
+sb.minimize(matrix, ballistic=True, heated=False)  # bSB
+sb.minimize(matrix, ballistic=False, heated=True)  # HdSB
 
-sb.maximize(matrix, ballistic=False, heat=False)  # dSB
-sb.maximize(matrix, ballistic=True, heat=True)  # HbSB
+sb.maximize(matrix, ballistic=False, heated=False)  # dSB
+sb.maximize(matrix, ballistic=True, heated=True)  # HbSB
 ```
 
 ### SB Algorithm's hyperparameters setting

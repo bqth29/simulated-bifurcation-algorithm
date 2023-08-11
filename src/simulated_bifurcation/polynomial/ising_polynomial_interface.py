@@ -102,7 +102,7 @@ class IsingPolynomialInterface(ABC):
                 raise TypeError(f"Input value cannot be cast to Tensor.") from err
         if (self.__accepted_values is not None) and torch.any(
             torch.isin(value, self.__accepted_values, invert=True)
-        ):
+        ):  # TODO: flag to skip type-check
             raise ValueError(
                 f"Input values must all belong to {self.__accepted_values.tolist()}."
             )
@@ -257,16 +257,17 @@ class IsingPolynomialInterface(ABC):
     @final
     def optimize(
         self,
-        convergence_threshold: int = 50,
-        sampling_period: int = 50,
-        max_steps: int = 10000,
         agents: int = 128,
-        use_window: bool = True,
-        ballistic: bool = False,
-        heat: bool = False,
-        verbose: bool = True,
+        max_steps: int = 10000,
         best_only: bool = True,
+        ballistic: bool = False,
+        heated: bool = False,
         minimize: bool = True,
+        verbose: bool = True,
+        *,
+        use_window: bool = True,
+        sampling_period: int = 50,
+        convergence_threshold: int = 50,
     ) -> Tuple[torch.Tensor, Union[torch.Tensor, float]]:
         """
         Computes a local extremum of the model by optimizing
@@ -307,6 +308,7 @@ class IsingPolynomialInterface(ABC):
 
         Parameters
         ----------
+        *
         convergence_threshold : int, optional
             number of consecutive identical spin sampling considered as a proof
             of convergence (default is 50)
@@ -323,7 +325,7 @@ class IsingPolynomialInterface(ABC):
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
-        heat : bool, optional
+        heated : bool, optional
             if True, the heated SB will be used, else it will be the non-heated
             SB (default is True)
         verbose : bool, optional
@@ -346,14 +348,14 @@ class IsingPolynomialInterface(ABC):
         else:
             ising_equivalent = -self.to_ising()
         ising_equivalent.optimize(
-            convergence_threshold,
-            sampling_period,
-            max_steps,
             agents,
-            use_window,
+            max_steps,
             ballistic,
-            heat,
+            heated,
             verbose,
+            use_window=use_window,
+            sampling_period=sampling_period,
+            convergence_threshold=convergence_threshold,
         )
         self.sb_result = self.convert_spins(ising_equivalent)
         result = self.sb_result.t()
@@ -367,15 +369,16 @@ class IsingPolynomialInterface(ABC):
     @final
     def minimize(
         self,
-        convergence_threshold: int = 50,
-        sampling_period: int = 50,
-        max_steps: int = 10000,
         agents: int = 128,
-        use_window: bool = True,
-        ballistic: bool = False,
-        heat: bool = False,
-        verbose: bool = True,
+        max_steps: int = 10000,
         best_only: bool = True,
+        ballistic: bool = False,
+        heated: bool = False,
+        verbose: bool = True,
+        *,
+        use_window: bool = True,
+        sampling_period: int = 50,
+        convergence_threshold: int = 50,
     ) -> Tuple[torch.Tensor, Union[torch.Tensor, float]]:
         """
         Computes a local minimum of the model by optimizing
@@ -416,6 +419,7 @@ class IsingPolynomialInterface(ABC):
 
         Parameters
         ----------
+        *
         convergence_threshold : int, optional
             number of consecutive identical spin sampling considered as a proof
             of convergence (default is 50)
@@ -432,7 +436,7 @@ class IsingPolynomialInterface(ABC):
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
-        heat : bool, optional
+        heated : bool, optional
             if True, the heated SB will be used, else it will be the non-heated
             SB (default is True)
         verbose : bool, optional
@@ -448,30 +452,31 @@ class IsingPolynomialInterface(ABC):
         Tensor
         """
         return self.optimize(
-            convergence_threshold,
-            sampling_period,
-            max_steps,
             agents,
-            use_window,
-            ballistic,
-            heat,
-            verbose,
+            max_steps,
             best_only,
+            ballistic,
+            heated,
             True,
+            verbose,
+            use_window=use_window,
+            sampling_period=sampling_period,
+            convergence_threshold=convergence_threshold,
         )
 
     @final
     def maximize(
         self,
-        convergence_threshold: int = 50,
-        sampling_period: int = 50,
-        max_steps: int = 10000,
         agents: int = 128,
-        use_window: bool = True,
-        ballistic: bool = False,
-        heat: bool = False,
-        verbose: bool = True,
+        max_steps: int = 10000,
         best_only: bool = True,
+        ballistic: bool = False,
+        heated: bool = False,
+        verbose: bool = True,
+        *,
+        use_window: bool = True,
+        sampling_period: int = 50,
+        convergence_threshold: int = 50,
     ) -> Tuple[torch.Tensor, Union[torch.Tensor, float]]:
         """
         Computes a local maximum of the model by optimizing
@@ -528,7 +533,7 @@ class IsingPolynomialInterface(ABC):
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
-        heat : bool, optional
+        heated : bool, optional
             if True, the heated SB will be used, else it will be the non-heated
             SB (default is True)
         verbose : bool, optional
@@ -544,14 +549,14 @@ class IsingPolynomialInterface(ABC):
         Tensor
         """
         return self.optimize(
-            convergence_threshold,
-            sampling_period,
-            max_steps,
             agents,
-            use_window,
-            ballistic,
-            heat,
-            verbose,
+            max_steps,
             best_only,
+            ballistic,
+            heated,
             False,
+            verbose,
+            use_window=use_window,
+            sampling_period=sampling_period,
+            convergence_threshold=convergence_threshold,
         )

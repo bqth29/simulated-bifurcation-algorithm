@@ -21,7 +21,16 @@ def test_optimizer():
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
-    ising.optimize(50, 50, 10000, 20, False, False, False, False)
+    ising.optimize(
+        20,
+        10000,
+        False,
+        False,
+        False,
+        use_window=False,
+        sampling_period=50,
+        convergence_threshold=50,
+    )
     assert torch.equal(torch.ones((3, 20)), ising.computed_spins)
 
 
@@ -37,7 +46,16 @@ def test_optimizer_without_bifurcation():
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
-    ising.optimize(50, 50, 10, 5, True, False, False, False)
+    ising.optimize(
+        5,
+        10,
+        False,
+        False,
+        False,
+        use_window=True,
+        sampling_period=50,
+        convergence_threshold=50,
+    )
     assert torch.equal(
         torch.tensor(
             [
@@ -63,7 +81,16 @@ def test_optimizer_with_window():
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
-    ising.optimize(20, 20, 30000, 20, True, False, False, False)
+    ising.optimize(
+        20,
+        30000,
+        False,
+        False,
+        False,
+        use_window=True,
+        sampling_period=20,
+        convergence_threshold=20,
+    )
     assert torch.equal(torch.ones((3, 20)), ising.computed_spins)
 
 
@@ -79,7 +106,16 @@ def test_optimizer_with_heating():
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
-    ising.optimize(50, 50, 10000, 20, False, False, True, False)
+    ising.optimize(
+        20,
+        10000,
+        False,
+        True,
+        False,
+        use_window=False,
+        sampling_period=50,
+        convergence_threshold=50,
+    )
     assert torch.equal(torch.ones((3, 20)), ising.computed_spins)
 
 
@@ -87,7 +123,7 @@ def test_set_optimization_environment():
     torch.manual_seed(42)
     set_env(time_step=0.05, pressure_slope=0.005, heat_coefficient=0.1)
     optimizer = SimulatedBifurcationOptimizer(
-        50, 50, 10000, 128, OptimizerMode.BALLISTIC, True, True
+        128, 10000, OptimizerMode.BALLISTIC, True, True, 50, 50
     )
     assert optimizer.heat_coefficient == 0.1
     assert optimizer.pressure_slope == 0.005
@@ -99,7 +135,7 @@ def test_set_only_one_optimization_variable():
     torch.manual_seed(42)
     set_env(time_step=0.05)
     optimizer = SimulatedBifurcationOptimizer(
-        50, 50, 10000, 128, OptimizerMode.BALLISTIC, True, True
+        128, 10000, OptimizerMode.BALLISTIC, True, True, 50, 50
     )
     assert optimizer.heat_coefficient == 0.06
     assert optimizer.pressure_slope == 0.01
@@ -113,7 +149,7 @@ def test_wrong_value_throws_exception_and_variables_not_updated():
         # noinspection PyTypeChecker
         set_env(heat_coefficient="Hello world!")
     optimizer = SimulatedBifurcationOptimizer(
-        50, 50, 10000, 128, OptimizerMode.BALLISTIC, True, True
+        128, 10000, OptimizerMode.BALLISTIC, True, True, 50, 50
     )
     assert optimizer.heat_coefficient == 0.06
     assert optimizer.pressure_slope == 0.01
