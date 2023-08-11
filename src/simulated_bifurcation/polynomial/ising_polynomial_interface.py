@@ -179,7 +179,7 @@ class IsingPolynomialInterface(ABC):
         matrix: Iterable, dtype: torch.dtype, device: str
     ) -> torch.Tensor:
         if isinstance(matrix, torch.Tensor):
-            return matrix
+            return matrix.to(dtype=dtype, device=device)
         try:
             return torch.tensor(matrix, dtype=dtype, device=device)
         except Exception as err:
@@ -191,7 +191,7 @@ class IsingPolynomialInterface(ABC):
         if vector is None:
             return torch.zeros(self.dimension, dtype=dtype, device=device)
         if isinstance(vector, torch.Tensor):
-            return torch.squeeze(vector)
+            return torch.squeeze(vector).to(dtype=dtype, device=device)
         try:
             return torch.squeeze(torch.tensor(vector, dtype=dtype, device=device))
         except Exception as err:
