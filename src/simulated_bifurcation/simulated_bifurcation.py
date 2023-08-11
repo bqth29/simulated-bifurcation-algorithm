@@ -77,11 +77,11 @@ def optimize(
         there is no constant term, that is `constant` = 0.
     input_type : {"spin", "binary", "int(\d+)"}, default=spin
         Domain over which the optimization is done.
-        - "spin" : Optimize the polynomial over vectors whose entries are
+        • "spin" : Optimize the polynomial over vectors whose entries are
         in {-1, 1}.
-        - "binary" : Optimize the polynomial over vectors whose entries are
+        • "binary" : Optimize the polynomial over vectors whose entries are
         in {0, 1}.
-        - "int(\d+)" : Optimize the polynomial over vectors whose entries
+        • "int(\d+)" : Optimize the polynomial over vectors whose entries
         are n-bits non-negative integers, that is integers between 0 and
         2^n - 1 inclusive. "int(\d+)" represents any string starting with
         "int" and followed by a positive integer n, e.g. "int3", "int42".
@@ -305,11 +305,11 @@ def minimize(
         there is no constant term, that is `constant` = 0.
     input_type : {"spin", "binary", "int(\d+)"}, default=spin
         Domain over which the minimization is done.
-        - "spin" : Minimize the polynomial over vectors whose entries are
+        • "spin" : Minimize the polynomial over vectors whose entries are
         in {-1, 1}.
-        - "binary" : Minimize the polynomial over vectors whose entries are
+        • "binary" : Minimize the polynomial over vectors whose entries are
         in {0, 1}.
-        - "int(\d+)" : Minimize the polynomial over vectors whose entries
+        • "int(\d+)" : Minimize the polynomial over vectors whose entries
         are n-bits non-negative integers, that is integers between 0 and
         2^n - 1 inclusive. "int(\d+)" represents any string starting with
         "int" and followed by a positive integer n, e.g. "int3", "int42".
@@ -524,11 +524,11 @@ def maximize(
         there is no constant term, that is `constant` = 0.
     input_type : {"spin", "binary", "int(\d+)"}, default=spin
         Domain over which the maximization is done.
-        - "spin" : Maximize the polynomial over vectors whose entries are
+        • "spin" : Maximize the polynomial over vectors whose entries are
         in {-1, 1}.
-        - "binary" : Maximize the polynomial over vectors whose entries are
+        • "binary" : Maximize the polynomial over vectors whose entries are
         in {0, 1}.
-        - "int(\d+)" : Maximize the polynomial over vectors whose entries
+        • "int(\d+)" : Maximize the polynomial over vectors whose entries
         are n-bits non-negative integers, that is integers between 0 and
         2^n - 1 inclusive. "int(\d+)" represents any string starting with
         "int" and followed by a positive integer n, e.g. "int3", "int42".
