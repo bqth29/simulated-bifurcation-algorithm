@@ -132,6 +132,12 @@ def test_call_polynomial_with_accepted_values():
     assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0
     with pytest.raises(ValueError):
         polynomial(torch.tensor([0, 1, 2], dtype=torch.float32))
+    assert (
+        polynomial(
+            torch.tensor([0, 1, 2], dtype=torch.float32), input_values_check=False
+        )
+        == 69
+    )
 
 
 def test_ising_interface():

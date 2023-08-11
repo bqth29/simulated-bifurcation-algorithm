@@ -93,16 +93,22 @@ class IsingPolynomialInterface(ABC):
 
     @final
     def __call__(
-        self, value: Union[torch.Tensor, np.ndarray]
+        self,
+        value: Union[torch.Tensor, np.ndarray],
+        /,
+        *,
+        input_values_check: bool = True,
     ) -> Union[float, torch.Tensor]:
         if not isinstance(value, torch.Tensor):
             try:
                 value = torch.tensor(value, dtype=self.dtype, device=self.device)
             except Exception as err:
                 raise TypeError(f"Input value cannot be cast to Tensor.") from err
-        if (self.__accepted_values is not None) and torch.any(
-            torch.isin(value, self.__accepted_values, invert=True)
-        ):  # TODO: flag to skip type-check
+        if (
+            input_values_check
+            and self.__accepted_values is not None
+            and torch.any(torch.isin(value, self.__accepted_values, invert=True))
+        ):
             raise ValueError(
                 f"Input values must all belong to {self.__accepted_values.tolist()}."
             )
