@@ -66,8 +66,8 @@ def optimize(
     ----------
     matrix : (M, M) Tensor | ndarray
         Matrix corresponding to the quadratic terms of the polynomial
-        (quadratic form). It should be a square matrix, but it needs not
-        be symmetric.
+        (quadratic form). It should be a square matrix, but not necessarily
+        symmetric.
     vector : (M,) Tensor | ndarray | None, optional
         Vector corresponding to the linear terms of the polynomial (linear
         form). The default is None which signifies there are no linear
@@ -90,7 +90,7 @@ def optimize(
     device : str | torch.device, default="cpu"
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
-        dimensional instances or  when running the algorithm with many
+        dimensional instances or when running the algorithm with many
         agents).
     agents : int, default=128
         Number of simultaneous execution of the SB algorithm. This is much
@@ -139,7 +139,7 @@ def optimize(
     Hyperparameters corresponding to physical constants :
         These parameters have been fine-tuned (Goto et al.) to give the
         best results most of the time. Nevertheless, the relevance of
-        specific  hyperparameters may vary depending on the properties of
+        specific hyperparameters may vary depending on the properties of
         the instances. They can respectively be modified and reset through
         the `set_env` and `reset_env` functions.
 
@@ -294,8 +294,8 @@ def minimize(
     ----------
     matrix : (M, M) Tensor | ndarray
         Matrix corresponding to the quadratic terms of the polynomial
-        (quadratic form). It should be a square matrix, but it needs not
-        be symmetric.
+        (quadratic form). It should be a square matrix, but not necessarily
+        symmetric.
     vector : (M,) Tensor | ndarray | None, optional
         Vector corresponding to the linear terms of the polynomial (linear
         form). The default is None which signifies there are no linear
@@ -318,7 +318,7 @@ def minimize(
     device : str | torch.device, default="cpu"
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
-        dimensional instances or  when running the algorithm with many
+        dimensional instances or when running the algorithm with many
         agents).
     agents : int, default=128
         Number of simultaneous execution of the SB algorithm. This is much
@@ -513,8 +513,8 @@ def maximize(
     ----------
     matrix : (M, M) Tensor | ndarray
         Matrix corresponding to the quadratic terms of the polynomial
-        (quadratic form). It should be a square matrix, but it needs not
-        be symmetric.
+        (quadratic form). It should be a square matrix, but not necessarily
+        symmetric.
     vector : (M,) Tensor | ndarray | None, optional
         Vector corresponding to the linear terms of the polynomial (linear
         form). The default is None which signifies there are no linear
@@ -537,7 +537,7 @@ def maximize(
     device : str | torch.device, default="cpu"
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
-        dimensional instances or  when running the algorithm with many
+        dimensional instances or when running the algorithm with many
         agents).
     agents : int, default=128
         Number of simultaneous execution of the SB algorithm. This is much
@@ -718,8 +718,8 @@ def build_model(
     ----------
     matrix : (M, M) Tensor | ndarray
         Matrix corresponding to the quadratic terms of the polynomial
-        (quadratic form). It should be a square matrix, but it needs not
-        be symmetric.
+        (quadratic form). It should be a square matrix, but not necessarily
+        symmetric.
     vector : (M,) Tensor | ndarray | None, optional
         Vector corresponding to the linear terms of the polynomial (linear
         form). The default is None which signifies there are no linear

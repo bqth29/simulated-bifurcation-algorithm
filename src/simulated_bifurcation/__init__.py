@@ -4,7 +4,8 @@ Simulated Bifurcation
 
 Provides
   1. GPU compatible implementation of the simulated bifurcation (SB)
-  algorithm, a physics inspired combinatorial approximation algorithm.
+  algorithm, a quantum physics inspired combinatorial optimization
+  approximation algorithm.
   2. Implementation of several common combinatorial optimization problems.
   3. A polynomial API for further customization.
 
@@ -57,8 +58,8 @@ can be added in order to help escape local optima [4]. Use this
 additional term by setting `heated=True`.
 
 The hyperparameters of the SB algorithm which correspond to physical
-constants have been fine-tuned  (Goto et al.) to give the best results most
-of the time. Nevertheless, the relevance of specific  hyperparameters may
+constants have been fine-tuned (Goto et al.) to give the best results most
+of the time. Nevertheless, the relevance of specific hyperparameters may
 vary depending on the properties of the instances. They can respectively be
 modified and reset through the `set_env` and `reset_env` functions.
 
