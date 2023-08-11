@@ -3,6 +3,26 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as readme:
     long_description = readme.read()
 
+
+dependencies = [
+    "torch>=2.0.1",
+    "numpy",
+    "tqdm",
+]
+
+# optional dependencies
+lint = [
+    "black",
+    "flake8",
+    "isort",
+]
+test = [
+    "coverage",
+    "pytest",
+]
+dev = lint + test
+
+
 setuptools.setup(
     name="simulated-bifurcation",
     version="1.2.0",
@@ -21,7 +41,13 @@ setuptools.setup(
         "Topic :: Scientific/Engineering",
         "Intended Audience :: Science/Research",
     ],
-    install_requires=["tqdm", "numpy", "torch>=2.0.1", "coverage", "pytest"],
+    install_requires=dependencies,
+    extras_require={
+        "lint": lint,
+        "test": test,
+        "dev": dev,
+        "all": dev,
+    },
     python_requires=">=3.8",
     package_dir={"": "src"},
 )

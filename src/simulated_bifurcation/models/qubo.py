@@ -1,7 +1,9 @@
-from ..polynomial import BinaryPolynomial
 from typing import Union
-import torch
+
 import numpy as np
+import torch
+
+from ..polynomial import BinaryPolynomial
 
 
 class QUBO(BinaryPolynomial):
@@ -13,6 +15,11 @@ class QUBO(BinaryPolynomial):
     `ΣΣ Q(i,j)b(i)b(j)` where the `b(i)`'s values are either `0` or `1`.
     """
 
-    def __init__(self, Q: Union[torch.Tensor, np.ndarray], dtype: torch.dtype=torch.float32, device: str = 'cpu') -> None:
+    def __init__(
+        self,
+        Q: Union[torch.Tensor, np.ndarray],
+        dtype: torch.dtype = torch.float32,
+        device: str = "cpu",
+    ) -> None:
         super().__init__(Q, None, None, dtype, device)
         self.Q = self.matrix

@@ -1,8 +1,9 @@
 # Simulated Bifurcation for Python
 
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?logo=PyTorch&logoColor=white)](https://pytorch.org/)
-![Status](https://github.com/bqth29/simulated-bifurcation-algorithm/actions/workflows/config.yml/badge.svg)
+[![PyPI package](https://badge.fury.io/py/simulated-bifurcation.svg)](https://pypi.org/project/simulated-bifurcation/)
 [![codecov](https://codecov.io/gh/bqth29/simulated-bifurcation-algorithm/branch/main/graph/badge.svg?token=J76VVHPGVS)](https://codecov.io/gh/bqth29/simulated-bifurcation-algorithm)
+![Status](https://github.com/bqth29/simulated-bifurcation-algorithm/actions/workflows/config.yml/badge.svg)
 ![GitHub stars](https://img.shields.io/github/stars/bqth29/simulated-bifurcation-algorithm.svg?style=social&label=Star)
 
 The **Simulated Bifurcation** (SB) algorithm is a fast and highly parallelizable state-of-the-art algorithm for combinatorial optimization inspired by quantum physics and spins dynamics. It relies on Hamiltonian quantum mechanics to find local minima of **Ising** problems. The last accuracy tests showed a median optimality gap of less than 1% on high-dimensional instances.
@@ -13,10 +14,30 @@ It also provides an API to define Ising models or other NP-hard and NP-complete 
 
 ## ⚙️ Install
 
-| Compute Platform |                 CPU                 |                                                             GPU                                                             |
-|------------------|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
-|   Instructions   | `pip install simulated-bifurcation` | 1. Install [PyTorch](https://pytorch.org/get-started/locally/) with GPU support <br> 2. `pip install simulated-bifurcation` |
+<table>
+<tr>
+<th> Compute Platform </th> <th> CPU </th> <th> GPU </th>
+</tr>
+<tr>
+<th> Instructions </th>
+<td>
 
+```console
+pip install simulated-bifurcation     
+```
+
+</td>
+<td>
+
+&nbsp;&nbsp;&nbsp;
+Install [PyTorch](https://pytorch.org/get-started/locally/) with GPU support
+```console
+pip install simulated-bifurcation     
+```
+
+</td>
+</tr>
+</table>
 
 ## 🧪 The *Simulated Bifurcation* (SB) algorithm
 
@@ -38,7 +59,7 @@ $$\sum_{i=1}^{N} \sum_{j=1}^{N} M_{ij}x_{i}x_{j} + \sum_{i=1}^{N} v_{i}x_{i} + c
 
 for which the $x_{i}$'s can be spins, binary or non-negative integer.
 
-This can also be seen as the sum of a quadratic form, a linear form and a constant term and such such a formulation is the basis of many optimization problems.
+This can also be seen as the sum of a quadratic form, a linear form and a constant term and such a formulation is the basis of many optimization problems.
 
 The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated input vector.
 
@@ -54,8 +75,8 @@ import simulated_bifurcation as sb
 ```
 
 ```python
-matrix = torch.Tensor([[0, 1, 2], [1, 0, -2], [2, -2, 0]])
-vector = torch.Tensor([-1, 0, 2])
+matrix = torch.tensor([[0, 1, 2], [1, 0, -2], [2, -2, 0]])
+vector = torch.tensor([-1, 0, 2])
 constant = 2.0
 ```
 
@@ -126,11 +147,21 @@ At regular intervals, the state of the spins is sampled and compared with its pr
 sb.minimize(matrix, max_steps=10000)
 
 # Early stopping
-sb.minimize(matrix,
+sb.minimize(
+    matrix,
     sampling_period=30,
     convergence_threshold=50,
-    use_window=True
+    use_window=True,
 )
+```
+
+### Optimization results
+
+By default, SB returns the best vector and objective value found. However, it is also possible to configure it to so it returns all the vectors for each agent with the associated objective value. To do so, the `best_only` parameter of the `minimize` and `maximize` functions must be set to `False` (default is `True`).
+
+```python
+best_vector, best_value = sb.minimize(matrix, best_only=True)
+vectors, values = sb.maximize(matrix, best_only=False)
 ```
 
 ## 💡 Advanced usages
@@ -150,14 +181,14 @@ The SB algorithm is available in four different versions (Goto *et al.*) that re
 3. **Heated ballistic SB (HbSB)**: uses the bSB algorithm with a supplementary non-symplectic term to allow a higher solution space exploration.
 4. **Heated discrete SB (HdSB)**: uses the dSB algorithm with a supplementary non-symplectic term to allow a higher solution space exploration.
 
-These mode can be selected setting the parameters `ballistic` and `heat` to either `True` or `False` in the `Ising.optimize` method or the `minimize`/`maximize` functions.
+These mode can be selected setting the parameters `ballistic` and `heated` to either `True` or `False` in the `Ising.optimize` method or the `minimize`/`maximize` functions.
 
 ```python
-sb.minimize(matrix, ballistic=True, heat=False)  # bSB
-sb.minimize(matrix, ballistic=False, heat=True)  # HdSB
+sb.minimize(matrix, ballistic=True, heated=False)  # bSB
+sb.minimize(matrix, ballistic=False, heated=True)  # HdSB
 
-sb.maximize(matrix, ballistic=False, heat=False)  # dSB
-sb.maximize(matrix, ballistic=True, heat=True)  # HbSB
+sb.maximize(matrix, ballistic=False, heated=False)  # dSB
+sb.maximize(matrix, ballistic=True, heated=True)  # HbSB
 ```
 
 ### SB Algorithm's hyperparameters setting
