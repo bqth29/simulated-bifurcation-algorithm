@@ -78,15 +78,13 @@ def optimize(
     input_type : {"spin", "binary", "int(\d+)"}, default=spin
         Domain over which the optimization is done.
         - "spin" : Optimize the polynomial over vectors whose entries are
-            in {-1, 1}.
+        in {-1, 1}.
         - "binary" : Optimize the polynomial over vectors whose entries are
-            in {0, 1}.
-        - "int(\d+)" : Represents any string starting with int and
-            followed by a positive integer n, e.g. "int3", "int42", ...
-            Optimize the polynomial over vectors whose entries are n-bits
-            non-negative integers, that is integers between 0 and 2^n - 1
-            inclusive.
-
+        in {0, 1}.
+        - "int(\d+)" : Optimize the polynomial over vectors whose entries
+        are n-bits non-negative integers, that is integers between 0 and
+        2^n - 1 inclusive. "int(\d+)" represents any string starting with
+        "int" and followed by a positive integer n, e.g. "int3", "int42".
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
     device : str | torch.device, default="cpu"
@@ -307,16 +305,14 @@ def minimize(
         there is no constant term, that is `constant` = 0.
     input_type : {"spin", "binary", "int(\d+)"}, default=spin
         Domain over which the minimization is done.
-        - "spin" : Optimize the polynomial over vectors whose entries are
-            in {-1, 1}.
-        - "binary" : Optimize the polynomial over vectors whose entries are
-            in {0, 1}.
-        - "int(\d+)" : Represents any string starting with int and
-            followed by a positive integer n, e.g. "int3", "int42", ...
-            Optimize the polynomial over vectors whose entries are n-bits
-            non-negative integers, that is integers between 0 and 2^n - 1
-            inclusive.
-
+        - "spin" : Minimize the polynomial over vectors whose entries are
+        in {-1, 1}.
+        - "binary" : Minimize the polynomial over vectors whose entries are
+        in {0, 1}.
+        - "int(\d+)" : Minimize the polynomial over vectors whose entries
+        are n-bits non-negative integers, that is integers between 0 and
+        2^n - 1 inclusive. "int(\d+)" represents any string starting with
+        "int" and followed by a positive integer n, e.g. "int3", "int42".
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
     device : str | torch.device, default="cpu"
@@ -528,16 +524,14 @@ def maximize(
         there is no constant term, that is `constant` = 0.
     input_type : {"spin", "binary", "int(\d+)"}, default=spin
         Domain over which the maximization is done.
-        - "spin" : Optimize the polynomial over vectors whose entries are
-            in {-1, 1}.
-        - "binary" : Optimize the polynomial over vectors whose entries are
-            in {0, 1}.
-        - "int(\d+)" : Represents any string starting with int and
-            followed by a positive integer n, e.g. "int3", "int42", ...
-            Optimize the polynomial over vectors whose entries are n-bits
-            non-negative integers, that is integers between 0 and 2^n - 1
-            inclusive.
-
+        - "spin" : Maximize the polynomial over vectors whose entries are
+        in {-1, 1}.
+        - "binary" : Maximize the polynomial over vectors whose entries are
+        in {0, 1}.
+        - "int(\d+)" : Maximize the polynomial over vectors whose entries
+        are n-bits non-negative integers, that is integers between 0 and
+        2^n - 1 inclusive. "int(\d+)" represents any string starting with
+        "int" and followed by a positive integer n, e.g. "int3", "int42".
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
     device : str | torch.device, default="cpu"
@@ -705,9 +699,9 @@ def maximize(
 
 def build_model(
     matrix: Union[torch.Tensor, ndarray],
-    vector: Union[torch.Tensor, ndarray, None],
-    constant: Union[int, float, None],
-    input_type: str,
+    vector: Union[torch.Tensor, ndarray, None] = None,
+    constant: Union[int, float, None] = None,
+    input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
     device: str = "cpu",
 ) -> IsingPolynomialInterface:
@@ -737,10 +731,10 @@ def build_model(
         Domain over which the maximization is done.
         - "spin" : Polynomial over vectors whose entries are in {-1, 1}.
         - "binary" : Polynomial over vectors whose entries are in {0, 1}.
-        - "int(\d+)" : Represents any string starting with int and
-            followed by a positive integer n, e.g. "int3", "int42", ...
-            Polynomial over vectors whose entries are n-bits non-negative
-            integers, that is integers between 0 and 2^n - 1 inclusive.
+        - "int(\d+)" : Polynomial over vectors whose entries are n-bits
+        non-negative integers, that is integers between 0 and 2^n - 1
+        inclusive. "int(\d+)" represents any string starting with "int" and
+        followed by a positive integer n, e.g. "int3", "int42", ...
     dtype : torch.dtype, default=torch.float32
         Data-type used for storing the coefficients of the polynomial.
     device : str | torch.device, default="cpu"
