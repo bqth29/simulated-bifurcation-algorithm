@@ -89,7 +89,9 @@ Minimize a polynomial over {0, 1} x {0, 1}
 >>> matrix = torch.tensor([[1, -2], [0, 3]], dtype=torch.float32)
 >>> vector = torch.tensor([3.5, 2.2], dtype=torch.float32)
 >>> constant = 3.1415
->>> best_vector, best_value = minimize(matrix, vector, constant, "binary")
+>>> best_vector, best_value = sb.minimize(
+...     matrix, vector, constant, "binary"
+... )
 >>> best_vector
 tensor([0, 0])
 >>> best_value
@@ -97,7 +99,7 @@ tensor([0, 0])
 
 Instantiate a polynomial over vectors whose entries are 3-bits integers
 ({0, 1, 2, ..., 6, 7})
->>> poly = build_model(matrix, vector, constant, "int3")
+>>> poly = sb.build_model(matrix, vector, constant, "int3")
 
 Maximize the polynomial over vectors whose entries are 3-bits integers
 >>> best_vector, best_value = poly.maximize()

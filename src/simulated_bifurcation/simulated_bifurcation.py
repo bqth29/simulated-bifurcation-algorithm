@@ -218,7 +218,7 @@ def optimize(
     Maximize a polynomial over {0, 1} x {0, 1}
     >>> Q = torch.tensor([[1, -2],
     ...                   [0, 3]])
-    >>> best_vector, best_value = optimize(
+    >>> best_vector, best_value = sb.optimize(
     ...     Q, minimize=False, input_type="binary"
     ... )
     >>> best_vector
@@ -227,7 +227,7 @@ def optimize(
     3
 
     Minimize Q and return all the solutions found using 42 agents
-    >>> best_vectors, best_values = optimize(
+    >>> best_vectors, best_values = sb.optimize(
     ...     Q, input_type="binary", agents=42, best_only=False
     ... )
     >>> best_vectors.shape  # (agents, dimension of the instance)
@@ -442,14 +442,14 @@ def minimize(
     Minimize a polynomial over {0, 1} x {0, 1}
     >>> Q = torch.tensor([[1, -2],
     ...                   [0, 3]])
-    >>> best_vector, best_value = minimize(Q, input_type="binary")
+    >>> best_vector, best_value = sb.minimize(Q, input_type="binary")
     >>> best_vector
     tensor([0, 0])
     >>> best_value
     0
 
     Return all the solutions found using 42 agents
-    >>> best_vectors, best_values = minimize(
+    >>> best_vectors, best_values = sb.minimize(
     ...     Q, input_type="binary", agents=42, best_only=False
     ... )
     >>> best_vectors.shape  # (agents, dimension of the instance)
@@ -661,14 +661,14 @@ def maximize(
     Maximize a polynomial over {0, 1} x {0, 1}
     >>> Q = torch.tensor([[1, -2],
     ...                   [0, 3]])
-    >>> best_vector, best_value = maximize(Q, input_type="binary")
+    >>> best_vector, best_value = sb.maximize(Q, input_type="binary")
     >>> best_vector
     tensor([0, 1])
     >>> best_value
     3
 
     Return all the solutions found using 42 agents
-    >>> best_vectors, best_values = maximize(
+    >>> best_vectors, best_values = sb.maximize(
     ...     Q, input_type="binary", agents=42, best_only=False
     ... )
     >>> best_vectors.shape  # (agents, dimension of the instance)
@@ -777,7 +777,7 @@ def build_model(
     Instantiate a polynomial over {0, 1} x {0, 1}
     >>> Q = torch.tensor([[1, -2],
     ...                   [0, 3]])
-    >>> poly = build_model(Q, input_type="binary")
+    >>> poly = sb.build_model(Q, input_type="binary")
 
     Maximize the polynomial
     >>> best_vector, best_value = poly.maximize()
