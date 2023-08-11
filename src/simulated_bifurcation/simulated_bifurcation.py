@@ -86,6 +86,7 @@ def optimize(
             Optimize the polynomial over vectors whose entries are n-bits
             non-negative integers, that is integers between 0 and 2^n - 1
             inclusive.
+
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
     device : str | torch.device, default="cpu"
@@ -315,6 +316,7 @@ def minimize(
             Optimize the polynomial over vectors whose entries are n-bits
             non-negative integers, that is integers between 0 and 2^n - 1
             inclusive.
+
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
     device : str | torch.device, default="cpu"
@@ -535,6 +537,7 @@ def maximize(
             Optimize the polynomial over vectors whose entries are n-bits
             non-negative integers, that is integers between 0 and 2^n - 1
             inclusive.
+
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
     device : str | torch.device, default="cpu"
