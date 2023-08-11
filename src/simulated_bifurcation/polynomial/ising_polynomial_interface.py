@@ -367,7 +367,7 @@ class IsingPolynomialInterface(ABC):
         result = self.sb_result.t()
         evaluation = self(result)
         if best_only:
-            i_min = torch.argmin(result)
+            i_min = torch.argmin(evaluation)
             result = result[i_min]
             evaluation = evaluation[i_min].item()
         return result, evaluation

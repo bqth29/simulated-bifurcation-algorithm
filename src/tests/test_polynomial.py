@@ -162,6 +162,7 @@ def test_best_only():
     assert model.sb_result.shape == (3, 42)
     assert spins_best_only.shape == (3,)
     assert isinstance(energy_best_only, float)
+    assert energy_best_only == -2
     spins_all, energies_all = model.optimize(agents=42, best_only=False)
     assert model.sb_result.shape == (3, 42)
     assert spins_all.shape == (42, 3)
