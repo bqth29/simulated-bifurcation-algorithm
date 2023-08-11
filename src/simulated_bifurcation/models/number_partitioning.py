@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Dict, List, Tuple, Union
 
 import torch
 from numpy import sum
@@ -30,10 +30,14 @@ class NumberPartitioning(SpinPolynomial):
         }
         if self.sb_result is None:
             return result
+
+        i_min = torch.argmin(self(self.sb_result.t())).item()
+        best_vector = self.sb_result[:, i_min]
+
         left_subset = []
         right_subset = []
         for elt in range(len(self)):
-            if self.sb_result[elt] > 0:
+            if best_vector[elt].item() > 0:
                 left_subset.append(self.numbers[elt])
             else:
                 right_subset.append(self.numbers[elt])

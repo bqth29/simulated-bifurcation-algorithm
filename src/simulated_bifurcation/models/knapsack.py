@@ -27,7 +27,10 @@ class Knapsack(BinaryPolynomial):
     def content(self) -> Dict[str, Union[int, float, List[int]]]:
         content = {"items": [], "total_cost": 0, "total_weight": 0}
         if self.sb_result is not None:
-            items = np.array(self.sb_result)[: self.n_items]
+            sb_result = self.sb_result[
+                :, torch.argmin(self(self.sb_result.t())).item()
+            ]
+            items = np.array(sb_result)[: self.n_items]
             weights_array = np.array(self.weights)
             costs_array = np.array(self.costs)
             content["items"] = np.arange(1, self.n_items + 1)[items == 1].tolist()

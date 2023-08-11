@@ -23,9 +23,6 @@ class Markowitz(IntegerPolynomial):
         device: str = "cpu",
     ) -> None:
         # Data
-        self.covariance = covariance.to(dtype=dtype, device=device)
-        self.expected_return = expected_return.to(dtype=dtype, device=device)
-        self.risk_coefficient = risk_coefficient
         super().__init__(
             -risk_coefficient * covariance,
             -expected_return,
@@ -34,11 +31,16 @@ class Markowitz(IntegerPolynomial):
             dtype,
             device,
         )
+        self.covariance = - self.matrix / risk_coefficient
+        self.expected_return = - self.vector
+        self.risk_coefficient = risk_coefficient
 
     @property
     def portfolio(self) -> Optional[torch.Tensor]:
-        return self.sb_result
+        return self.sb_result[
+            :, torch.argmin(self(self.sb_result.t())).item()
+        ] if self.sb_result is not None else None
 
     @property
     def gains(self) -> float:
-        return -self(self.sb_result) if self.sb_result is not None else 0.0
+        return -self(self.portfolio) if self.portfolio is not None else 0.0
