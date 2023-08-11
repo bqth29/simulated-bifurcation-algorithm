@@ -25,6 +25,17 @@ Polynomials over vectors whose entries are in {0, 1} or whose entries are
 fixed bit-width integers are also implemented, as well as an abstract
 polynomial class `IsingPolynomialInterface` for further customization.
 
+The docstring examples assume that `torch` (PyTorch) has been imported and
+that simulated_bifurcation has been imported as `sb`:
+
+  >>> import torch
+  >>> import simulated_bifurcation as sb
+
+Code snippets are indicated by three greater-than signs:
+
+  >>> x = 42
+  >>> x = x + 1
+
 Notes
 -----
 The SB algorithm is an approximation algorithm, which implies that the
@@ -73,7 +84,39 @@ https://doi.org/10.1038/s42005-022-00929-9
 
 Examples
 --------
-TODO
+Minimize a polynomial over {0, 1} x {0, 1}
+>>> matrix = torch.tensor([[1, -2], [0, 3]], dtype=torch.float32)
+>>> vector = torch.tensor([3.5, 2.2], dtype=torch.float32)
+>>> constant = 3.1415
+>>> best_vector, best_value = minimize(matrix, vector, constant, "binary")
+>>> best_vector
+tensor([0, 0])
+>>> best_value
+3.1415
+
+Instantiate a polynomial over vectors whose entries are 3-bits integers
+({0, 1, 2, ..., 6, 7})
+>>> poly = build_model(matrix, vector, constant, "int3")
+
+Maximize the polynomial over vectors whose entries are 3-bits integers
+>>> best_vector, best_value = poly.maximize()
+
+Evaluate the polynomial at a single point
+>>> point = torch.tensor([0, 0], dtype=torch.float32)
+>>> poly(point)
+3.1415
+
+Evaluate the polynomial at several points simultaneously
+>>> points = torch.tensor(
+...     [[3, 5], [0, 0], [7, 1], [2, 6]],
+...     dtype=torch.float32,
+... )
+>>> poly(points)
+tensor([0, 3, 1, 2])
+
+Create a QUBO instance and minimize it using a GPU to run the SB algorithm
+>>> qubo = sb.models.QUBO(matrix, device="cuda")
+>>> best_vector, best_value = qubo.minimize()
 
 """
 

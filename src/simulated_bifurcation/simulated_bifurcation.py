@@ -1,5 +1,17 @@
 """
-TODO
+Module defining high-level routines for a basic usage of the
+simulated_bifurcation package.
+
+Available routines
+------------------
+optimize:
+    Optimize a multivariate degree 2 polynomial using the SB algorithm.
+minimize:
+    Minimize a multivariate degree 2 polynomial using the SB algorithm.
+maximize:
+    Maximize a multivariate degree 2 polynomial using the SB algorithm.
+build_model:
+    Instantiate a multivariate degree 2 polynomial over a given domain.
 
 """
 
@@ -38,14 +50,14 @@ def optimize(
     convergence_threshold: int = 50,
 ) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
     r"""
-    Optimizes a multivariate degree 2 polynomial using the SB algorithm.
+    Optimize a multivariate degree 2 polynomial using the SB algorithm.
 
     The simulated bifurcated (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The optimization can either be a minimization or a maximization, and
     it is done over a discrete domain specified through `input_type`.
     The polynomial is the sum of a quadratic form and a linear form plus
-    a constant term :
+    a constant term:
     `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
     or `x.T Q x + l.T x + c` in matrix notation,
     where `Q` is a square matrix, `l` a vector a `c` a constant.
@@ -171,7 +183,7 @@ def optimize(
     -----
     The original version of the SB algorithm [1] is not implemented since
     it is less efficient than the more recent variants of the SB algorithm
-    described in [2] :
+    described in [2]:
         ballistic SB : Uses the position of the particles for the
             position-based update of the momentums ; usually faster but
             less accurate. Use this variant by setting `ballistic=True`.
@@ -207,14 +219,18 @@ def optimize(
     Maximize a polynomial over {0, 1} x {0, 1}
     >>> Q = torch.tensor([[1, -2],
     ...                   [0, 3]])
-    >>> best_vector, best_value = optimize(Q, minimize=False)
+    >>> best_vector, best_value = optimize(
+    ...     Q, minimize=False, input_type="binary"
+    ... )
     >>> best_vector
     tensor([0, 1])
     >>> best_value
     3
 
     Minimize Q and return all the solutions found using 42 agents
-    >>> best_vectors, best_values = optimize(Q, agents=42, best_only=False)
+    >>> best_vectors, best_values = optimize(
+    ...     Q, input_type="binary", agents=42, best_only=False
+    ... )
     >>> best_vectors.shape  # (agents, dimension of the instance)
     (42, 2)
     >>> best_values.shape  # (agents,)
@@ -263,14 +279,14 @@ def minimize(
     convergence_threshold: int = 50,
 ) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
     r"""
-    Minimizes a multivariate degree 2 polynomial using the SB algorithm.
+    Minimize a multivariate degree 2 polynomial using the SB algorithm.
 
     The simulated bifurcated (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The minimization is done over a discrete domain specified through
     `input_type`.
     The polynomial is the sum of a quadratic form and a linear form plus
-    a constant term :
+    a constant term:
     `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
     or `x.T Q x + l.T x + c` in matrix notation,
     where `Q` is a square matrix, `l` a vector a `c` a constant.
@@ -392,7 +408,7 @@ def minimize(
     -----
     The original version of the SB algorithm [1] is not implemented since
     it is less efficient than the more recent variants of the SB algorithm
-    described in [2] :
+    described in [2]:
         ballistic SB : Uses the position of the particles for the
             position-based update of the momentums ; usually faster but
             less accurate. Use this variant by setting `ballistic=True`.
@@ -428,14 +444,16 @@ def minimize(
     Minimize a polynomial over {0, 1} x {0, 1}
     >>> Q = torch.tensor([[1, -2],
     ...                   [0, 3]])
-    >>> best_vector, best_value = minimize(Q)
+    >>> best_vector, best_value = minimize(Q, input_type="binary")
     >>> best_vector
     tensor([0, 0])
     >>> best_value
     0
 
     Return all the solutions found using 42 agents
-    >>> best_vectors, best_values = minimize(Q, agents=42, best_only=False)
+    >>> best_vectors, best_values = minimize(
+    ...     Q, input_type="binary", agents=42, best_only=False
+    ... )
     >>> best_vectors.shape  # (agents, dimension of the instance)
     (42, 2)
     >>> best_values.shape  # (agents,)
@@ -481,14 +499,14 @@ def maximize(
     convergence_threshold: int = 50,
 ) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
     r"""
-    Maximizes a multivariate degree 2 polynomial using the SB algorithm.
+    Maximize a multivariate degree 2 polynomial using the SB algorithm.
 
     The simulated bifurcated (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The maximization is done over a discrete domain specified through
     `input_type`.
     The polynomial is the sum of a quadratic form and a linear form plus
-    a constant term :
+    a constant term:
     `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
     or `x.T Q x + l.T x + c` in matrix notation,
     where `Q` is a square matrix, `l` a vector a `c` a constant.
@@ -610,7 +628,7 @@ def maximize(
     -----
     The original version of the SB algorithm [1] is not implemented since
     it is less efficient than the more recent variants of the SB algorithm
-    described in [2] :
+    described in [2]:
         ballistic SB : Uses the position of the particles for the
             position-based update of the momentums ; usually faster but
             less accurate. Use this variant by setting `ballistic=True`.
@@ -646,14 +664,16 @@ def maximize(
     Maximize a polynomial over {0, 1} x {0, 1}
     >>> Q = torch.tensor([[1, -2],
     ...                   [0, 3]])
-    >>> best_vector, best_value = maximize(Q)
+    >>> best_vector, best_value = maximize(Q, input_type="binary")
     >>> best_vector
     tensor([0, 1])
     >>> best_value
     3
 
     Return all the solutions found using 42 agents
-    >>> best_vectors, best_values = maximize(Q, agents=42, best_only=False)
+    >>> best_vectors, best_values = maximize(
+    ...     Q, input_type="binary", agents=42, best_only=False
+    ... )
     >>> best_vectors.shape  # (agents, dimension of the instance)
     (42, 2)
     >>> best_values.shape  # (agents,)
@@ -685,14 +705,14 @@ def build_model(
     vector: Union[torch.Tensor, ndarray, None],
     constant: Union[int, float, None],
     input_type: str,
-    dtype: torch.dtype,
-    device: str,
+    dtype: torch.dtype = torch.float32,
+    device: str = "cpu",
 ) -> IsingPolynomialInterface:
     r"""
-    Returns a multivariate degree 2 polynomial over a given domain.
+    Instantiate a multivariate degree 2 polynomial over a given domain.
 
     The polynomial is the sum of a quadratic form and a linear form plus
-    a constant term :
+    a constant term:
     `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
     or `x.T Q x + l.T x + c` in matrix notation,
     where `Q` is a square matrix, `l` a vector a `c` a constant.
@@ -741,7 +761,8 @@ def build_model(
     Warnings
     --------
     Calling a polynomial on a vector containing values which do not belong
-    to the domain of the polynomial raises a ValueError.
+    to the domain of the polynomial raises a ValueError, unless it is
+    called while explicitly passing `input_values_check=False`.
 
     See Also
     --------
@@ -756,7 +777,7 @@ def build_model(
 
     Examples
     --------
-    Create a polynomial over {0, 1} x {0, 1}
+    Instantiate a polynomial over {0, 1} x {0, 1}
     >>> Q = torch.tensor([[1, -2],
     ...                   [0, 3]])
     >>> poly = build_model(Q, input_type="binary")
@@ -778,12 +799,15 @@ def build_model(
     (42,)
 
     Evaluate the polynomial at a single point
-    >>> point = torch.tensor([1, 1])
+    >>> point = torch.tensor([1, 1], dtype=torch.float32)
     >>> poly(point)
     2
 
     Evaluate the polynomial at several points simultaneously
-    >>> points = torch.tensor([[0, 0], [0, 1], [1, 0], [1, 1]])
+    >>> points = torch.tensor(
+    ...     [[0, 0], [0, 1], [1, 0], [1, 1]],
+    ...     dtype=torch.float32,
+    ... )
     >>> poly(points)
     tensor([0, 3, 1, 2])
 
