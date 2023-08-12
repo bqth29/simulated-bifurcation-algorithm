@@ -15,17 +15,22 @@ It also provides an API to define Ising models or other NP-hard and NP-complete 
 ## ⚙️ Install
 
 <table>
+<thead>
 <tr>
-<th> Compute Platform </th> <th> CPU </th> <th> GPU </th>
+<th>Compute Plateform</th>
+<th>CPU</th>
+<th>GPU</th>
 </tr>
+</thead>
+<tbody>
 <tr>
-<th> Instructions </th>
+<th>Instructions</th>
 <td>
 
 ```console
 pip install simulated-bifurcation     
 ```
-
+  
 </td>
 <td>
 
@@ -37,6 +42,7 @@ pip install simulated-bifurcation
 
 </td>
 </tr>
+</tbody>
 </table>
 
 ## 🧪 The *Simulated Bifurcation* (SB) algorithm
