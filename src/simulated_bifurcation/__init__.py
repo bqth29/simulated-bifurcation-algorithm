@@ -129,3 +129,6 @@ from .polynomial import BinaryPolynomial, IntegerPolynomial, SpinPolynomial
 from .simulated_bifurcation import build_model, maximize, minimize, optimize
 
 reset_env()
+
+
+__version__ = "1.2.1.dev0"

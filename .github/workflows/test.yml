@@ -1,12 +1,19 @@
-name: Build package
+name: "Test"
 
 on:
   push:
     branches:
-      - main
+    - main
+    - github-actions-test
+    paths-ignore:
+    - 'LICENSE'
+    - '.gitignore'
   pull_request:
     branches:
       - main
+    paths-ignore:
+    - 'LICENSE'
+    - '.gitignore'
     types:
       - opened
       - synchronize
@@ -18,14 +25,14 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
 
-      - name: Install dependencies
+      - name: Install package [pip]
         run: |
           python -m pip install --upgrade pip
           pip install .[test]
@@ -38,6 +45,10 @@ jobs:
         run: |
           coverage report
           coverage json
+
+      - name: Version check
+        run: |
+          python .github/scripts/metadata_manager
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
