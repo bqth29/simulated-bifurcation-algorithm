@@ -75,15 +75,15 @@ def optimize(
     constant : int | float | None, optional
         Constant of the polynomial. The default is None which signifies
         there is no constant term, that is `constant` = 0.
-    input_type : {"spin", "binary", "int(\d+)"}, default=spin
+    input_type : {"spin", "binary", "int..."}, default="spin"
         Domain over which the optimization is done.
         • "spin" : Optimize the polynomial over vectors whose entries are
         in {-1, 1}.
         • "binary" : Optimize the polynomial over vectors whose entries are
         in {0, 1}.
-        • "int(\d+)" : Optimize the polynomial over vectors whose entries
+        • "int..." : Optimize the polynomial over vectors whose entries
         are n-bits non-negative integers, that is integers between 0 and
-        2^n - 1 inclusive. "int(\d+)" represents any string starting with
+        2^n - 1 inclusive. "int..." represents any string starting with
         "int" and followed by a positive integer n, e.g. "int3", "int42".
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
@@ -146,7 +146,10 @@ def optimize(
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int(\d+)"}.
+        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        "int..." designates any string starting with "int" and followed by
+        a positive integer, or more formally, any string matching the
+        following regular expression: ^int[1-9][0-9]*$.
 
     Warns
     -----
@@ -303,15 +306,15 @@ def minimize(
     constant : int | float | None, optional
         Constant of the polynomial. The default is None which signifies
         there is no constant term, that is `constant` = 0.
-    input_type : {"spin", "binary", "int(\d+)"}, default=spin
+    input_type : {"spin", "binary", "int..."}, default="spin"
         Domain over which the minimization is done.
         • "spin" : Minimize the polynomial over vectors whose entries are
         in {-1, 1}.
         • "binary" : Minimize the polynomial over vectors whose entries are
         in {0, 1}.
-        • "int(\d+)" : Minimize the polynomial over vectors whose entries
+        • "int..." : Minimize the polynomial over vectors whose entries
         are n-bits non-negative integers, that is integers between 0 and
-        2^n - 1 inclusive. "int(\d+)" represents any string starting with
+        2^n - 1 inclusive. "int..." represents any string starting with
         "int" and followed by a positive integer n, e.g. "int3", "int42".
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
@@ -371,7 +374,10 @@ def minimize(
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int(\d+)"}.
+        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        "int..." designates any string starting with "int" and followed by
+        a positive integer, or more formally, any string matching the
+        following regular expression: ^int[1-9][0-9]*$.
 
     Warns
     -----
@@ -522,15 +528,15 @@ def maximize(
     constant : int | float | None, optional
         Constant of the polynomial. The default is None which signifies
         there is no constant term, that is `constant` = 0.
-    input_type : {"spin", "binary", "int(\d+)"}, default=spin
+    input_type : {"spin", "binary", "int..."}, default="spin"
         Domain over which the maximization is done.
         • "spin" : Maximize the polynomial over vectors whose entries are
         in {-1, 1}.
         • "binary" : Maximize the polynomial over vectors whose entries are
         in {0, 1}.
-        • "int(\d+)" : Maximize the polynomial over vectors whose entries
+        • "int..." : Maximize the polynomial over vectors whose entries
         are n-bits non-negative integers, that is integers between 0 and
-        2^n - 1 inclusive. "int(\d+)" represents any string starting with
+        2^n - 1 inclusive. "int..." represents any string starting with
         "int" and followed by a positive integer n, e.g. "int3", "int42".
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
@@ -590,7 +596,10 @@ def maximize(
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int(\d+)"}.
+        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        "int..." designates any string starting with "int" and followed by
+        a positive integer, or more formally, any string matching the
+        following regular expression: ^int[1-9][0-9]*$.
 
     Warns
     -----
@@ -727,13 +736,13 @@ def build_model(
     constant : int | float | None, optional
         Constant of the polynomial. The default is None which signifies
         there is no constant term, that is `constant` = 0.
-    input_type : {"spin", "binary", "int(\d+)"}, default=spin
+    input_type : {"spin", "binary", "int..."}, default="spin"
         Domain over which the maximization is done.
         - "spin" : Polynomial over vectors whose entries are in {-1, 1}.
         - "binary" : Polynomial over vectors whose entries are in {0, 1}.
-        - "int(\d+)" : Polynomial over vectors whose entries are n-bits
+        - "int..." : Polynomial over vectors whose entries are n-bits
         non-negative integers, that is integers between 0 and 2^n - 1
-        inclusive. "int(\d+)" represents any string starting with "int" and
+        inclusive. "int..." represents any string starting with "int" and
         followed by a positive integer n, e.g. "int3", "int42", ...
     dtype : torch.dtype, default=torch.float32
         Data-type used for storing the coefficients of the polynomial.
@@ -748,12 +757,15 @@ def build_model(
         the domain specified by `input_type`.
         - `input_type="spin"` : SpinPolynomial.
         - `input_type="binary"` : BinaryPolynomial.
-        - `input_type="binary"` : IntegerPolynomial.
+        - `input_type="int..."` : IntegerPolynomial.
 
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int(\d+)"}.
+        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        "int..." designates any string starting with "int" and followed by
+        a positive integer, or more formally, any string matching the
+        following regular expression: ^int[1-9][0-9]*$.
 
     Warnings
     --------
@@ -809,7 +821,9 @@ def build_model(
     tensor([0, 3, 1, 2])
 
     """
-    int_type_regex = re.compile(r"int(\d+)")
+    int_type_regex = "^int[1-9][0-9]*$"
+    int_type_pattern = re.compile(int_type_regex)
+
     if input_type == "spin":
         return SpinPolynomial(
             matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device
@@ -818,14 +832,21 @@ def build_model(
         return BinaryPolynomial(
             matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device
         )
-    if int_type_regex.match(input_type):
-        number_of_bits = int(int_type_regex.findall(input_type)[0])
-        return IntegerPolynomial(
-            matrix=matrix,
-            vector=vector,
-            constant=constant,
-            dtype=dtype,
-            device=device,
-            number_of_bits=number_of_bits,
+    if int_type_pattern.match(input_type) is None:
+        raise ValueError(
+            f'Input type must be one of "spin" or "binary", or be a string starting'
+            f'with "int" and be followed by a positive integer.\n'
+            f"More formally, it should match the following regular expression.\n"
+            f"{int_type_regex}\n"
+            f'Examples: "int7", "int42", ...'
         )
-    raise ValueError(r'Input type must match "spin", "binary" or "int(\d+)".')
+
+    number_of_bits = int(input_type[3:])
+    return IntegerPolynomial(
+        matrix=matrix,
+        vector=vector,
+        constant=constant,
+        dtype=dtype,
+        device=device,
+        number_of_bits=number_of_bits,
+    )
