@@ -88,14 +88,14 @@ Examples
 Minimize a polynomial over {0, 1} x {0, 1}
 >>> matrix = torch.tensor([[1, -2], [0, 3]], dtype=torch.float32)
 >>> vector = torch.tensor([3.5, 2.2], dtype=torch.float32)
->>> constant = 3.1415
+>>> constant = 3.14
 >>> best_vector, best_value = sb.minimize(
 ...     matrix, vector, constant, "binary"
 ... )
 >>> best_vector
-tensor([0, 0])
+tensor([0., 0.])
 >>> best_value
-3.1415
+3.14
 
 Instantiate a polynomial over vectors whose entries are 3-bits integers
 ({0, 1, 2, ..., 6, 7})
@@ -103,27 +103,33 @@ Instantiate a polynomial over vectors whose entries are 3-bits integers
 
 Maximize the polynomial over vectors whose entries are 3-bits integers
 >>> best_vector, best_value = poly.maximize()
+>>> best_vector
+tensor([0., 7.])
+>>> best_value
+165.54
 
 Evaluate the polynomial at a single point
->>> point = torch.tensor([0, 0], dtype=torch.float32)
+>>> point = torch.tensor([6, 3], dtype=torch.float32)
 >>> poly(point)
-3.1415
+57.74
 
 Evaluate the polynomial at several points simultaneously
 >>> points = torch.tensor(
-...     [[3, 5], [0, 0], [7, 1], [2, 6]],
+...     [[3, 5], [4, 4], [7, 1], [2, 6]],
 ...     dtype=torch.float32,
 ... )
 >>> poly(points)
-tensor([0, 3, 1, 2])
+tensor([78.64, 57.94, 67.84, 111.34])
 
 Create a QUBO instance and minimize it using a GPU to run the SB algorithm
 >>> qubo = sb.models.QUBO(matrix, device="cuda")
->>> best_vector, best_value = qubo.minimize()
+>>> best_vector, best_value = qubo.minimize()  # Output is located on GPU
+>>> best_vector
+tensor([0., 0.], device='cuda:0')
 
 """
 
-
+from . import models
 from .optimizer import get_env, reset_env, set_env
 from .polynomial import BinaryPolynomial, IntegerPolynomial, SpinPolynomial
 from .simulated_bifurcation import build_model, maximize, minimize, optimize
