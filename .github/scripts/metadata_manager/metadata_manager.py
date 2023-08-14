@@ -239,12 +239,15 @@ def get_version_string_from_package() -> str:
 
 
 def check_version_string_is_valid(
-    version_string: str, /, *, release: bool, source_error: MetadataErrorCode
+    version_string: Optional[str], /, *, release: bool, source_error: MetadataErrorCode
 ) -> None:
     assert (
         source_error is MetadataErrorCode.PACKAGE_ERROR
         or source_error is MetadataErrorCode.SETUP_ERROR
     )
+
+    if version_string is None:
+        return
 
     release_version_pattern = re.compile(RELEASE_VERSION_REGEX)
     dev_version_pattern = re.compile(DEV_VERSION_REGEX)
@@ -259,21 +262,22 @@ def check_version_string_is_valid(
             raise MetadataError(error_code, version_string=version_string)
 
 
-def metadata_manager() -> None:
-    # TODO: add release mode
+def metadata_manager(release: bool, check_package_version: bool) -> None:
     setup = read_setup_file()
     setup_version = get_version_string_from_setup(setup)
-    package_version = get_version_string_from_package()
+    if check_package_version:
+        package_version = get_version_string_from_package()
+    else:
+        package_version = None
     check_version_string_is_valid(
-        setup_version, release=False, source_error=MetadataErrorCode.SETUP_ERROR
+        setup_version, release=release, source_error=MetadataErrorCode.SETUP_ERROR
     )
     check_version_string_is_valid(
-        package_version, release=False, source_error=MetadataErrorCode.PACKAGE_ERROR
+        package_version, release=release, source_error=MetadataErrorCode.PACKAGE_ERROR
     )
-    if setup_version != package_version:
+    if package_version is not None and setup_version != package_version:
         raise MetadataError(
             MetadataErrorCode.INCONSISTENT_VERSION_STRINGS,
             setup_version=setup_version,
             package_version=package_version,
         )
-    print(SETUP_VERSION_ASSIGNMENT_LINE_REGEX)
