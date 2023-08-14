@@ -5,15 +5,9 @@ on:
     branches:
     - main
     - github-actions-test
-    paths-ignore:
-    - 'LICENSE'
-    - '.gitignore'
   pull_request:
     branches:
       - main
-    paths-ignore:
-    - 'LICENSE'
-    - '.gitignore'
     types:
       - opened
       - synchronize
