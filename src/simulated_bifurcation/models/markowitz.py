@@ -31,15 +31,15 @@ class Markowitz(IntegerPolynomial):
             dtype,
             device,
         )
-        self.covariance = - self.matrix / risk_coefficient
-        self.expected_return = - self.vector
+        self.covariance = -self.matrix / risk_coefficient
+        self.expected_return = -self.vector
         self.risk_coefficient = risk_coefficient
 
     @property
     def portfolio(self) -> Optional[torch.Tensor]:
-        return self.sb_result[
-            :, torch.argmin(self(self.sb_result.t())).item()
-        ] if self.sb_result is not None else None
+        if self.sb_result is not None:
+            return self.sb_result[:, torch.argmin(self(self.sb_result.t())).item()]
+        return None
 
     @property
     def gains(self) -> float:
