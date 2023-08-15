@@ -94,13 +94,15 @@ def test_init_with_wrong_parameters():
 
 
 def test_check_device():
-    IsingPolynomialInterfaceImpl(matrix, device=torch.device("cpu"))
+    IsingPolynomialInterfaceImpl(matrix, device="cpu")
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
         IsingPolynomialInterfaceImpl(matrix, device=1)
-    if not torch.cuda.is_available():
-        with pytest.raises(RuntimeError):  # pragma: no cover
+    if not torch.cuda.is_available():  # pragma: no cover
+        with pytest.raises(RuntimeError):
             IsingPolynomialInterfaceImpl(matrix, device="cuda")
+    else:
+        IsingPolynomialInterfaceImpl(matrix, device="cuda")
 
 
 def test_call_polynomial():

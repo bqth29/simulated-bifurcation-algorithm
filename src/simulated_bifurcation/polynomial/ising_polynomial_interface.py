@@ -149,7 +149,7 @@ class IsingPolynomialInterface(ABC):
             device = device.type
         elif not isinstance(device, str):
             raise TypeError(
-                f"device should a string or a torch.device, received {device}"
+                f"device should a string or a torch.device, received {device}."
             )
         if "cuda" in device and not torch.cuda.is_available():
             raise RuntimeError(

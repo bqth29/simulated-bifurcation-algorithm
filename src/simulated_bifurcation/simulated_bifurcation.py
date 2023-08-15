@@ -91,7 +91,7 @@ def optimize(
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
         dimensional instances or when running the algorithm with many
-        agents).
+        agents). Output tensors are located on this device.
     agents : int, default=128
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
@@ -225,18 +225,29 @@ def optimize(
     ...     Q, minimize=False, input_type="binary"
     ... )
     >>> best_vector
-    tensor([0, 1])
+    tensor([0., 1.])
     >>> best_value
-    tensor(3)
+    tensor(3.)
 
-    Minimize Q and return all the solutions found using 42 agents
+    Minimize a polynomial over {-1, 1} x {-1, 1} and return all the
+    solutions found using 42 agents
     >>> best_vectors, best_values = sb.optimize(
-    ...     Q, input_type="binary", agents=42, best_only=False
+    ...     Q, input_type="spin", agents=42, best_only=False
     ... )
     >>> best_vectors.shape  # (agents, dimension of the instance)
     (42, 2)
     >>> best_values.shape  # (agents,)
     (42,)
+
+    Minimize a polynomial over {0, 1, 2, ..., 6, 7} x {0, 1, 2, ..., 6, 7}
+    using the GPU to run the SB algorithm. Outputs are located on the GPU.
+    >>> best_vector, best_value = sb.optimize(
+    ...     Q, input_type="int3", device="cuda"
+    ... )
+    >>> best_vector
+    tensor([0., 0.], device='cuda:0')
+    >>> best_value
+    tensor(0., device='cuda:0')
 
     """
     model = build_model(
@@ -322,7 +333,7 @@ def minimize(
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
         dimensional instances or when running the algorithm with many
-        agents).
+        agents). Output tensors are located on this device.
     agents : int, default=128
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
@@ -450,9 +461,9 @@ def minimize(
     ...                   [0, 3]])
     >>> best_vector, best_value = sb.minimize(Q, input_type="binary")
     >>> best_vector
-    tensor([0, 0])
+    tensor([0., 0.])
     >>> best_value
-    tensor(0)
+    tensor(0.)
 
     Return all the solutions found using 42 agents
     >>> best_vectors, best_values = sb.minimize(
@@ -462,6 +473,16 @@ def minimize(
     (42, 2)
     >>> best_values.shape  # (agents,)
     (42,)
+
+    Minimize a polynomial over {0, 1, 2, ..., 6, 7} x {0, 1, 2, ..., 6, 7}
+    using the GPU to run the SB algorithm. Outputs are located on the GPU.
+    >>> best_vector, best_value = sb.minimize(
+    ...     Q, input_type="int3", device="cuda"
+    ... )
+    >>> best_vector
+    tensor([0., 0.], device='cuda:0')
+    >>> best_value
+    tensor(0., device='cuda:0')
 
     """
     return optimize(
@@ -544,7 +565,7 @@ def maximize(
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
         dimensional instances or when running the algorithm with many
-        agents).
+        agents). Output tensors are located on this device.
     agents : int, default=128
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
@@ -672,9 +693,9 @@ def maximize(
     ...                   [0, 3]])
     >>> best_vector, best_value = sb.maximize(Q, input_type="binary")
     >>> best_vector
-    tensor([0, 1])
+    tensor([0., 1.])
     >>> best_value
-    tensor(3)
+    tensor(3.)
 
     Return all the solutions found using 42 agents
     >>> best_vectors, best_values = sb.maximize(
@@ -684,6 +705,16 @@ def maximize(
     (42, 2)
     >>> best_values.shape  # (agents,)
     (42,)
+
+    Maximize a polynomial over {0, 1, 2, ..., 6, 7} x {0, 1, 2, ..., 6, 7}
+    using the GPU to run the SB algorithm. Outputs are located on the GPU.
+    >>> best_vector, best_value = sb.maximize(
+    ...     Q, input_type="int3", device="cuda"
+    ... )
+    >>> best_vector
+    tensor([0., 7.], device='cuda:0')
+    >>> best_value
+    tensor(147., device='cuda:0')
 
     """
     return optimize(
@@ -819,6 +850,25 @@ def build_model(
     ... )
     >>> poly(points)
     tensor([0, 3, 1, 2])
+
+    Instantiate a polynomial over {0, 1, ..., 14, 15} x {0, 1, ..., 14, 15}
+    and use it on the GPU
+    >>> Q = torch.tensor([[1, -2],
+    ...                   [0, 3]])
+    >>> poly = sb.build_model(Q, input_type="int4", device="cuda")
+
+    Maximize this polynomial (outputs are located on the GPU)
+    >>> best_vector, best_value = poly.maximize()
+    >>> best_vector
+    tensor([ 0., 15.], device='cuda:0')
+    >>> best_value
+    tensor(675., device='cuda:0')
+
+    Evaluate this polynomial at a given point
+    >>> point = torch.tensor([12, 7], dtype=torch.float32)
+    >>> point = point.to(device="cuda")  # send tensor to GPU
+    >>> poly(point)  # (output is located on GPU)
+    tensor(123., device='cuda:0')
 
     """
     int_type_regex = "^int[1-9][0-9]*$"
