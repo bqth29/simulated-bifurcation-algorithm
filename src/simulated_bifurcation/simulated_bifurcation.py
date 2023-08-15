@@ -36,7 +36,7 @@ def optimize(
     constant: Union[int, float, None] = None,
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
-    device: str = "cpu",
+    device: Union[str, torch.device] = "cpu",
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
@@ -290,7 +290,7 @@ def minimize(
     constant: Union[int, float, None] = None,
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
-    device: str = "cpu",
+    device: Union[str, torch.device] = "cpu",
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
@@ -533,7 +533,7 @@ def maximize(
     constant: Union[int, float, None] = None,
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
-    device: str = "cpu",
+    device: Union[str, torch.device] = "cpu",
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
@@ -776,7 +776,7 @@ def build_model(
     constant: Union[int, float, None] = None,
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
-    device: str = "cpu",
+    device: Union[str, torch.device] = "cpu",
 ) -> IsingPolynomialInterface:
     r"""
     Instantiate a multivariate degree 2 polynomial over a given domain.
@@ -923,7 +923,6 @@ def build_model(
             f"{int_type_regex}\n"
             f'Examples: "int7", "int42", ...'
         )
-
     number_of_bits = int(input_type[3:])
     return IntegerPolynomial(
         matrix=matrix,

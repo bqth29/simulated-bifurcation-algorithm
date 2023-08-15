@@ -43,7 +43,7 @@ class IsingCore:
         J: torch.Tensor,
         h: Optional[torch.Tensor],
         dtype: torch.dtype,
-        device: str,
+        device: Union[str, torch.device],
     ):
         null_vector = torch.zeros(self.dimension).to(device=device, dtype=dtype)
         if h is None:

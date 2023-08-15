@@ -29,7 +29,7 @@ class SpinPolynomial(IsingPolynomialInterface):
         vector: Union[torch.Tensor, np.ndarray, None] = None,
         constant: Union[float, int, None] = None,
         dtype: torch.dtype = torch.float32,
-        device: str = "cpu",
+        device: Union[str, torch.device] = "cpu",
     ) -> None:
         """
         Parameters
@@ -44,9 +44,9 @@ class SpinPolynomial(IsingPolynomialInterface):
             the constant term of the polynomial. `None` means no constant term
             (default is `None`)
         dtype : torch.dtype, optional
-            the dtype used to encode polynomial's coefficients (default is 
+            the dtype used to encode polynomial's coefficients (default is
             `float32`)
-        device : str, optional
+        device : str | torch.device, optional
             the device on which to perform the computations of the Simulated
             Bifurcation algorithm (default `"cpu"`)
         """

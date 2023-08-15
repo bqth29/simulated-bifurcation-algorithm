@@ -30,7 +30,7 @@ class IntegerPolynomial(IsingPolynomialInterface):
         constant: Union[float, int, None] = None,
         number_of_bits: int = 1,
         dtype: torch.dtype = torch.float32,
-        device: str = "cpu",
+        device: Union[str, torch.device] = "cpu",
     ) -> None:
         """
         Parameters
@@ -50,7 +50,7 @@ class IntegerPolynomial(IsingPolynomialInterface):
         dtype : torch.dtype, optional
             the dtype used to encode polynomial's coefficients (default is
             `float32`)
-        device : str, optional
+        device : str | torch.device, optional
             the device on which to perform the computations of the Simulated
             Bifurcation algorithm (default `"cpu"`)
         """
@@ -66,7 +66,7 @@ class IntegerPolynomial(IsingPolynomialInterface):
 
     @staticmethod
     def integer_to_binary_matrix(
-        dimension: int, number_of_bits: int, device: str
+        dimension: int, number_of_bits: int, device: Union[str, torch.device]
     ) -> torch.Tensor:
         matrix = torch.zeros((dimension * number_of_bits, dimension), device=device)
         for row in range(dimension):

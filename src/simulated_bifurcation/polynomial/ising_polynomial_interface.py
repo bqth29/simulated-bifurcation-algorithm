@@ -29,7 +29,7 @@ class IsingPolynomialInterface(ABC):
         constant: Union[int, float, None] = None,
         accepted_values: Union[torch.Tensor, np.ndarray, list[int], None] = None,
         dtype: torch.dtype = torch.float32,
-        device: str = "cpu",
+        device: Union[str, torch.device] = "cpu",
     ) -> None:
         """
         Parameters
@@ -51,7 +51,7 @@ class IsingPolynomialInterface(ABC):
         dtype : torch.dtype, optional
             the dtype used to encode polynomial's coefficients (default is
             `float32`)
-        device : str, optional
+        device : str | torch.device, optional
             the device on which to perform the computations of the Simulated
             Bifurcation algorithm (default `"cpu"`)
         """
@@ -158,13 +158,17 @@ class IsingPolynomialInterface(ABC):
                 "about installing with CUDA support."
             )  # pragma: no cover
 
-    def __init_matrix(self, matrix: Iterable, dtype: torch.dtype, device: str) -> None:
+    def __init_matrix(
+        self, matrix: Iterable, dtype: torch.dtype, device: Union[str, torch.device]
+    ) -> None:
         tensor_matrix = self.__cast_matrix_to_tensor(matrix, dtype, device)
         self.__check_square_matrix(tensor_matrix)
         self.__matrix = tensor_matrix
         self.__dimension = tensor_matrix.shape[0]
 
-    def __init_vector(self, vector: Iterable, dtype: torch.dtype, device: str) -> None:
+    def __init_vector(
+        self, vector: Iterable, dtype: torch.dtype, device: Union[str, torch.device]
+    ) -> None:
         tensor_vector = self.__cast_vector_to_tensor(vector, dtype, device)
         self.__check_vector_shape(tensor_vector)
         self.__vector = tensor_vector
@@ -175,11 +179,11 @@ class IsingPolynomialInterface(ABC):
         dtype: torch.dtype,
         device: Union[str, torch.device],
     ) -> None:
-        self.__constant = self.__cast_constant_to_float(constant, dtype, device)
+        self.__constant = self.__cast_constant_to_scalar_tensor(constant, dtype, device)
 
     @staticmethod
     def __cast_matrix_to_tensor(
-        matrix: Iterable, dtype: torch.dtype, device: str
+        matrix: Iterable, dtype: torch.dtype, device: Union[str, torch.device]
     ) -> torch.Tensor:
         if isinstance(matrix, torch.Tensor):
             return matrix.to(dtype=dtype, device=device)
@@ -189,7 +193,10 @@ class IsingPolynomialInterface(ABC):
             raise TypeError("Matrix cannot be cast to tensor.") from err
 
     def __cast_vector_to_tensor(
-        self, vector: Optional[Iterable], dtype: torch.dtype, device: str
+        self,
+        vector: Optional[Iterable],
+        dtype: torch.dtype,
+        device: Union[str, torch.device],
     ) -> torch.Tensor:
         if vector is None:
             return torch.zeros(self.dimension, dtype=dtype, device=device)
@@ -201,15 +208,17 @@ class IsingPolynomialInterface(ABC):
             raise TypeError("Vector cannot be cast to tensor.") from err
 
     @staticmethod
-    def __cast_constant_to_float(
-        constant: Union[float, int, None], dtype, device
+    def __cast_constant_to_scalar_tensor(
+        constant: Union[float, int, None],
+        dtype: torch.dtype,
+        device: Union[str, torch.device],
     ) -> torch.Tensor:
         if constant is None:
             return torch.tensor(0.0, dtype=dtype, device=device)
         try:
             return torch.tensor(float(constant), dtype=dtype, device=device)
         except Exception as err:
-            raise TypeError("Constant cannot be cast to float.") from err
+            raise TypeError("Constant cannot be cast to scalar tensor.") from err
 
     @staticmethod
     def __check_square_matrix(matrix: torch.Tensor) -> None:
