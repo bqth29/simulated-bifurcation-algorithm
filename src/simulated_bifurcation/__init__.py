@@ -45,6 +45,16 @@ constraints are embedded as penalties in the polynomial, that is adding
 terms that ensure that any global maximum satisfies the constraints, the
 return values may violate these constraints.
 
+The SB algorithm uses a randomized initialization, and this package is
+implemented with a PyTorch backend. To ensure a consistent initialization
+when running the same script multiple times, use `torch.manual_seed`.
+However, results may not be reproducible between CPU and GPU executions,
+even when using identical seeds. Furthermore, certain PyTorch operations
+are not deterministic.
+For more comprehensive details on reproducibility, refer to the PyTorch
+documentation available at:
+https://pytorch.org/docs/stable/notes/randomness.html.
+
 The original version of the SB algorithm [2] is not implemented since it is
 less efficient than the more recent variants of the SB algorithm described
 in [3] :

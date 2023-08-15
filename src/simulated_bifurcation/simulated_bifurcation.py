@@ -166,11 +166,22 @@ def optimize(
 
     Warnings
     --------
-    The SB algorithm is an approximation algorithm, which implies that
-    the returned values may not correspond to global optima. Therefore, if
-    some constraints are embedded as penalties in the polynomial, that is
-    adding terms that ensure that any global optimum satisfies the
-    constraints, the return values may violate these constraints.
+    Approximation algorithm:
+        The SB algorithm is an approximation algorithm, which implies that
+        the returned values may not correspond to global optima. Therefore,
+        if some constraints are embedded as penalties in the polynomial,
+        that is adding terms that ensure that any global optimum satisfies
+        the constraints, the return values may violate these constraints.
+    Non-deterministic behaviour:
+        The SB algorithm uses a randomized initialization, and this package
+        is implemented with a PyTorch backend. To ensure a consistent
+        initialization when running the same script multiple times, use
+        `torch.manual_seed`. However, results may not be reproducible
+        between CPU and GPU executions, even when using identical seeds.
+        Furthermore, certain PyTorch operations are not deterministic.
+        For more comprehensive details on reproducibility, refer to the
+        PyTorch documentation available at:
+        https://pytorch.org/docs/stable/notes/randomness.html.
 
     See Also
     --------
@@ -405,11 +416,22 @@ def minimize(
 
     Warnings
     --------
-    The SB algorithm is an approximation algorithm, which implies that
-    the returned values may not correspond to global minima. Therefore, if
-    some constraints are embedded as penalties in the polynomial, that is
-    adding terms that ensure that any global minimum satisfies the
-    constraints, the return values may violate these constraints.
+    Approximation algorithm:
+        The SB algorithm is an approximation algorithm, which implies that
+        the returned values may not correspond to global minima. Therefore,
+        if some constraints are embedded as penalties in the polynomial,
+        that is adding terms that ensure that any global minimum satisfies
+        the constraints, the return values may violate these constraints.
+    Non-deterministic behaviour:
+        The SB algorithm uses a randomized initialization, and this package
+        is implemented with a PyTorch backend. To ensure a consistent
+        initialization when running the same script multiple times, use
+        `torch.manual_seed`. However, results may not be reproducible
+        between CPU and GPU executions, even when using identical seeds.
+        Furthermore, certain PyTorch operations are not deterministic.
+        For more comprehensive details on reproducibility, refer to the
+        PyTorch documentation available at:
+        https://pytorch.org/docs/stable/notes/randomness.html.
 
     See Also
     --------
@@ -637,11 +659,22 @@ def maximize(
 
     Warnings
     --------
-    The SB algorithm is an approximation algorithm, which implies that
-    the returned values may not correspond to global maxima. Therefore, if
-    some constraints are embedded as penalties in the polynomial, that is
-    adding terms that ensure that any global maximum satisfies the
-    constraints, the return values may violate these constraints.
+    Approximation algorithm:
+        The SB algorithm is an approximation algorithm, which implies that
+        the returned values may not correspond to global maxima. Therefore,
+        if some constraints are embedded as penalties in the polynomial,
+        that is adding terms that ensure that any global maximum satisfies
+        the constraints, the return values may violate these constraints.
+    Non-deterministic behaviour:
+        The SB algorithm uses a randomized initialization, and this package
+        is implemented with a PyTorch backend. To ensure a consistent
+        initialization when running the same script multiple times, use
+        `torch.manual_seed`. However, results may not be reproducible
+        between CPU and GPU executions, even when using identical seeds.
+        Furthermore, certain PyTorch operations are not deterministic.
+        For more comprehensive details on reproducibility, refer to the
+        PyTorch documentation available at:
+        https://pytorch.org/docs/stable/notes/randomness.html.
 
     See Also
     --------
