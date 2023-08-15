@@ -115,6 +115,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.test_env
 
 # IDEproject settings
 .spyderproject
