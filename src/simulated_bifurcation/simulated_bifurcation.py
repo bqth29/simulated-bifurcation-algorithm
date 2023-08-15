@@ -48,7 +48,7 @@ def optimize(
     use_window: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
-) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
+) -> Tuple[torch.Tensor, torch.Tensor]:
     r"""
     Optimize a multivariate degree 2 polynomial using the SB algorithm.
 
@@ -123,7 +123,7 @@ def optimize(
     result : ([`agents`], M) Tensor
         Best vector found, or all the vectors found is `best_only` is
         False.
-    evaluation : float | (`agents`) Tensor
+    evaluation : ([`agents`],) Tensor
         Value of the polynomial at `result`.
 
     Other Parameters
@@ -227,7 +227,7 @@ def optimize(
     >>> best_vector
     tensor([0, 1])
     >>> best_value
-    3
+    tensor(3)
 
     Minimize Q and return all the solutions found using 42 agents
     >>> best_vectors, best_values = sb.optimize(
@@ -279,7 +279,7 @@ def minimize(
     use_window: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
-) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
+) -> Tuple[torch.Tensor, torch.Tensor]:
     r"""
     Minimize a multivariate degree 2 polynomial using the SB algorithm.
 
@@ -351,7 +351,7 @@ def minimize(
     result : ([`agents`], M) Tensor
         Best vector found, or all the vectors found is `best_only` is
         False.
-    evaluation : float | (`agents`) Tensor
+    evaluation : ([`agents`],) Tensor
         Value of the polynomial at `result`.
 
     Other Parameters
@@ -452,7 +452,7 @@ def minimize(
     >>> best_vector
     tensor([0, 0])
     >>> best_value
-    0
+    tensor(0)
 
     Return all the solutions found using 42 agents
     >>> best_vectors, best_values = sb.minimize(
@@ -501,7 +501,7 @@ def maximize(
     use_window: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
-) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
+) -> Tuple[torch.Tensor, torch.Tensor]:
     r"""
     Maximize a multivariate degree 2 polynomial using the SB algorithm.
 
@@ -573,7 +573,7 @@ def maximize(
     result : ([`agents`], M) Tensor
         Best vector found, or all the vectors found is `best_only` is
         False.
-    evaluation : float | (`agents`) Tensor
+    evaluation : ([`agents`],) Tensor
         Value of the polynomial at `result`.
 
     Other Parameters
@@ -674,7 +674,7 @@ def maximize(
     >>> best_vector
     tensor([0, 1])
     >>> best_value
-    3
+    tensor(3)
 
     Return all the solutions found using 42 agents
     >>> best_vectors, best_values = sb.maximize(
@@ -796,7 +796,7 @@ def build_model(
     >>> best_vector
     tensor([0, 1])
     >>> best_value
-    3
+    tensor(3)
 
     Return all the solutions found using 42 agents
     >>> best_vectors, best_values = poly.maximize(
@@ -810,7 +810,7 @@ def build_model(
     Evaluate the polynomial at a single point
     >>> point = torch.tensor([1, 1], dtype=torch.float32)
     >>> poly(point)
-    2
+    tensor(2)
 
     Evaluate the polynomial at several points simultaneously
     >>> points = torch.tensor(

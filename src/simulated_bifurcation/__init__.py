@@ -95,7 +95,7 @@ Minimize a polynomial over {0, 1} x {0, 1}
 >>> best_vector
 tensor([0., 0.])
 >>> best_value
-3.14
+tensor(3.14)
 
 Instantiate a polynomial over vectors whose entries are 3-bits integers
 ({0, 1, 2, ..., 6, 7})
@@ -106,12 +106,12 @@ Maximize the polynomial over vectors whose entries are 3-bits integers
 >>> best_vector
 tensor([0., 7.])
 >>> best_value
-165.54
+tensor(165.54)
 
 Evaluate the polynomial at a single point
 >>> point = torch.tensor([6, 3], dtype=torch.float32)
 >>> poly(point)
-57.74
+tensor(57.74)
 
 Evaluate the polynomial at several points simultaneously
 >>> points = torch.tensor(

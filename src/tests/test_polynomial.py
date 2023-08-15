@@ -106,7 +106,6 @@ def test_check_device():
 def test_call_polynomial():
     polynomial = IsingPolynomialInterfaceImpl(matrix)
     assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0.0
-    assert isinstance(polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)), float)
     assert torch.equal(
         polynomial(
             torch.tensor(
@@ -119,6 +118,11 @@ def test_call_polynomial():
         ),
         torch.tensor([0, 228], dtype=torch.float32),
     )
+    assert isinstance(
+        polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)), torch.Tensor
+    )
+    assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)).shape == ()
+    assert polynomial(torch.tensor([[0, 0, 0]], dtype=torch.float32)).shape == (1,)
     assert polynomial(torch.zeros((1, 5, 3, 1, 2, 1, 3))).shape == (1, 5, 3, 1, 2, 1)
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
