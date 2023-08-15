@@ -167,7 +167,8 @@ def test_best_only():
     spins_best_only, energy_best_only = model.optimize(agents=42, best_only=True)
     assert model.sb_result.shape == (3, 42)
     assert spins_best_only.shape == (3,)
-    assert isinstance(energy_best_only, float)
+    assert isinstance(energy_best_only, torch.Tensor)
+    assert energy_best_only.shape == ()
     assert energy_best_only == -2
     spins_all, energies_all = model.optimize(agents=42, best_only=False)
     assert model.sb_result.shape == (3, 42)
