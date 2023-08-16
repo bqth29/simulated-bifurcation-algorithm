@@ -162,13 +162,15 @@ def optimize(
     If `use_window` is True and no agent has reached the convergence
     criterion defined by `sampling_period` and `convergence_threshold`
     within `max_steps` iterations, a warning is logged in the console.
-    This is just an indication however; the returned solutions may still
-    be of good quality. If the returned solutions are not of good quality,
-    solutions include increasing `max_steps` (at the expense of runtime),
-    changing the values of `ballistic` and `heated` to use different
-    variants of the SB algorithm and changing the values of some
-    hyperparameters corresponding to physical constants (advanced usage,
-    see Other Parameters).
+    This is just an indication however; the returned vectors may still be
+    of good quality. Solutions to this warning include:
+        - increasing the time step in the SB algorithm (may decrease
+            numerical stability), see the `set_env` function.
+        - increasing `max_steps` (at the expense of runtime).
+        - changing the values of `ballistic` and `heated` to use different
+            variants of the SB algorithm.
+        - changing the values of some hyperparameters corresponding to
+            physical constants (advanced usage, see Other Parameters).
 
     Warnings
     --------
@@ -412,13 +414,15 @@ def minimize(
     If `use_window` is True and no agent has reached the convergence
     criterion defined by `sampling_period` and `convergence_threshold`
     within `max_steps` iterations, a warning is logged in the console.
-    This is just an indication however; the returned solutions may still
-    be of good quality. If the returned solutions are not of good quality,
-    solutions include increasing `max_steps` (at the expense of runtime),
-    changing the values of `ballistic` and `heated` to use different
-    variants of the SB algorithm and changing the values of some
-    hyperparameters corresponding to physical constants (advanced usage,
-    see Other Parameters).
+    This is just an indication however; the returned vectors may still be
+    of good quality. Solutions to this warning include:
+        - increasing the time step in the SB algorithm (may decrease
+            numerical stability), see the `set_env` function.
+        - increasing `max_steps` (at the expense of runtime).
+        - changing the values of `ballistic` and `heated` to use different
+            variants of the SB algorithm.
+        - changing the values of some hyperparameters corresponding to
+            physical constants (advanced usage, see Other Parameters).
 
     Warnings
     --------
@@ -655,13 +659,15 @@ def maximize(
     If `use_window` is True and no agent has reached the convergence
     criterion defined by `sampling_period` and `convergence_threshold`
     within `max_steps` iterations, a warning is logged in the console.
-    This is just an indication however; the returned solutions may still
-    be of good quality. If the returned solutions are not of good quality,
-    solutions include increasing `max_steps` (at the expense of runtime),
-    changing the values of `ballistic` and `heated` to use different
-    variants of the SB algorithm and changing the values of some
-    hyperparameters corresponding to physical constants (advanced usage,
-    see Other Parameters).
+    This is just an indication however; the returned vectors may still be
+    of good quality. Solutions to this warning include:
+        - increasing the time step in the SB algorithm (may decrease
+            numerical stability), see the `set_env` function.
+        - increasing `max_steps` (at the expense of runtime).
+        - changing the values of `ballistic` and `heated` to use different
+            variants of the SB algorithm.
+        - changing the values of some hyperparameters corresponding to
+            physical constants (advanced usage, see Other Parameters).
 
     Warnings
     --------
