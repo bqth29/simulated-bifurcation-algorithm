@@ -359,7 +359,7 @@ class IsingPolynomialInterface(ABC):
             ising_equivalent = self.to_ising()
         else:
             ising_equivalent = -self.to_ising()
-        ising_equivalent.optimize(
+        ising_equivalent.minimize(
             agents,
             max_steps,
             ballistic,

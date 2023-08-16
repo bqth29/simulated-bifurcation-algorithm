@@ -74,7 +74,7 @@ vary depending on the properties of the instances. They can respectively be
 modified and reset through the `set_env` and `reset_env` functions.
 
 The time complexity is O(`max_steps` * `agents` * M^2) where M is the
-dimension of the instance. The space complexity O(M^2 + `agents` * N).
+dimension of the instance. The space complexity O(M^2 + `agents` * M).
 
 For instances in low dimension (~100), running computations on GPU is
 slower than running computations on CPU unless a large number of

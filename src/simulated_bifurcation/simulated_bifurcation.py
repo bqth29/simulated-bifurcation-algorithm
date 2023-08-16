@@ -13,6 +13,12 @@ maximize:
 build_model:
     Instantiate a multivariate degree 2 polynomial over a given domain.
 
+See Also
+--------
+models:
+    Module containing the implementation of several common combinatorial
+    optimization problems.
+
 """
 
 
@@ -49,7 +55,7 @@ def optimize(
     sampling_period: int = 50,
     convergence_threshold: int = 50,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    r"""
+    """
     Optimize a multivariate degree 2 polynomial using the SB algorithm.
 
     The simulated bifurcated (SB) algorithm is a randomized approximation
@@ -209,7 +215,7 @@ def optimize(
     additional term by setting `heated=True`.
 
     The time complexity is O(`max_steps` * `agents` * M^2) where M is the
-    dimension of the instance. The space complexity O(M^2 + `agents` * N).
+    dimension of the instance. The space complexity O(M^2 + `agents` * M).
 
     For instances in low dimension (~100), running computations on GPU is
     slower than running computations on CPU unless a large number of
@@ -302,7 +308,7 @@ def minimize(
     sampling_period: int = 50,
     convergence_threshold: int = 50,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    r"""
+    """
     Minimize a multivariate degree 2 polynomial using the SB algorithm.
 
     The simulated bifurcated (SB) algorithm is a randomized approximation
@@ -458,7 +464,7 @@ def minimize(
     additional term by setting `heated=True`.
 
     The time complexity is O(`max_steps` * `agents` * M^2) where M is the
-    dimension of the instance. The space complexity O(M^2 + `agents` * N).
+    dimension of the instance. The space complexity O(M^2 + `agents` * M).
 
     For instances in low dimension (~100), running computations on GPU is
     slower than running computations on CPU unless a large number of
@@ -545,7 +551,7 @@ def maximize(
     sampling_period: int = 50,
     convergence_threshold: int = 50,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    r"""
+    """
     Maximize a multivariate degree 2 polynomial using the SB algorithm.
 
     The simulated bifurcated (SB) algorithm is a randomized approximation
@@ -701,7 +707,7 @@ def maximize(
     additional term by setting `heated=True`.
 
     The time complexity is O(`max_steps` * `agents` * M^2) where M is the
-    dimension of the instance. The space complexity O(M^2 + `agents` * N).
+    dimension of the instance. The space complexity O(M^2 + `agents` * M).
 
     For instances in low dimension (~100), running computations on GPU is
     slower than running computations on CPU unless a large number of
@@ -778,7 +784,7 @@ def build_model(
     dtype: torch.dtype = torch.float32,
     device: Union[str, torch.device] = "cpu",
 ) -> IsingPolynomialInterface:
-    r"""
+    """
     Instantiate a multivariate degree 2 polynomial over a given domain.
 
     The polynomial is the sum of a quadratic form and a linear form plus
