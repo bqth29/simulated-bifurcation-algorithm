@@ -2,13 +2,13 @@ import re
 from enum import Flag, auto
 from typing import Any, Callable, Optional
 
-RELEASE_VERSION_REGEX = r"^(([1-9][0-9]*)|0)\.(([1-9][0-9]*)|0)\.(([1-9][0-9]*)|0)$"
-DEV_VERSION_REGEX = r"^(([1-9][0-9]*)|0)\.(([1-9][0-9]*)|0)\.(([1-9][0-9]*)|0)(\.dev(([1-9][0-9]*)|0))?$"
-
-SETUP_VERSION_ASSIGNMENT_MARKER = "# GitHub workflows: package version"
-SETUP_VERSION_ASSIGNMENT = "package_version = "
-SETUP_VERSION_STRING_DELIMITER = '"'
-SETUP_VERSION_ASSIGNMENT_LINE_REGEX = f"^{SETUP_VERSION_ASSIGNMENT}{SETUP_VERSION_STRING_DELIMITER}.*{SETUP_VERSION_STRING_DELIMITER}$"
+from config import (
+    BIBTEX_TEMPLATE,
+    DEV_VERSION_REGEX,
+    FILES_SHOULD_DEFINE,
+    METADATA_MANAGER_INVOCATION,
+    RELEASE_VERSION_REGEX,
+)
 
 
 class MetadataErrorCode(Flag):
