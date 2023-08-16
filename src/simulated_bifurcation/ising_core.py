@@ -15,12 +15,15 @@ IsingPolynomialInterface: Abstract multivariate polynomial class.
 """
 
 
-from typing import Optional, Union
+from typing import Optional, TypeVar, Union
 
 import torch
 from numpy import ndarray
 
 from .optimizer import OptimizerMode, SimulatedBifurcationOptimizer
+
+# Workaround because `Self` type is only available in Python >= 3.11
+SelfIsingCore = TypeVar("SelfIsingCore", bound="IsingCore")
 
 
 class IsingCore:
@@ -96,7 +99,7 @@ class IsingCore:
     def __len__(self) -> int:
         return self.dimension
 
-    def __neg__(self) -> IsingCore:
+    def __neg__(self: SelfIsingCore) -> SelfIsingCore:
         return self.__class__(-self.J, -self.h, self.dtype, self.device)
 
     def __init_from_tensor(
