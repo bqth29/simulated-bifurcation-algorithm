@@ -109,22 +109,14 @@ class IsingCore:
         dtype: torch.dtype,
         device: Union[str, torch.device],
     ) -> None:
-        # TODO: refactor
-        null_vector = torch.zeros(self.dimension).to(device=device, dtype=dtype)
+        null_vector = torch.zeros(self.dimension, dtype=dtype, device=device)
+        self.J = J.to(device=device, dtype=dtype)
         if h is None:
-            self.J = J.to(device=device, dtype=dtype)
-            self.h = null_vector
-            self.linear_term = False
-        elif torch.equal(
-            h.reshape(self.dimension).to(device=device, dtype=dtype), null_vector
-        ):
-            self.J = J.to(device=device, dtype=dtype)
             self.h = null_vector
             self.linear_term = False
         else:
-            self.J = J.to(device=device, dtype=dtype)
-            self.h = h.reshape(self.dimension).to(device=device, dtype=dtype)
-            self.linear_term = True
+            self.h = h.to(device=device, dtype=dtype)
+            self.linear_term = not torch.equal(self.h, null_vector)
 
     def clip_vector_to_tensor(self) -> torch.Tensor:
         """
