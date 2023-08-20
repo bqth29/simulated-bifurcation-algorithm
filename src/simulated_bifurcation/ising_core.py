@@ -183,6 +183,7 @@ class IsingCore:
         optimizer = SimulatedBifurcationOptimizer(
             agents,
             max_steps,
+            timeout,
             OptimizerMode.BALLISTIC if ballistic else OptimizerMode.DISCRETE,
             heated,
             verbose,
@@ -190,7 +191,7 @@ class IsingCore:
             convergence_threshold,
         )
         tensor = self.as_simulated_bifurcation_tensor()
-        spins = optimizer.run_integrator(tensor, use_window, timeout)
+        spins = optimizer.run_integrator(tensor, use_window)
         if self.linear_term:
             self.computed_spins = spins[-1] * spins[:-1]
         else:

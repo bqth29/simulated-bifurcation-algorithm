@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from .optimization_variables import OptimizationVariable
 from .optimizer_mode import OptimizerMode
-from .optimizer_stop_reason import OptimizerStopReason
+from .optimizer_stop_trigger import OptimizerStopTrigger
 from .stop_window import StopWindow
 from .symplectic_integrator import SymplecticIntegrator
 
@@ -61,6 +61,7 @@ class SimulatedBifurcationOptimizer:
         self,
         agents: int,
         max_steps: int,
+        timeout: float,
         mode: OptimizerMode,
         heated: bool,
         verbose: bool,
@@ -76,7 +77,7 @@ class SimulatedBifurcationOptimizer:
         self.verbose = verbose
         self.start_time = None
         self.simulation_time = None
-        self.stop_reason = None
+        self.stop_trigger = None
         # Simulation parameters
         self.time_step = OptimizationVariable.TIME_STEP.get()
         self.agents = agents
@@ -85,6 +86,7 @@ class SimulatedBifurcationOptimizer:
         self.convergence_threshold = convergence_threshold
         self.sampling_period = sampling_period
         self.max_steps = max_steps
+        self.timeout = timeout
 
     def __reset(self, matrix: torch.Tensor, use_window: bool) -> None:
         self.__init_progress_bar(self.max_steps, self.verbose)
@@ -95,7 +97,7 @@ class SimulatedBifurcationOptimizer:
         self.step = 0
         self.start_time = None
         self.simulation_time = None
-        self.stop_reason = None
+        self.stop_trigger = None
 
     def __init_progress_bar(self, max_steps: int, verbose: bool) -> None:
         self.iterations_progress = tqdm(
@@ -130,20 +132,20 @@ class SimulatedBifurcationOptimizer:
         self.step += 1
         self.iterations_progress.update()
 
-    def __check_stop(self, use_window: bool, timeout: float) -> None:
+    def __check_stop(self, use_window: bool) -> None:
         if use_window and self.__do_sampling:
             self.run = self.window.must_continue()
             if not self.run:
-                self.stop_reason = OptimizerStopReason.WINDOW
+                self.stop_trigger = OptimizerStopTrigger.WINDOW
             return
         if self.step >= self.max_steps:
             self.run = False
-            self.stop_reason = OptimizerStopReason.STEPS
+            self.stop_trigger = OptimizerStopTrigger.STEPS
             return
         self.simulation_time = time() - self.start_time
-        if self.simulation_time > timeout:
+        if self.simulation_time > self.timeout:
             self.run = False
-            self.stop_reason = OptimizerStopReason.TIMEOUT
+            self.stop_trigger = OptimizerStopTrigger.TIMEOUT
             return
 
     @property
@@ -155,7 +157,9 @@ class SimulatedBifurcationOptimizer:
         self.window.progress.close()
 
     def __symplectic_update(
-        self, matrix: torch.Tensor, use_window: bool, timeout: float
+        self,
+        matrix: torch.Tensor,
+        use_window: bool,
     ) -> torch.Tensor:
         self.start_time = time()
         while self.run:
@@ -182,7 +186,7 @@ class SimulatedBifurcationOptimizer:
             if use_window and self.__do_sampling:
                 self.window.update(sampled_spins)
 
-            self.__check_stop(use_window, timeout)
+            self.__check_stop(use_window)
 
         return sampled_spins
 
@@ -205,14 +209,12 @@ class SimulatedBifurcationOptimizer:
     def __pressure(self):
         return minimum(self.time_step * self.step * self.pressure_slope, 1.0)
 
-    def run_integrator(
-        self, matrix: torch.Tensor, use_window: bool, timeout: float
-    ) -> torch.Tensor:
+    def run_integrator(self, matrix: torch.Tensor, use_window: bool) -> torch.Tensor:
         """
         Runs the Simulated Bifurcation (SB) algorithm.
         """
         self.__reset(matrix, use_window)
-        spins = self.__symplectic_update(matrix, use_window, timeout)
+        spins = self.__symplectic_update(matrix, use_window)
         self.__close_progress_bars()
         return self.get_final_spins(spins, use_window)
 

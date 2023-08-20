@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class OptimizerStopReason(Enum):
+class OptimizerStopTrigger(Enum):
     STEPS = "Maximum number of steps reached."
     TIMEOUT = "Maximum simulation time reached."
     WINDOW = "All agents converged."
