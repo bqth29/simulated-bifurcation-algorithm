@@ -1,3 +1,5 @@
+from time import time
+
 import pytest
 import torch
 
@@ -5,6 +7,7 @@ from src.simulated_bifurcation import reset_env, set_env
 from src.simulated_bifurcation.ising_core import IsingCore
 from src.simulated_bifurcation.optimizer import (
     OptimizerMode,
+    OptimizerStopReason,
     SimulatedBifurcationOptimizer,
 )
 
@@ -154,3 +157,23 @@ def test_wrong_value_throws_exception_and_variables_not_updated():
     assert optimizer.heat_coefficient == 0.06
     assert optimizer.pressure_slope == 0.01
     assert optimizer.time_step == 0.1
+
+
+def test_timeout():
+    torch.manual_seed(42)
+    J = torch.tensor(
+        [
+            [1, 2, 3],
+            [2, 1, 4],
+            [3, 4, 1],
+        ],
+        dtype=torch.float32,
+    )
+    h = torch.tensor([1, 0, -2], dtype=torch.float32)
+    ising = IsingCore(J, h)
+    optimizer = SimulatedBifurcationOptimizer(
+        128, 100000, OptimizerMode.BALLISTIC, True, True, 50, 50
+    )
+    optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False, 3.0)
+    assert optimizer.simulation_time > 3.0
+    assert optimizer.stop_reason == OptimizerStopReason.TIMEOUT

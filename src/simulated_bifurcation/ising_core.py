@@ -112,6 +112,7 @@ class IsingCore:
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
+        timeout: float = float("inf"),
     ):
         """
         Computes a local minimum of the Ising problem using the
@@ -175,6 +176,9 @@ class IsingCore:
         verbose : bool, optional
             whether to display a progress bar to monitor the algorithm's
             evolution (default is True)
+        timeout : float, optional
+            the time, in seconds, after which the simulation will be stopped
+            (default is inf, i.e. no timeout)
         """
         optimizer = SimulatedBifurcationOptimizer(
             agents,
@@ -186,7 +190,7 @@ class IsingCore:
             convergence_threshold,
         )
         tensor = self.as_simulated_bifurcation_tensor()
-        spins = optimizer.run_integrator(tensor, use_window)
+        spins = optimizer.run_integrator(tensor, use_window, timeout)
         if self.linear_term:
             self.computed_spins = spins[-1] * spins[:-1]
         else:
