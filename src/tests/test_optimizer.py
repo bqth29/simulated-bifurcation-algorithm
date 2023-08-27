@@ -7,7 +7,6 @@ from src.simulated_bifurcation import reset_env, set_env
 from src.simulated_bifurcation.ising_core import IsingCore
 from src.simulated_bifurcation.optimizer import (
     OptimizerMode,
-    OptimizerStopTrigger,
     SimulatedBifurcationOptimizer,
 )
 
@@ -176,7 +175,6 @@ def test_timeout():
     )
     optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
     assert optimizer.simulation_time > 3.0
-    assert optimizer.stop_trigger == OptimizerStopTrigger.TIMEOUT
 
 
 def test_window():
@@ -192,10 +190,9 @@ def test_window():
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
     optimizer = SimulatedBifurcationOptimizer(
-        1, 100000, float("inf"), OptimizerMode.BALLISTIC, True, True, 1, 1
+        1, 100000, None, OptimizerMode.BALLISTIC, True, True, 1, 1
     )
     optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), True)
-    assert optimizer.stop_trigger == OptimizerStopTrigger.WINDOW
 
 
 def test_max_steps():
@@ -211,7 +208,27 @@ def test_max_steps():
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
     optimizer = SimulatedBifurcationOptimizer(
-        1, 10, float("inf"), OptimizerMode.BALLISTIC, True, True, 50, 50
+        1, 10, None, OptimizerMode.BALLISTIC, True, True, 50, 50
     )
     optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
-    assert optimizer.stop_trigger == OptimizerStopTrigger.STEPS
+    assert optimizer.step == 10
+
+
+def test_no_stop_criterion():
+    torch.manual_seed(42)
+    J = torch.tensor(
+        [
+            [1, 2, 3],
+            [2, 1, 4],
+            [3, 4, 1],
+        ],
+        dtype=torch.float32,
+    )
+    h = torch.tensor([1, 0, -2], dtype=torch.float32)
+    ising = IsingCore(J, h)
+    optimizer = SimulatedBifurcationOptimizer(
+        1, None, None, OptimizerMode.BALLISTIC, True, True, 50, 50
+    )
+    with pytest.raises(ValueError) as error:
+        optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
+        assert error.value == "No stop criterion provided."

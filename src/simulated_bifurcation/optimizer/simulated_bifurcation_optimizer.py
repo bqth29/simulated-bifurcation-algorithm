@@ -8,7 +8,6 @@ from tqdm import tqdm
 
 from .optimization_variables import OptimizationVariable
 from .optimizer_mode import OptimizerMode
-from .optimizer_stop_trigger import OptimizerStopTrigger
 from .stop_window import StopWindow
 from .symplectic_integrator import SymplecticIntegrator
 
@@ -85,8 +84,8 @@ class SimulatedBifurcationOptimizer:
         # Stopping criterion parameters
         self.convergence_threshold = convergence_threshold
         self.sampling_period = sampling_period
-        self.max_steps = max_steps
-        self.timeout = timeout
+        self.max_steps = max_steps if max_steps is not None else float("inf")
+        self.timeout = timeout if timeout is not None else float("inf")
 
     def __reset(self, matrix: torch.Tensor, use_window: bool) -> None:
         self.__init_progress_bar(self.max_steps, self.verbose)
@@ -97,13 +96,12 @@ class SimulatedBifurcationOptimizer:
         self.step = 0
         self.start_time = None
         self.simulation_time = None
-        self.stop_trigger = None
 
     def __init_progress_bar(self, max_steps: int, verbose: bool) -> None:
         self.iterations_progress = tqdm(
             total=max_steps,
             desc="Iterations",
-            disable=not verbose,
+            disable=not verbose or max_steps == float("inf"),
             smoothing=0.1,
             mininterval=0.5,
         )
@@ -136,16 +134,18 @@ class SimulatedBifurcationOptimizer:
         if use_window and self.__do_sampling:
             self.run = self.window.must_continue()
             if not self.run:
-                self.stop_trigger = OptimizerStopTrigger.WINDOW
+                LOGGER.info("Optimizer stopped. Reason: all agents converged.")
             return
         if self.step >= self.max_steps:
             self.run = False
-            self.stop_trigger = OptimizerStopTrigger.STEPS
+            LOGGER.info(
+                "Optimizer stopped. Reason: maximum number of iterations reached."
+            )
             return
         self.simulation_time = time() - self.start_time
         if self.simulation_time > self.timeout:
             self.run = False
-            self.stop_trigger = OptimizerStopTrigger.TIMEOUT
+            LOGGER.info("Optimizer stopped. Reason: computation timeout reached.")
             return
 
     @property
@@ -213,6 +213,12 @@ class SimulatedBifurcationOptimizer:
         """
         Runs the Simulated Bifurcation (SB) algorithm.
         """
+        if (
+            self.max_steps == float("inf")
+            and self.timeout == float("inf")
+            and not use_window
+        ):
+            raise ValueError("No stop criterion provided.")
         self.__reset(matrix, use_window)
         spins = self.__symplectic_update(matrix, use_window)
         self.__close_progress_bars()
