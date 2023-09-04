@@ -1,6 +1,43 @@
-"""
+Getting started
+===============
+
+Install for CPU computation
+---------------------------
+
+.. code-block:: bash
+
+    pip install simulated-bifurcation
+
+Install for GPU computation
+---------------------------
+
+.. _PyTorch: https://pytorch.org/get-started/locally/
+
+1. Install `PyTorch <_PyTorch>`_ with GPU support.
+2. Install package from PyPI:
+
+.. code-block:: bash
+
+    pip install simulated-bifurcation
+
+Background
+==========
+
+Ising model
+-----------
+
+An Ising problem, given a null-diagonal square symmetrical matrix :math:`J` of size :math:`N \times N` and a vector :math:`h` of size :math:`N`, consists in finding the spin vector :math:`\mathbf{s} = (s_{1}, ... s_{N})` called the *ground state*, (each :math:`s_{i}` being equal to either 1 or -1) such that the following value, called *Ising energy*, is minimal:
+
+.. math::
+
+    - \frac{1}{2} \sum_{i=1}^{N} \sum_{j=1}^{N} J_{ij}s_{i}s_{j} + \sum_{i=1}^{N} h_{i}s_{i}
+
+This problem is known to be NP-hard but is very useful since it can be used in many sectors such as finance, transportation or chemistry or derived as other well-know optimization problems (QUBO, MAXCUT, Knapsack problem, etc.).
+
+The Simulated Bifurcation algorithm was originally introduced to solve Ising problems by simulating the adiabatic evolution of spins in a quantum Hamiltonian system, but can also be generalized to a wider range of optimization problems.
+
 Simulated Bifurcation
-=====================
+---------------------
 
 Provides
 
@@ -37,7 +74,7 @@ Code snippets are indicated by three greater-than signs:
   >>> x = x + 1
 
 Notes
------
+~~~~~
 The SB algorithm is an approximation algorithm, which implies that the
 returned values may not correspond to global optima. Therefore, if some
 constraints are embedded as penalties in the polynomial, that is adding
@@ -69,7 +106,7 @@ slower than running computations on CPU unless a large number of
 agents (~2000) is used.
 
 References
-----------
+~~~~~~~~~~
 [1] https://en.wikipedia.org/wiki/Ising_model
 
 [2] Hayato Goto et al., "Combinatorial optimization by simulating adiabatic
@@ -85,7 +122,7 @@ fluctuation". Commun Phys 5, 153 (2022).
 https://doi.org/10.1038/s42005-022-00929-9
 
 Examples
---------
+~~~~~~~~
 Minimize a polynomial over {0, 1} x {0, 1}
 
   >>> matrix = torch.tensor([[1, -2], [0, 3]], dtype=torch.float32)
@@ -128,11 +165,10 @@ Create a QUBO instance and minimize it using a GPU to run the SB algorithm
   >>> qubo = sb.models.QUBO(matrix, device="cuda")
   >>> best_vector, best_value = qubo.minimize()
 
-"""
+Useful links
+============
 
+.. _GitHub: https://github.com/bqth29/simulated-bifurcation-algorithm
+.. _PyPI: https://pypi.org/project/simulated-bifurcation
 
-from .optimizer import get_env, reset_env, set_env
-from .polynomial import BinaryPolynomial, IntegerPolynomial, SpinPolynomial
-from .simulated_bifurcation import build_model, maximize, minimize, optimize
-
-reset_env()
+You can find the source code for this project on `GitHub`_. For package installation and distribution, please refer to `PyPI`_.

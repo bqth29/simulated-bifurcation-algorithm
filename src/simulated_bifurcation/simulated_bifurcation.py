@@ -77,14 +77,15 @@ def optimize(
         there is no constant term, that is `constant` = 0.
     input_type : {"spin", "binary", "int(\d+)"}, default=spin
         Domain over which the optimization is done.
-        • "spin" : Optimize the polynomial over vectors whose entries are
-        in {-1, 1}.
-        • "binary" : Optimize the polynomial over vectors whose entries are
-        in {0, 1}.
-        • "int(\d+)" : Optimize the polynomial over vectors whose entries
-        are n-bits non-negative integers, that is integers between 0 and
-        2^n - 1 inclusive. "int(\d+)" represents any string starting with
-        "int" and followed by a positive integer n, e.g. "int3", "int42".
+
+        - "spin" : Optimize the polynomial over vectors whose entries are
+          in {-1, 1}.
+        - "binary" : Optimize the polynomial over vectors whose entries are
+          in {0, 1}.
+        - "int(\d+)" : Optimize the polynomial over vectors whose entries
+          are n-bits non-negative integers, that is integers between 0 and
+          2^n - 1 inclusive. "int(\d+)" represents any string starting with
+          "int" and followed by a positive integer n, e.g. "int3", "int42".
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
     device : str | torch.device, default="cpu"
@@ -150,16 +151,17 @@ def optimize(
 
     Warns
     -----
-    If `use_window` is True and no agent has reached the convergence
-    criterion defined by `sampling_period` and `convergence_threshold`
-    within `max_steps` iterations, a warning is logged in the console.
-    This is just an indication however; the returned solutions may still
-    be of good quality. If the returned solutions are not of good quality,
-    solutions include increasing `max_steps` (at the expense of runtime),
-    changing the values of `ballistic` and `heated` to use different
-    variants of the SB algorithm and changing the values of some
-    hyperparameters corresponding to physical constants (advanced usage,
-    see Other Parameters).
+    Partial agents convergence
+        If `use_window` is True and no agent has reached the convergence
+        criterion defined by `sampling_period` and `convergence_threshold`
+        within `max_steps` iterations, a warning is logged in the console.
+        This is just an indication however; the returned solutions may still
+        be of good quality. If the returned solutions are not of good quality,
+        solutions include increasing `max_steps` (at the expense of runtime),
+        changing the values of `ballistic` and `heated` to use different
+        variants of the SB algorithm and changing the values of some
+        hyperparameters corresponding to physical constants (advanced usage,
+        see Other Parameters).
 
     Warnings
     --------
@@ -183,13 +185,15 @@ def optimize(
     The original version of the SB algorithm [1] is not implemented since
     it is less efficient than the more recent variants of the SB algorithm
     described in [2]:
-        ballistic SB : Uses the position of the particles for the
-            position-based update of the momentums ; usually faster but
-            less accurate. Use this variant by setting `ballistic=True`.
-        discrete SB : Uses the sign of the position of the particles for
-            the position-based update of the momentums ; usually slower
-            but more accurate. Use this variant by setting
-            `ballistic=False`.
+
+    - ballistic SB : Uses the position of the particles for the
+      position-based update of the momentums ; usually faster but
+      less accurate. Use this variant by setting `ballistic=True`.
+    - discrete SB : Uses the sign of the position of the particles for
+      the position-based update of the momentums ; usually slower
+      but more accurate. Use this variant by setting
+      `ballistic=False`.
+
     On top of these two variants, an additional thermal fluctuation term
     can be added in order to help escape local optima [3]. Use this
     additional term by setting `heated=True`.
@@ -206,9 +210,11 @@ def optimize(
     [1] Hayato Goto et al., "Combinatorial optimization by simulating
     adiabatic bifurcations in nonlinear Hamiltonian systems". Sci. Adv.5,
     eaav2372(2019). DOI:10.1126/sciadv.aav2372
+
     [2] Hayato Goto et al., "High-performance combinatorial optimization
     based on classical mechanics". Sci. Adv.7, eabe7953(2021).
     DOI:10.1126/sciadv.abe7953
+
     [3] Kanao, T., Goto, H. "Simulated bifurcation assisted by thermal
     fluctuation". Commun Phys 5, 153 (2022).
     https://doi.org/10.1038/s42005-022-00929-9
@@ -216,24 +222,26 @@ def optimize(
     Examples
     --------
     Maximize a polynomial over {0, 1} x {0, 1}
-    >>> Q = torch.tensor([[1, -2],
-    ...                   [0, 3]])
-    >>> best_vector, best_value = sb.optimize(
-    ...     Q, minimize=False, input_type="binary"
-    ... )
-    >>> best_vector
-    tensor([0, 1])
-    >>> best_value
-    3
+
+        >>> Q = torch.tensor([[1, -2],
+        ...                   [0, 3]])
+        >>> best_vector, best_value = sb.optimize(
+        ...     Q, minimize=False, input_type="binary"
+        ... )
+        >>> best_vector
+        tensor([0, 1])
+        >>> best_value
+        3
 
     Minimize Q and return all the solutions found using 42 agents
-    >>> best_vectors, best_values = sb.optimize(
-    ...     Q, input_type="binary", agents=42, best_only=False
-    ... )
-    >>> best_vectors.shape  # (agents, dimension of the instance)
-    (42, 2)
-    >>> best_values.shape  # (agents,)
-    (42,)
+
+        >>> best_vectors, best_values = sb.optimize(
+        ...     Q, input_type="binary", agents=42, best_only=False
+        ... )
+        >>> best_vectors.shape  # (agents, dimension of the instance)
+        (42, 2)
+        >>> best_values.shape  # (agents,)
+        (42,)
 
     """
     model = build_model(
