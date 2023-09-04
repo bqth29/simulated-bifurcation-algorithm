@@ -5,13 +5,13 @@
 
 .. toctree::
    :maxdepth: 1
-   :caption: General:
+   :caption: General
 
    pages/general
 
 .. toctree::
    :maxdepth: 2
-   :caption: Package description:
+   :caption: Package description
 
    pages/package
 
