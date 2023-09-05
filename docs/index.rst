@@ -3,17 +3,39 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+Content
+=======
+
 .. toctree::
    :maxdepth: 1
    :caption: General
 
-   pages/general
+   pages/general/getting_started
+   pages/general/background
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Package description
+   :maxdepth: 3
+   :caption: Main features
 
-   pages/package
+   pages/main_features/optimization
+   pages/main_features/models
+   pages/main_features/advanced
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Modules
+
+   pages/modules/optimizer
+   pages/modules/polynomial
+   pages/modules/models
+
+Useful links
+============
+
+.. _GitHub: https://github.com/bqth29/simulated-bifurcation-algorithm
+.. _PyPI: https://pypi.org/project/simulated-bifurcation
+
+You can find the source code for this project on `GitHub`_. For package installation and distribution, please refer to `PyPI`_.
 
 Indices and tables
 ==================

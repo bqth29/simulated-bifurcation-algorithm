@@ -8,7 +8,7 @@ Provides
 2. Implementation of several common combinatorial optimization problems.
 3. A polynomial API for further customization.
 
-The simulated bifurcated (SB) algorithm is a randomized approximation
+The simulated bifurcation (SB) algorithm is a randomized approximation
 algorithm for combinatorial optimization problems. More specifically, it
 solves the Ising problem, an NP-hard optimization problem which consists
 in finding the ground state of an Ising model. It corresponds to the

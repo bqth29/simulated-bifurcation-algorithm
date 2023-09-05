@@ -1,25 +1,3 @@
-Getting started
-===============
-
-Install for CPU computation
----------------------------
-
-.. code-block:: bash
-
-    pip install simulated-bifurcation
-
-Install for GPU computation
----------------------------
-
-.. _PyTorch: https://pytorch.org/get-started/locally/
-
-1. Install `PyTorch <_PyTorch>`_ with GPU support.
-2. Install package from PyPI:
-
-.. code-block:: bash
-
-    pip install simulated-bifurcation
-
 Background
 ==========
 
@@ -51,11 +29,15 @@ Such a MO2P is mathematically expressed as:
 
 .. math::
 
-    \sum_{i=1}^{N} \sum_{j=1}^{N} Q_{ij}x_{i}x_{j} + \sum_{i=1}^{N} l_{i}x_{i} + c = \mathbf{x}^T Q \mathbf{x} + l^T \mathbf{x} + c
+    \sum_{i=1}^{N} \sum_{j=1}^{N} Q_{ij}x_{i}x_{j} + \sum_{i=1}^{N} l_{i}x_{i} + c
 
 where :math:`Q` is a square matrix, :math:`l` a vector and :math:`c` a constant.
 
 This can also be seen as the sum of a quadratic form, a linear form and a constant term.
+
+.. math::
+
+    \mathbf{x}^T Q \mathbf{x} + l^T \mathbf{x} + c
 
 Simulated Bifurcation algorithm
 -------------------------------
@@ -173,7 +155,7 @@ https://doi.org/10.1038/s42005-022-00929-9
 
 Examples
 ~~~~~~~~
-Minimize a polynomial over {0, 1} x {0, 1}
+Minimize a polynomial over :math:`\{0, 1\} \times \{0, 1\}`
 
   >>> matrix = torch.tensor([[1, -2], [0, 3]], dtype=torch.float32)
   >>> vector = torch.tensor([3.5, 2.2], dtype=torch.float32)
@@ -214,11 +196,3 @@ Create a QUBO instance and minimize it using a GPU to run the SB algorithm
 
   >>> qubo = sb.models.QUBO(matrix, device="cuda")
   >>> best_vector, best_value = qubo.minimize()
-
-Useful links
-============
-
-.. _GitHub: https://github.com/bqth29/simulated-bifurcation-algorithm
-.. _PyPI: https://pypi.org/project/simulated-bifurcation
-
-You can find the source code for this project on `GitHub`_. For package installation and distribution, please refer to `PyPI`_.
