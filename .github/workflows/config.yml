@@ -43,3 +43,9 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Generate documentation
+        run: |
+          pip install .[docs]
+          cd docs
+          make html

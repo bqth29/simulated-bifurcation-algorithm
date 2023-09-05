@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 # optional dependencies
-docs = ["sphinx"]
+docs = ["sphinx", "sphinx-rtd-theme"]
 lint = [
     "black",
     "flake8",
