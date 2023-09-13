@@ -76,7 +76,6 @@ class SimulatedBifurcationOptimizer:
         self.verbose = verbose
         self.start_time = None
         self.simulation_time = None
-        self.stop_trigger = None
         # Simulation parameters
         self.time_step = OptimizationVariable.TIME_STEP.get()
         self.agents = agents
@@ -218,7 +217,7 @@ class SimulatedBifurcationOptimizer:
             and self.timeout == float("inf")
             and not use_window
         ):
-            raise ValueError("No stop criterion provided.")
+            raise ValueError("No stopping criterion provided.")
         self.__reset(matrix, use_window)
         spins = self.__symplectic_update(matrix, use_window)
         self.__close_progress_bars()
