@@ -229,6 +229,5 @@ def test_no_stop_criterion():
     optimizer = SimulatedBifurcationOptimizer(
         1, None, None, OptimizerMode.BALLISTIC, True, True, 50, 50
     )
-    with pytest.raises(ValueError) as error:
+    with pytest.raises(ValueError, match="No stopping criterion provided."):
         optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
-        assert error.value == "No stop criterion provided."
