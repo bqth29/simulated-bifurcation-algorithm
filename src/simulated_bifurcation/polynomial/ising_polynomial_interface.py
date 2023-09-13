@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, Optional, Tuple, Union, final
+from typing import Iterable, List, Optional, Tuple, Union, final
 
 import numpy as np
 import torch
@@ -27,7 +27,7 @@ class IsingPolynomialInterface(ABC):
         matrix: Union[torch.Tensor, np.ndarray],
         vector: Union[torch.Tensor, np.ndarray, None] = None,
         constant: Union[int, float, None] = None,
-        accepted_values: Union[torch.Tensor, np.ndarray, list[int], None] = None,
+        accepted_values: Union[torch.Tensor, np.ndarray, List[int], None] = None,
         dtype: torch.dtype = torch.float32,
         device: str = "cpu",
     ) -> None:
