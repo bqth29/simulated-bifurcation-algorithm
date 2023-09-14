@@ -251,7 +251,7 @@ class QUBO(BinaryPolynomial):
 
 > You can check Andrew Lucas' paper on Ising formulations of NP-complete and NP-hard problems, including all of Karp's 21 NP-complete problems.
 > 
-> 🔎 Lucas, A. (2014). Ising formulations of many NP problems. *Frontiers in physics, 2*, 5.
+> [🔎 Lucas, A. (2014). Ising formulations of many NP problems. *Frontiers in physics, 2*, 5.](https://www.frontiersin.org/articles/10.3389/fphy.2014.00005/full)
 
 ## 🔗 Cite this work
 
