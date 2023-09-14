@@ -1,9 +1,10 @@
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
 
 from ..polynomial import IntegerPolynomial
+from .utils import cast_to_tensor
 
 
 class Markowitz(IntegerPolynomial):
@@ -43,11 +44,10 @@ class Markowitz(IntegerPolynomial):
 
     @property
     def portfolio(self) -> Optional[torch.Tensor]:
-        return (
-            self.sb_result[:, torch.argmax(self(self.sb_result.t())).item()]
-            if self.sb_result is not None
-            else None
-        )
+        if self.sb_result is None:
+            return None
+        best_agent = torch.argmax(self(self.sb_result.t())).item()
+        return self.sb_result[:, best_agent]
 
     @property
     def gains(self) -> float:
@@ -71,13 +71,66 @@ class SequentialMarkowitz(IntegerPolynomial):
         expected_returns : T x N
         rebalancing_costs : T x N x N
         """
-        self.covariances = covariances
-        self.expected_returns = expected_returns
-        self.rebalancing_costs = rebalancing_costs
+        self.covariances = cast_to_tensor(covariances)
+        self.expected_returns = cast_to_tensor(expected_returns)
+        self.rebalancing_costs = cast_to_tensor(rebalancing_costs)
         self.risk_coefficient = risk_coefficient
-        self.timestamps = covariances.shape[0]
-        self.dimension = covariances.shape[0] * covariances.shape[1]
+        self.timestamps = self.covariances.shape[0]
+        self.assets = self.covariances.shape[1]
 
         self.initial_stocks = (
-            torch.zeros(self.dimension) if initial_stocks is None else initial_stocks
+            torch.zeros(self.assets) if initial_stocks is None else initial_stocks
         )
+
+        matrix, vector, constant = self.compile_model()
+        super().__init__(matrix, vector, constant, number_of_bits, dtype, device)
+
+    def compile_model(self) -> Tuple[torch.Tensor, torch.Tensor, float]:
+        matrix = self.__compile_matrix()
+        vector = self.__compile_vector()
+        constant = self.__compile_constant()
+        return matrix, vector, constant
+
+    def __compile_matrix(self) -> torch.Tensor:
+        block_diagonal = self.__create_block_diagonal()
+        upper_block_diagonal = self.__create_upper_block_diagonal()
+        return block_diagonal + upper_block_diagonal + upper_block_diagonal.t()
+
+    def __create_block_diagonal(self) -> torch.Tensor:
+        time_shifted_rebalancing_costs = torch.roll(self.rebalancing_costs, -1, 0)
+        time_shifted_rebalancing_costs[-1] = 0.0
+        tensors = (
+            -self.risk_coefficient / 2 * self.covariances
+            - self.rebalancing_costs
+            - time_shifted_rebalancing_costs
+        )
+        return torch.block_diag(*tensors)
+
+    def __create_upper_block_diagonal(self) -> torch.Tensor:
+        dimension = self.assets * self.timestamps
+        tensor = torch.zeros(dimension, dimension)
+        upper_block_diagonal = torch.block_diag(*self.rebalancing_costs[1:])
+        tensor[: -self.assets, self.assets :] = upper_block_diagonal
+        return tensor
+
+    def __compile_vector(self) -> torch.Tensor:
+        stacked_expected_returns = self.expected_returns.reshape(-1, 1)
+        first_timestamp_rebalancing_costs = self.rebalancing_costs[0]
+        stacked_expected_returns[self.assets :] += (
+            first_timestamp_rebalancing_costs + first_timestamp_rebalancing_costs.t()
+        ) @ self.initial_stocks.reshape(-1, 1)
+        return stacked_expected_returns
+
+    def __compile_constant(self) -> float:
+        initial_portfolio = self.initial_stocks.reshape(-1, 1)
+        constant = (
+            -initial_portfolio.t() @ self.rebalancing_costs[0] @ initial_portfolio
+        )
+        return round(constant.item(), 4)
+
+    @property
+    def portfolio(self) -> torch.Tensor:
+        if self.sb_result is None:
+            return None
+        best_agent = torch.argmax(self(self.sb_result.t())).item()
+        return self.sb_result[:, best_agent].reshape(self.timestamps, self.assets)
