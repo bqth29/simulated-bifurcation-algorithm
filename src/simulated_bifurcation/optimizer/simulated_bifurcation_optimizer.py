@@ -143,7 +143,7 @@ class SimulatedBifurcationOptimizer:
             self.run = self.window.must_continue()
             if not self.run:
                 LOGGER.info("Optimizer stopped. Reason: all agents converged.")
-            return
+                return
         if self.step >= self.max_steps:
             self.run = False
             LOGGER.info(
@@ -196,12 +196,13 @@ class SimulatedBifurcationOptimizer:
                 self.__heat(momentum_copy)
 
             self.__step_update()
-            sampled_spins = self.symplectic_integrator.sample_spins()
             if use_window and self.__do_sampling:
+                sampled_spins = self.symplectic_integrator.sample_spins()
                 self.window.update(sampled_spins)
 
             self.__check_stop(use_window)
 
+        sampled_spins = self.symplectic_integrator.sample_spins()
         return sampled_spins
 
     def __heat(self, momentum_copy: torch.Tensor) -> None:
