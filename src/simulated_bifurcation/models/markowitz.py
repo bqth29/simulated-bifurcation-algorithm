@@ -116,9 +116,10 @@ class SequentialMarkowitz(IntegerPolynomial):
     def __compile_vector(self) -> torch.Tensor:
         stacked_expected_returns = self.expected_returns.reshape(-1, 1)
         first_timestamp_rebalancing_costs = self.rebalancing_costs[0]
-        stacked_expected_returns[self.assets :] += (
+        initial_stocks_contribution = (
             first_timestamp_rebalancing_costs + first_timestamp_rebalancing_costs.t()
         ) @ self.initial_stocks.reshape(-1, 1)
+        stacked_expected_returns[: self.assets] += initial_stocks_contribution
         return stacked_expected_returns
 
     def __compile_constant(self) -> float:
@@ -134,3 +135,11 @@ class SequentialMarkowitz(IntegerPolynomial):
             return None
         best_agent = torch.argmax(self(self.sb_result.t())).item()
         return self.sb_result[:, best_agent].reshape(self.timestamps, self.assets)
+
+    @property
+    def gains(self) -> float:
+        return (
+            self(self.portfolio.reshape(1, -1)).item()
+            if self.portfolio is not None
+            else 0.0
+        )
