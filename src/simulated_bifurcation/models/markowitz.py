@@ -51,7 +51,7 @@ class Markowitz(IntegerPolynomial):
 
     @property
     def gains(self) -> float:
-        return self(self.portfolio) if self.portfolio is not None else 0.0
+        return self(self.portfolio).item() if self.portfolio is not None else 0.0
 
 
 class SequentialMarkowitz(IntegerPolynomial):

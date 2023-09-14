@@ -101,7 +101,7 @@ def test_check_device():
     if not torch.cuda.is_available():  # pragma: no cover
         with pytest.raises(RuntimeError):
             IsingPolynomialInterfaceImpl(matrix, device="cuda")
-    else:
+    else:  # pragma: no cover
         IsingPolynomialInterfaceImpl(matrix, device="cuda")
 
 
