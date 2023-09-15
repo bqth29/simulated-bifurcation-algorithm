@@ -63,3 +63,25 @@ def test_optimize_spin_polynomial():
     spin_vars, value = spin_polynomial.optimize(verbose=False)
     assert torch.equal(spin_vars, torch.tensor([1, -1, 1], dtype=torch.float32))
     assert value == -11.0
+
+
+def test_to():
+    spin_polynomial = SpinPolynomial(matrix, vector, constant)
+    assert spin_polynomial.dtype == torch.float32
+    assert spin_polynomial.device == torch.device("cpu")
+
+    spin_polynomial.to(dtype=torch.float16)
+    assert spin_polynomial.dtype == torch.float16
+    assert spin_polynomial.device == torch.device("cpu")
+
+    spin_polynomial.to(device="cpu")
+    assert spin_polynomial.dtype == torch.float16
+    assert spin_polynomial.device == torch.device("cpu")
+
+    spin_polynomial.to(device="cpu", dtype=torch.float64)
+    assert spin_polynomial.dtype == torch.float64
+    assert spin_polynomial.device == torch.device("cpu")
+
+    spin_polynomial.to()
+    assert spin_polynomial.dtype == torch.float64
+    assert spin_polynomial.device == torch.device("cpu")

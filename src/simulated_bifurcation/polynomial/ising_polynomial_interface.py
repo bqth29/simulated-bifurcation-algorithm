@@ -228,6 +228,21 @@ class IsingPolynomialInterface(ABC):
                 f"Vector must be of size {self.dimension}, got {vector.shape}."
             )
 
+    @final
+    def to(
+        self,
+        device: Optional[Union[str, torch.device]] = None,
+        dtype: Optional[torch.dtype] = None,
+    ) -> None:
+        args = {}
+        if device is not None:
+            args["device"] = device
+        if dtype is not None:
+            args["dtype"] = dtype
+        self.__matrix = self.__matrix.to(**args)
+        self.__vector = self.__vector.to(**args)
+        self.__constant = self.__constant.to(**args)
+
     @abstractmethod
     def to_ising(self) -> IsingCore:
         """
