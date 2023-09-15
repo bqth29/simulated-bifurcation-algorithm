@@ -67,21 +67,27 @@ def test_optimize_spin_polynomial():
 
 def test_to():
     spin_polynomial = SpinPolynomial(matrix, vector, constant)
-    assert spin_polynomial.dtype == torch.float32
-    assert spin_polynomial.device == torch.device("cpu")
+
+    def check_device_and_dtype(dtype: torch.dtype):
+        assert spin_polynomial.dtype == dtype
+        assert spin_polynomial.device == torch.device("cpu")
+        assert spin_polynomial.matrix.dtype == dtype
+        assert spin_polynomial.vector.dtype == dtype
+        assert spin_polynomial.constant.dtype == dtype
+        assert spin_polynomial.matrix.device == torch.device("cpu")
+        assert spin_polynomial.vector.device == torch.device("cpu")
+        assert spin_polynomial.constant.device == torch.device("cpu")
+
+    check_device_and_dtype(torch.float32)
 
     spin_polynomial.to(dtype=torch.float16)
-    assert spin_polynomial.dtype == torch.float16
-    assert spin_polynomial.device == torch.device("cpu")
+    check_device_and_dtype(torch.float16)
 
     spin_polynomial.to(device="cpu")
-    assert spin_polynomial.dtype == torch.float16
-    assert spin_polynomial.device == torch.device("cpu")
+    check_device_and_dtype(torch.float16)
 
     spin_polynomial.to(device="cpu", dtype=torch.float64)
-    assert spin_polynomial.dtype == torch.float64
-    assert spin_polynomial.device == torch.device("cpu")
+    check_device_and_dtype(torch.float64)
 
     spin_polynomial.to()
-    assert spin_polynomial.dtype == torch.float64
-    assert spin_polynomial.device == torch.device("cpu")
+    check_device_and_dtype(torch.float64)
