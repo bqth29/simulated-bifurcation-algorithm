@@ -102,7 +102,7 @@ def action_set(
 
 
 def action_begin(
-    lines: list[str],
+    lines: List[str],
     enumerate_lines: Iterator[Tuple[int, str]],
     begin_args: str,
     variables: Dict[str, List[Tuple[str, int]]],
