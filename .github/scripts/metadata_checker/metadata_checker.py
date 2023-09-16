@@ -7,94 +7,85 @@ from typing import Dict, Iterator, List, Tuple, Union
 from config import *
 from errors import *
 
-from config import (
-    BIBTEX_TEMPLATE,
-    DEV_VERSION_REGEX,
-    FILES_SHOULD_DEFINE,
-    METADATA_MANAGER_INVOCATION,
-    RELEASE_VERSION_REGEX,
-)
+
+def parse_citation_file(content: List[str]) -> Dict[str, List[Tuple[str, int]]]:
+    definitions = [("version:", "version"), ("date-released:", "date")]
+    variables = defaultdict(list)
+    for field, var_name in definitions:
+        for line_nb, line in enumerate(content):
+            if line.startswith(field):
+                value = line[len(field) :].strip()
+                variables[var_name].append((value, line_nb))
+    return variables
 
 
-class MetadataErrorCode(Flag):
-    PACKAGE_NOT_FOUND = auto()
-    PACKAGE_MISSING_VERSION_STRING = auto()
-    PACKAGE_INVALID_DEV_VERSION_STRING = auto()
-    PACKAGE_INVALID_RELEASE_VERSION_STRING = auto()
-    SETUP_NOT_FOUND = auto()
-    SETUP_MISSING_VERSION_MARKER = auto()
-    SETUP_MISSING_VERSION_LINE = auto()
-    SETUP_INVALID_VERSION_LINE = auto()
-    SETUP_INVALID_DEV_VERSION_STRING = auto()
-    SETUP_INVALID_RELEASE_VERSION_STRING = auto()
-    INCONSISTENT_VERSION_STRINGS = auto()
+def skip_blank_line(
+    lines: List[str], line_nb: int, enumerate_lines: Iterator[Tuple[int, str]]
+) -> None:
+    if (
+        line_nb == 0
+        or line_nb == len(lines) - 1
+        or lines[line_nb - 1].strip() != ""
+        or lines[line_nb + 1].strip() != ""
+    ):
+        raise BlankLineError
+    next(enumerate_lines)
 
 
-    def error_message(self, **kwargs: Any) -> str:
-        messages = []
-        for error_code in self:
-            message_method = error_code.__error_message_method()
-            message = message_method(**kwargs)
-            if message is not None:
-                messages.append(message)
-        message = "\n\n".join(messages)
-        return message
+def action_set(lines, line_nb, variables):
+    pass
 
-    def __error_message_method(self) -> Optional[Callable[[...], str]]:
-        method_name = f"{self.name.lower()}_message"
+
+def parse_file(lines, is_markdown):
+    variables = {}
+    errors = []
+    enumerate_lines = enumerate(lines)
+    while True:
         try:
-            method = getattr(self, method_name)
-        except AttributeError:
-            method = None
-        return method
-
-    def __invalid_version_string_message(self, version_string: str) -> str:
-        def example_formatter(ex: str) -> str:
-            return f'"{ex}"'
-
-        if self in self.__class__.PACKAGE_ERROR:
-            source = "simulated-bifurcation package"
-        elif self in self.__class__.SETUP_ERROR:
-            source = "setup.py"
-        else:
-            raise ValueError(f"Unexpected error code: {self}")
-
-        if self in self.__class__.RELEASE_VERSION_STRING_ERROR:
-            mode = "Release"
-            regex = RELEASE_VERSION_REGEX
-            examples = ["3.14.15", "1.42.0"]
-        elif self in self.__class__.DEV_VERSION_STRING_ERROR:
-            mode = "Development"
-            regex = DEV_VERSION_REGEX
-            examples = ["3.14.15", "1.42.0", "2.3.1.dev0", "2.3.1.dev15"]
+            line_nb, line = next(enumerate_lines)
+        except StopIteration:
+            break
+        index = line.find(METADATA_CHECKER_INVOCATION)
+        if index == -1:
+            continue
+        if is_markdown:
+            skip_blank_line(lines, line_nb, enumerate_lines)
+        action, args = parse_command(line[index:])
+        if action == "set":
+            pass
+        elif action == "begin":
+            pass
+        elif action == "end":
+            raise EndNoBeginError
         else:
             pass
-    except StopIteration:
-        raise MetadataError(MetadataErrorCode.SETUP_MISSING_VERSION_MARKER) from None
+    return errors
 
+
+def read_file(
+    filename: str,
+) -> Tuple[
+    Dict[str, Tuple[str, int]], List[Union[FileNotFoundError, MetadataCheckerError]]
+]:
     try:
-        version_string_assignment_line = next(setup)
-    except StopIteration:
-        raise MetadataError(MetadataErrorCode.SETUP_MISSING_VERSION_LINE) from None
-
-    if version_string_assignment_line == "":
-        raise MetadataError(MetadataErrorCode.SETUP_MISSING_VERSION_LINE) from None
-
-    if version_line_pattern.match(version_string_assignment_line) is None:
-        raise MetadataError(
-            MetadataErrorCode.SETUP_INVALID_VERSION_LINE,
-            setup_version_string_assignment_line=version_string_assignment_line,
-        ) from None
-
+        with open(filename, "r", encoding="utf-8") as file:
+            file_content = file.readlines()
+    except FileNotFoundError as error:
+        return {}, [error]
+    if filename.endswith("CITATION.cff"):
+        variables = parse_citation_file(file_content)
+        errors = []
+    else:
+        is_markdown = path.endswith(".md")
+        variables, errors = parse_file(file_content, is_markdown)
+    return variables, errors
 
 
-def get_version_string_from_package() -> str:
-    try:
-        import simulated_bifurcation as sb
-    except ModuleNotFoundError:
-        raise MetadataError(MetadataErrorCode.PACKAGE_NOT_FOUND) from None
-    return sb.__version__
-
+def check_should_define(filename, variables, should_define):
+    defined = set(variables.keys())
+    missing = set(should_define).difference(defined)
+    if not missing:
+        raise MissingRequiredDefinitionError(filename, missing)
 
 
 def version_string_is_valid(
@@ -107,8 +98,6 @@ def version_string_is_valid(
             raise InvalidReleaseVersionError(filename, line_nb, version_string)
     else:
         if dev_version_pattern.match(version_string) is None:
-            error_code = MetadataErrorCode.DEV_VERSION_STRING_ERROR & source_error
-            raise MetadataError(error_code, version_string=version_string)
             raise InvalidDevVersionError(filename, line_nb, version_string)
 
 
