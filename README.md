@@ -258,7 +258,7 @@ class QUBO(BinaryPolynomial):
 
 If you are using this code for your own projects please cite our work:
 
-[comment]: # (!MDM{begin}{BibTeX})
+[comment]: # (!MDC{begin}{BibTeX})
 
 ```bibtex
 @software{Ageron_Simulated_Bifurcation_SB_2023,
@@ -271,4 +271,4 @@ If you are using this code for your own projects please cite our work:
 }
 ```
 
-[comment]: # (!MDM{end}{BibTeX})
+[comment]: # (!MDC{end}{BibTeX})

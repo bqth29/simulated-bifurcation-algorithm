@@ -1,6 +1,8 @@
-METADATA_MANAGER_INVOCATION = "!MDM"
+METADATA_CHECKER_INVOCATION = "!MDC"
 
 FILES_SHOULD_DEFINE = {
+    "CITATION.cff": ["date-released", "version"],
+    "README.md": ["BibTeX"],
     "setup.py": ["version"],
     "src/simulated_bifurcation/__init__.py": ["version"],
 }
@@ -11,13 +13,10 @@ DEV_VERSION_REGEX = (
     r"(\.dev(([1-9][0-9]*)|0))?$"
 )
 
-BIBTEX_TEMPLATE = """\
-@software{{{first_alphabetical_author}_Simulated_Bifurcation_SB_{year},
-    author = {{{authors}}},
-    month = {month},
-    title = {{{{{title}}}}},
-    url = {{{url}}},
-    version = {{{version}}},
-    year = {{{year}}},
-}}\
-"""
+
+__all__ = [
+    "DEV_VERSION_REGEX",
+    "FILES_SHOULD_DEFINE",
+    "METADATA_CHECKER_INVOCATION",
+    "RELEASE_VERSION_REGEX",
+]

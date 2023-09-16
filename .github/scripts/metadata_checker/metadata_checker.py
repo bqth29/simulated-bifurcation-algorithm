@@ -1,6 +1,11 @@
+import calendar
 import re
-from enum import Flag, auto
-from typing import Any, Callable, Optional
+from collections import defaultdict
+from datetime import date, timedelta
+from typing import Dict, Iterator, List, Tuple, Union
+
+from config import *
+from errors import *
 
 from config import (
     BIBTEX_TEMPLATE,
@@ -281,3 +286,23 @@ def metadata_manager(release: bool, check_package_version: bool) -> None:
             setup_version=setup_version,
             package_version=package_version,
         )
+def metadata_checker(
+    release: bool,
+) -> List[Union[FileNotFoundError, MetadataCheckerError]]:
+    errors = []
+    variables = {}
+    for filename, should_define in FILES_SHOULD_DEFINE.items():
+        file_variables, read_file_errors = read_file(filename)
+        errors.extend(read_file_errors)
+        try:
+            check_should_define(filename, file_variables, should_define)
+        except MissingRequiredDefinitionError as error:
+            errors.append(error)
+        multiple_definitions = unwrap_variables(variables, file_variables)
+        errors.extend(multiple_definitions)
+    version_errors = check_all_version_strings(variables["version"], release)
+    errors.extend(version_errors)
+    if release:
+        date_errors = check_dates(variables["date"])
+        errors.extend(date_errors)
+    return errors

@@ -4,7 +4,7 @@ with open("README.md", "r", encoding="utf-8") as readme:
     long_description = readme.read()
 
 
-# !MDM{set}{package_version = "$version"}
+# !MDC{set}{package_version = "{version}"}
 package_version = "1.2.1.dev0"
 
 

@@ -30,7 +30,7 @@ jobs:
 
       - name: Check version string
         run: |
-          python .github/scripts/metadata_manager --release --no-package-version-check
+          python .github/scripts/metadata_checker --release
 
       - name: Install dependencies
         run: |

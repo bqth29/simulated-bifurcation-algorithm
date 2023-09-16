@@ -40,9 +40,13 @@ jobs:
           coverage report
           coverage json
 
-      - name: Version check
+      - name: Test metadata checker
         run: |
-          python .github/scripts/metadata_manager
+          python -m pytest .github/scripts/metadata_checker/test_metadata_checker.py
+
+      - name: Metadata check
+        run: |
+          python .github/scripts/metadata_checker
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
