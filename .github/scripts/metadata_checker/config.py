@@ -1,5 +1,8 @@
 METADATA_CHECKER_INVOCATION = "!MDC"
 
+BIBTEX_FILE = "README.md"
+CITATION_FILE = "CITATION.cff"
+
 FILES_SHOULD_DEFINE = {
     "CITATION.cff": ["date-released", "version"],
     "README.md": ["BibTeX"],
@@ -13,10 +16,4 @@ DEV_VERSION_REGEX = (
     r"(\.dev(([1-9][0-9]*)|0))?$"
 )
 
-
-__all__ = [
-    "DEV_VERSION_REGEX",
-    "FILES_SHOULD_DEFINE",
-    "METADATA_CHECKER_INVOCATION",
-    "RELEASE_VERSION_REGEX",
-]
+DATE_FORMAT = "yyyy-mm-dd"

@@ -1,7 +1,7 @@
 import calendar
+import datetime
 import re
 from collections import defaultdict
-from datetime import date, timedelta
 from typing import Dict, Iterator, List, Tuple, Union
 
 from config import *
@@ -124,25 +124,75 @@ def check_all_version_strings(version_strings, release):
     return errors
 
 
-def metadata_manager(release: bool, check_package_version: bool) -> None:
-    setup = read_setup_file()
-    setup_version = get_version_string_from_setup(setup)
-    if check_package_version:
-        package_version = get_version_string_from_package()
+def get_allowed_dates():
+    today = date.today()
+    yesterday = today - datetime.timedelta(days=1)
+    tomorrow = today + datetime.timedelta(days=1)
+    # the person doing the release might not be in the same timezone
+    # as the server on which the GitHub actions are running
+    allowed_dates = {yesterday, today, tomorrow}
+    return allowed_dates
+
+
+def check_citation_date(date_string, citation_file, line_nb):
+    try:
+        citation_date = datetime.date.fromisoformat(date_string)
+    except ValueError:
+        raise InvalidDateFormatError(citation_file, line_nb, date_string) from None
+    allowed_dates = get_allowed_dates()
+    if citation_date not in allowed_dates:
+        allowed_dates = [date.isoformat for date in allowed_dates]
+        raise WrongDateError(citation_file, line_nb, date_string, allowed_dates)
+    return citation_date
+
+
+def get_month_abbreviation(month_number):
+    with calendar.different_locale(("en-US", None)) as encoding:
+        abbreviation = calendar.month_abbr[month_number]
+        if encoding is not None:
+            abbreviation = abbreviation.decode(encoding)
+        abbreviation = abbreviation.lower()
+        return abbreviation
+
+
+def check_bibtex_date(month, year, filename, line_nb, allowed_dates):
+    allowed_dates = {
+        (get_month_abbreviation(date.month), str(date.year)) for date in allowed_dates
+    }
+    if (month, year) not in allowed_dates:
+        date = f"{month}, {year}"
+        allowed_dates = [f"{month}, {year}" for month, year in allowed_dates]
+        raise WrongDateError(filename, line_nb, date, allowed_dates)
+
+
+def check_all_dates(dates):
+    citation_date = None
+    bibtex_date = None
+    for date in dates:
+        if date[1] == CITATION_FILE:
+            citation_date = date
+        elif date[1] == BIBTEX_FILE:
+            bibtex_date = date
+    errors = []
+    if citation_date is None:
+        allowed_dates = None
     else:
-        package_version = None
-    check_version_string_is_valid(
-        setup_version, release=release, source_error=MetadataErrorCode.SETUP_ERROR
-    )
-    check_version_string_is_valid(
-        package_version, release=release, source_error=MetadataErrorCode.PACKAGE_ERROR
-    )
-    if package_version is not None and setup_version != package_version:
-        raise MetadataError(
-            MetadataErrorCode.INCONSISTENT_VERSION_STRINGS,
-            setup_version=setup_version,
-            package_version=package_version,
-        )
+        try:
+            citation_date = check_citation_date(*citation_date)
+            allowed_dates = {citation_date}
+        except (InvalidDateFormatError, WrongDateError) as error:
+            errors.append(error)
+            allowed_dates = None
+    if bibtex_date is not None:
+        if allowed_dates is None:
+            allowed_dates = get_allowed_dates()
+        try:
+            check_bibtex_date(*bibtex_date, allowed_dates)
+        except WrongDateError as error:
+            errors.append(error)
+    return errors
+
+
 def metadata_checker(
     release: bool,
 ) -> List[Union[FileNotFoundError, MetadataCheckerError]]:
@@ -160,6 +210,6 @@ def metadata_checker(
     version_errors = check_all_version_strings(variables["version"], release)
     errors.extend(version_errors)
     if release:
-        date_errors = check_dates(variables["date"])
+        date_errors = check_all_dates(variables["date"])
         errors.extend(date_errors)
     return errors

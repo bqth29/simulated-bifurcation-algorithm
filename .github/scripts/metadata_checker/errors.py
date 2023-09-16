@@ -1,6 +1,6 @@
 from typing import Optional, Set
 
-from config import DEV_VERSION_REGEX, RELEASE_VERSION_REGEX
+from config import DATE_FORMAT, DEV_VERSION_REGEX, RELEASE_VERSION_REGEX
 
 
 class MetadataCheckerError(Exception):
@@ -39,6 +39,15 @@ class BlankLineError(MetadataCheckerError):
 class EndWithoutBeginError(MetadataCheckerError):
     def __init__(self, filename: str, line_nb: int):
         error_message = 'Could not the find corresponding "begin" command.'
+        super().__init__(filename, line_nb, error_message)
+
+
+class InvalidDateFormatError(MetadataCheckerError):
+    def __init__(self, filename, line_nb, date):
+        error_message = (
+            f'The date in the citation file should be in "{DATE_FORMAT}" '
+            f'format, got "{date}".'
+        )
         super().__init__(filename, line_nb, error_message)
 
 
@@ -99,13 +108,23 @@ class VersionStringsNotMatchingError(MetadataCheckerError):
 
 
 class WrongDateError(MetadataCheckerError):
-    pass
+    def __init_(self, filename, line_nb, date, allowed_dates):
+        if len(allowed_dates) > 1:
+            text = f"Valid dates are {', and'.join(allowed_dates)}."
+        else:
+            text = f"The only valid date is {allowed_dates[0]}"
+        error_message = (
+            f'Date "{date}" does not math any valid date in "{DATE_FORMAT}".\n'
+            f"{text}"
+        )
+        super().__init__(filename, line_nb, error_message)
 
 
 __all__ = [
     "BeginWithoutEndError",
     "BlankLineError",
     "EndWithoutBeginError",
+    "InvalidDateFormatError",
     "InvalidVersionError",
     "InvalidDevVersionError",
     "InvalidReleaseVersionError",
