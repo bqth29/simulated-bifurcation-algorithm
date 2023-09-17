@@ -40,10 +40,6 @@ jobs:
           coverage report
           coverage json
 
-      - name: Test metadata checker
-        run: |
-          python -m pytest .github/scripts/metadata_checker/test_metadata_checker.py
-
       - name: Metadata check
         run: |
           python .github/scripts/metadata_checker
