@@ -16,7 +16,7 @@ build_model:
 See Also
 --------
 models:
-    Module containing the implementation of several common combinatorial
+    Package containing the implementation of several common combinatorial
     optimization problems.
 
 """
