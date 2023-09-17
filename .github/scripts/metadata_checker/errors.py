@@ -1,4 +1,4 @@
-from typing import Optional, Set
+from typing import Dict, List, Optional, Set
 
 from config import (
     DATE_FORMAT,
@@ -11,7 +11,7 @@ from config import (
 class MetadataCheckerError(Exception):
     def __init_(
         self, filename: Optional[str], line_nb: Optional[int], error_message: str
-    ):
+    ) -> None:
         if filename is None:
             message = f"{self.__class__.__name__}:\n{error_message}"
         elif line_nb is None:
@@ -27,13 +27,13 @@ class MetadataCheckerError(Exception):
 
 
 class BeginWithoutEndError(MetadataCheckerError):
-    def __init__(self, filename: str, line_nb: int):
+    def __init__(self, filename: str, line_nb: int) -> None:
         error_message = 'Could not the find corresponding "end" command.'
         super().__init__(filename, line_nb, error_message)
 
 
 class BlankLineError(MetadataCheckerError):
-    def __init__(self, filename: str, line_nb: int):
+    def __init__(self, filename: str, line_nb: int) -> None:
         error_message = (
             "In this file, command lines should be preceded and followed by a blank "
             "line."
@@ -42,13 +42,13 @@ class BlankLineError(MetadataCheckerError):
 
 
 class EndWithoutBeginError(MetadataCheckerError):
-    def __init__(self, filename: str, line_nb: int):
+    def __init__(self, filename: str, line_nb: int) -> None:
         error_message = 'Could not the find corresponding "begin" command.'
         super().__init__(filename, line_nb, error_message)
 
 
 class InvalidCommandError(MetadataCheckerError):
-    def __init__(self, filename, line_nb, issue):
+    def __init__(self, filename: str, line_nb: int, issue: str) -> None:
         if issue == "syntax":
             error_message = (
                 "Commands should be of the form "
@@ -75,7 +75,7 @@ class InvalidCommandError(MetadataCheckerError):
 
 
 class InvalidDateFormatError(MetadataCheckerError):
-    def __init__(self, filename, line_nb, date):
+    def __init__(self, filename: str, line_nb: int, date: str) -> None:
         error_message = (
             f'The date in the citation file should be in "{DATE_FORMAT}" '
             f'format, got "{date}".'
@@ -87,7 +87,7 @@ class InvalidVersionError(MetadataCheckerError):
     REGEX = ""
     VERSION_TYPE = ""
 
-    def __init__(self, filename: str, line_nb: int, version_string: str):
+    def __init__(self, filename: str, line_nb: int, version_string: str) -> None:
         error_message = (
             f"{self.VERSION_TYPE} version string should match the following regular "
             "expression.\n"
@@ -98,42 +98,46 @@ class InvalidVersionError(MetadataCheckerError):
 
     def __init_subclass__(cls, regex: str, version_type: str) -> None:
         super().__init_subclass__()
-        self.REGEX = regex
-        self.VERSION_TYPE = version_type.capitalize()
+        cls.REGEX = regex
+        cls.VERSION_TYPE = version_type.capitalize()
 
 
-class InvalidDevVersionError(InvalidVersionError, DEV_VERSION_REGEX, "development"):
+class InvalidDevVersionError(
+    InvalidVersionError, regex=DEV_VERSION_REGEX, version_type="development"
+):
     pass
 
 
-class InvalidReleaseVersionError(InvalidVersionError, RELEASE_VERSION_REGEX, "release"):
+class InvalidReleaseVersionError(
+    InvalidVersionError, regex=RELEASE_VERSION_REGEX, version_type="release"
+):
     pass
 
 
 class MissingRequiredDefinitionError(MetadataCheckerError):
-    def __init__(self, filename: str, missing_definitions: Set[str]):
+    def __init__(self, filename: str, missing_definitions: Set[str]) -> None:
         missing = ", ".join(sorted(missing_definitions))
         error_message = f"The file should define the following variables: {missing}."
         super().__init__(filename, None, error_message)
 
 
 class MultipleDefinitionsError(MetadataCheckerError):
-    def __init__(self, filename, lines, variable):
+    def __init__(self, filename: str, lines: List[int], variable: str) -> None:
         error_message = (
             f'Variable "{variable}" is defined multiple times '
-            f"(at lines {', '.join(lines)})."
+            f"(at lines {', '.join(map(str, lines))})."
         )
         super().__init__(filename, None, error_message)
 
 
 class UnknownActionError(MetadataCheckerError):
-    def __init_(self, filename: str, line_nb: int, action: str):
+    def __init_(self, filename: str, line_nb: int, action: str) -> None:
         error_message = f'Unknown action "{action}".'
         super().__init__(filename, line_nb, error_message)
 
 
 class VersionStringsNotMatchingError(MetadataCheckerError):
-    def __init__(self, versions):
+    def __init__(self, versions: Dict[str, List[int]]) -> None:
         error_message = ["Version strings are not consistent."]
         for version_string, locations in versions.items():
             locations = [f'"{file}" at line {line_nb}' for file, line_nb in locations]
@@ -145,7 +149,9 @@ class VersionStringsNotMatchingError(MetadataCheckerError):
 
 
 class WrongDateError(MetadataCheckerError):
-    def __init_(self, filename, line_nb, date, allowed_dates):
+    def __init_(
+        self, filename: str, line_nb: int, date: str, allowed_dates: List[str]
+    ) -> None:
         if len(allowed_dates) > 1:
             text = f"Valid dates are {', and'.join(allowed_dates)}."
         else:
@@ -163,9 +169,9 @@ __all__ = [
     "EndWithoutBeginError",
     "InvalidCommandError",
     "InvalidDateFormatError",
-    "InvalidVersionError",
     "InvalidDevVersionError",
     "InvalidReleaseVersionError",
+    "InvalidVersionError",
     "MetadataCheckerError",
     "MissingRequiredDefinitionError",
     "MultipleDefinitionsError",

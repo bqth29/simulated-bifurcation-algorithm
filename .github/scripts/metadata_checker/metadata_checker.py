@@ -2,7 +2,7 @@ import calendar
 import datetime
 import re
 from collections import defaultdict
-from typing import Dict, Iterator, List, Tuple, Union
+from typing import Callable, Dict, Iterator, List, Set, Tuple, Union
 
 from config import *
 from errors import *
@@ -35,7 +35,7 @@ def skip_blank_line(
     next(enumerate_lines)
 
 
-def parse_command(text, filename, line_nb):
+def parse_command(text: str, filename: str, line_nb: int) -> Tuple[str, str]:
     end_action = text.find("}")
     if text[0] != "{" or end_action == -1:
         raise InvalidCommandError(filename, line_nb, "syntax")
@@ -48,7 +48,13 @@ def parse_command(text, filename, line_nb):
     return action, args
 
 
-def simultaneous_read(args, line, curly, iterator, error_factory):
+def simultaneous_read(
+    args: str,
+    line: str,
+    curly: str,
+    iterator: Callable[[str], Iterator[str]],
+    error_factory: Callable[[str], InvalidCommandError],
+) -> Tuple[str, str]:
     args = iterator(args)
     line = iterator(line)
     prev_curly = curly
@@ -72,10 +78,15 @@ def simultaneous_read(args, line, curly, iterator, error_factory):
     return args, line
 
 
-def action_set(enumerate_lines, args, variables, filename):
+def action_set(
+    enumerate_lines: Iterator[Tuple[int, str]],
+    args: str,
+    variables: Dict[str, List[Tuple[str, int]]],
+    filename: str,
+) -> None:
     line_nb, line = next(enumerate_lines)
 
-    def error_factory(issue):
+    def error_factory(issue: str) -> InvalidCommandError:
         return InvalidCommandError(filename, line_nb, issue)
 
     args, line = simultaneous_read(args, line, "{", iter, error_factory)
@@ -83,7 +94,13 @@ def action_set(enumerate_lines, args, variables, filename):
     variables[args].append((line, line_nb))
 
 
-def action_begin(enumerate_lines, begin_args, variables, is_markdown, filename):
+def action_begin(
+    enumerate_lines: Iterator[Tuple[int, str]],
+    begin_args: str,
+    variables: Dict[str, List[Tuple[str, int]]],
+    is_markdown: bool,
+    filename: str,
+) -> None:
     content = []
     while True:
         line_nb, line = next(enumerate_lines)
@@ -103,7 +120,9 @@ def action_begin(enumerate_lines, begin_args, variables, is_markdown, filename):
     variables[begin_args].append((content, line_nb))
 
 
-def parse_file(lines, filename):
+def parse_file(
+    lines: List[str], filename: str
+) -> Tuple[Dict[str, List[Tuple[str, int]]], List[MetadataCheckerError]]:
     is_markdown = filename.endswith(".md")
     variables = defaultdict(list)
     errors = []
@@ -145,7 +164,7 @@ def parse_file(lines, filename):
     return variables, errors
 
 
-def parse_bibtex(variables):
+def parse_bibtex(variables: Dict[str, List[Tuple[str, int]]]) -> None:
     for bibtex, line_nb in variables["BibTeX"]:
         year = None
         month = None
@@ -161,13 +180,13 @@ def parse_bibtex(variables):
             elif line.startswith("month = "):
                 month = line[len("month = ") : -1]
         if month is not None and year is not None:
-            date = (year, month)
+            date = f"{year} {month}"
             variables["date"].append((date, line_nb))
 
 
 def read_file(
     filename: str,
-) -> Tuple[Dict[str, Tuple[str, int]], List[MetadataCheckerError]]:
+) -> Tuple[Dict[str, List[Tuple[str, int]]], List[MetadataCheckerError]]:
     with open(filename, "r", encoding="utf-8") as file:
         file_content = file.readlines()
     if filename.endswith("CITATION.cff"):
@@ -180,14 +199,20 @@ def read_file(
     return variables, errors
 
 
-def check_should_define(filename, variables, should_define):
+def check_should_define(
+    filename: str, variables: Dict[str, List[Tuple[str, int]]], should_define: List[str]
+):
     defined = set(variables.keys())
     missing = set(should_define).difference(defined)
     if not missing:
         raise MissingRequiredDefinitionError(filename, missing)
 
 
-def unwrap_variables(variables, file_variables, filename):
+def unwrap_variables(
+    variables: Dict[str, List[Tuple[str, str, int]]],
+    file_variables: Dict[str, List[Tuple[str, int]]],
+    filename: str,
+) -> List[MultipleDefinitionsError]:
     errors = []
     for variable, values in file_variables.items():
         if len(values) >= 2:
@@ -213,16 +238,20 @@ def version_string_is_valid(
             raise InvalidDevVersionError(filename, line_nb, version_string)
 
 
-def version_strings_are_consistent(version_strings, release):
+def version_strings_are_consistent(
+    version_strings: List[Tuple[str, str, int]], release: bool
+):
     versions = defaultdict(list)
     for version, filename, line_nb in version_strings:
         if release or filename not in ["CITATION.cff", "README.md"]:
-            versions[version].append(filename, line_nb)
+            versions[version].append((filename, line_nb))
     if len(versions) >= 2:
         raise VersionStringsNotMatchingError(versions)
 
 
-def check_all_version_strings(version_strings, release):
+def check_all_version_strings(
+    version_strings: List[Tuple[str, str, int]], release: bool
+) -> List[MetadataCheckerError]:
     errors = []
     for version_string, filename, line_nb in version_strings:
         try:
@@ -236,7 +265,7 @@ def check_all_version_strings(version_strings, release):
     return errors
 
 
-def get_allowed_dates():
+def get_allowed_dates() -> Set[datetime.date]:
     today = date.today()
     yesterday = today - datetime.timedelta(days=1)
     tomorrow = today + datetime.timedelta(days=1)
@@ -246,7 +275,9 @@ def get_allowed_dates():
     return allowed_dates
 
 
-def check_citation_date(date_string, citation_file, line_nb):
+def check_citation_date(
+    date_string: str, citation_file: str, line_nb: int
+) -> datetime.date:
     try:
         citation_date = datetime.date.fromisoformat(date_string)
     except ValueError:
@@ -258,7 +289,7 @@ def check_citation_date(date_string, citation_file, line_nb):
     return citation_date
 
 
-def get_month_abbreviation(month_number):
+def get_month_abbreviation(month_number: int) -> str:
     with calendar.different_locale(("en-US", None)) as encoding:
         abbreviation = calendar.month_abbr[month_number]
         if encoding is not None:
@@ -267,8 +298,10 @@ def get_month_abbreviation(month_number):
         return abbreviation
 
 
-def check_bibtex_date(date, filename, line_nb, allowed_dates):
-    year, month = date
+def check_bibtex_date(
+    date: str, filename: str, line_nb: int, allowed_dates: Set[datetime.date]
+):
+    year, month = date.split()
     allowed_dates = {
         (get_month_abbreviation(date.month), str(date.year)) for date in allowed_dates
     }
@@ -278,7 +311,7 @@ def check_bibtex_date(date, filename, line_nb, allowed_dates):
         raise WrongDateError(filename, line_nb, date, allowed_dates)
 
 
-def check_all_dates(dates):
+def check_all_dates(dates: List[Tuple[str, str, int]]) -> List[MetadataCheckerError]:
     citation_date = None
     bibtex_date = None
     for date in dates:
@@ -300,7 +333,7 @@ def check_all_dates(dates):
         if allowed_dates is None:
             allowed_dates = get_allowed_dates()
         try:
-            check_bibtex_date(*bibtex_date, allowed_dates)
+            check_bibtex_date(*bibtex_date, allowed_dates=allowed_dates)
         except WrongDateError as error:
             errors.append(error)
     return errors
