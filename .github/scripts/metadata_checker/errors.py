@@ -1,6 +1,11 @@
 from typing import Optional, Set
 
-from config import DATE_FORMAT, DEV_VERSION_REGEX, RELEASE_VERSION_REGEX
+from config import (
+    DATE_FORMAT,
+    DEV_VERSION_REGEX,
+    METADATA_CHECKER_INVOCATION,
+    RELEASE_VERSION_REGEX,
+)
 
 
 class MetadataCheckerError(Exception):
@@ -9,21 +14,21 @@ class MetadataCheckerError(Exception):
     ):
         if filename is None:
             message = f"{self.__class__.__name__}:\n{error_message}"
-        elif line_nb is not None:
+        elif line_nb is None:
             message = (
-                f'{self.__class__.__name__} in file "{filename}" at line {line_nb}:\n'
-                f"{error_message}"
+                f'{self.__class__.__name__} in file "{filename}":\n{error_message}'
             )
         else:
             message = (
-                f'{self.__class__.__name__} in file "{filename}":\n{error_message}'
+                f'{self.__class__.__name__} in file "{filename}" at line {line_nb}:\n'
+                f"{error_message}"
             )
         super().__init__(message)
 
 
 class BeginWithoutEndError(MetadataCheckerError):
     def __init__(self, filename: str, line_nb: int):
-        error_message = 'Could not the find corresponding "end" command .'
+        error_message = 'Could not the find corresponding "end" command.'
         super().__init__(filename, line_nb, error_message)
 
 
@@ -39,6 +44,33 @@ class BlankLineError(MetadataCheckerError):
 class EndWithoutBeginError(MetadataCheckerError):
     def __init__(self, filename: str, line_nb: int):
         error_message = 'Could not the find corresponding "begin" command.'
+        super().__init__(filename, line_nb, error_message)
+
+
+class InvalidCommandError(MetadataCheckerError):
+    def __init__(self, filename, line_nb, issue):
+        if issue == "syntax":
+            error_message = (
+                "Commands should be of the form "
+                f"{METADATA_CHECKER_INVOCATION}{{action}}{{arguments}}.\n"
+                'To include "{" or "}" in the arguments, use "{{" or "}}".'
+            )
+        elif issue == "end file":
+            error_message = "Command should be followed be the line it applies to."
+        elif issue == "not matching":
+            error_message = "The command and the line it applies to do not match."
+        elif issue == "{":
+            error_message = (
+                "Could not find an opening curly bracket. "
+                'To include "{" or "}" in the arguments, use "{{" or "}}".'
+            )
+        elif issue == "}":
+            error_message = (
+                "Could not find a closing curly bracket. "
+                'To include "{" or "}" in the arguments, use "{{" or "}}".'
+            )
+        else:
+            raise ValueError(f"Unknown issue {issue}.")
         super().__init__(filename, line_nb, error_message)
 
 
@@ -86,7 +118,12 @@ class MissingRequiredDefinitionError(MetadataCheckerError):
 
 
 class MultipleDefinitionsError(MetadataCheckerError):
-    pass
+    def __init__(self, filename, lines, variable):
+        error_message = (
+            f'Variable "{variable}" is defined multiple times '
+            f"(at lines {', '.join(lines)})."
+        )
+        super().__init__(filename, None, error_message)
 
 
 class UnknownActionError(MetadataCheckerError):
@@ -97,14 +134,14 @@ class UnknownActionError(MetadataCheckerError):
 
 class VersionStringsNotMatchingError(MetadataCheckerError):
     def __init__(self, versions):
-        message = ["Version strings are not consistent."]
+        error_message = ["Version strings are not consistent."]
         for version_string, locations in versions.items():
             locations = [f'"{file}" at line {line_nb}' for file, line_nb in locations]
             locations = ", and ".join(locations)
             locations = f'"{version_string}" found in {locations}'
-            message.append(locations)
-        message = "\n".join(message)
-        super().__init__(None, None, message)
+            error_message.append(locations)
+        error_message = "\n".join(error_message)
+        super().__init__(None, None, error_message)
 
 
 class WrongDateError(MetadataCheckerError):
@@ -124,6 +161,7 @@ __all__ = [
     "BeginWithoutEndError",
     "BlankLineError",
     "EndWithoutBeginError",
+    "InvalidCommandError",
     "InvalidDateFormatError",
     "InvalidVersionError",
     "InvalidDevVersionError",
