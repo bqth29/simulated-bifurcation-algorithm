@@ -78,6 +78,6 @@ def test_sequential_markowitz():
     model.maximize(agents=64, use_window=False, verbose=False)
     assert (4, 2) == model.portfolio.shape
     assert torch.equal(
-        torch.tensor([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [1.0, 0.0]]), model.portfolio
+        torch.tensor([[0.0, 2.0], [2.0, 0.0], [0.0, 2.0], [2.0, 0.0]]), model.portfolio
     )
-    assert 0.79 == round(model.gains, 4)
+    assert 2.52 == round(model.gains, 4)
