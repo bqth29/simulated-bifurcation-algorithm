@@ -266,8 +266,10 @@ class IsingCore:
             Whether to display a progress bar to monitor the progress of
             the algorithm.
         use_window : bool, default=True
-            Whether to use the window as a stopping criterion.
-            TODO: better explanation
+            Whether to use the window as a stopping criterion: an agent is
+            said to have converged is its spins have not changed over the
+            last `convergence_threshold` spin samplings (done every
+            `sampling_period` steps).
         sampling_period : int, default=50
             Number of iterations between two consecutive spin samplings by
             the  window.
@@ -324,6 +326,13 @@ class IsingCore:
             not deterministic. For more comprehensive details on
             reproducibility, refer to the PyTorch documentation available
             at https://pytorch.org/docs/stable/notes/randomness.html.
+
+        See Also
+        --------
+        models.Ising:
+            Implementation of the Ising model which behaves like other
+            models and polynomials.
+        IsingPolynomialInterface: Abstract multivariate polynomial class.
 
         Notes
         -----

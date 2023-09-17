@@ -135,7 +135,10 @@ def optimize(
     Other Parameters
     ----------------
     use_window : bool, default=True
-        Whether to use the window as a stopping criterion.
+        Whether to use the window as a stopping criterion: an agent is said
+        to have converged is its spins have not changed over the last
+        `convergence_threshold` spin samplings (done every
+        `sampling_period` steps).
     sampling_period : int, default=50
         Number of iterations between two consecutive spin samplings by the
         window.
@@ -387,7 +390,10 @@ def minimize(
     Other Parameters
     ----------------
     use_window : bool, default=True
-        Whether to use the window as a stopping criterion.
+        Whether to use the window as a stopping criterion: an agent is said
+        to have converged is its spins have not changed over the last
+        `convergence_threshold` spin samplings (done every
+        `sampling_period` steps).
     sampling_period : int, default=50
         Number of iterations between two consecutive spin samplings by the
         window.
@@ -632,7 +638,10 @@ def maximize(
     Other Parameters
     ----------------
     use_window : bool, default=True
-        Whether to use the window as a stopping criterion.
+        Whether to use the window as a stopping criterion: an agent is said
+        to have converged is its spins have not changed over the last
+        `convergence_threshold` spin samplings (done every
+        `sampling_period` steps).
     sampling_period : int, default=50
         Number of iterations between two consecutive spin samplings by the
         window.
