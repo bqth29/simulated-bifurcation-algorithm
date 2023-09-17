@@ -161,7 +161,7 @@ class IsingPolynomialInterface(ABC):
     def __init_matrix(
         self, matrix: Iterable, dtype: torch.dtype, device: Union[str, torch.device]
     ) -> None:
-        tensor_matrix = self.__cast_matrix_to_tensor(matrix, dtype, device)
+        tensor_matrix = self._cast_matrix_to_tensor(matrix, dtype, device)
         self.__check_square_matrix(tensor_matrix)
         self.__matrix = tensor_matrix
         self.__dimension = tensor_matrix.shape[0]
@@ -169,7 +169,7 @@ class IsingPolynomialInterface(ABC):
     def __init_vector(
         self, vector: Iterable, dtype: torch.dtype, device: Union[str, torch.device]
     ) -> None:
-        tensor_vector = self.__cast_vector_to_tensor(vector, dtype, device)
+        tensor_vector = self._cast_vector_to_tensor(vector, dtype, device)
         self.__check_vector_shape(tensor_vector)
         self.__vector = tensor_vector
 
@@ -179,10 +179,10 @@ class IsingPolynomialInterface(ABC):
         dtype: torch.dtype,
         device: Union[str, torch.device],
     ) -> None:
-        self.__constant = self.__cast_constant_to_scalar_tensor(constant, dtype, device)
+        self.__constant = self._cast_constant_to_scalar_tensor(constant, dtype, device)
 
     @staticmethod
-    def __cast_matrix_to_tensor(
+    def _cast_matrix_to_tensor(
         matrix: Iterable, dtype: torch.dtype, device: Union[str, torch.device]
     ) -> torch.Tensor:
         if isinstance(matrix, torch.Tensor):
@@ -192,7 +192,7 @@ class IsingPolynomialInterface(ABC):
         except Exception as err:
             raise TypeError("Matrix cannot be cast to tensor.") from err
 
-    def __cast_vector_to_tensor(
+    def _cast_vector_to_tensor(
         self,
         vector: Optional[Iterable],
         dtype: torch.dtype,
@@ -208,7 +208,7 @@ class IsingPolynomialInterface(ABC):
             raise TypeError("Vector cannot be cast to tensor.") from err
 
     @staticmethod
-    def __cast_constant_to_scalar_tensor(
+    def _cast_constant_to_scalar_tensor(
         constant: Union[float, int, None],
         dtype: torch.dtype,
         device: Union[str, torch.device],
