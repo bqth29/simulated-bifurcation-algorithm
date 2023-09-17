@@ -25,14 +25,11 @@ def skip_blank_line(
     enumerate_lines: Iterator[Tuple[int, str]],
     filename: str,
 ) -> None:
-    if (
-        line_nb == 0
-        or line_nb == len(lines) - 1
-        or lines[line_nb - 1].strip() != ""
-        or lines[line_nb + 1].strip() != ""
-    ):
+    if line_nb == len(lines) or lines[line_nb] != "":
         raise BlankLineError(filename, line_nb)
     next(enumerate_lines)
+    if line_nb == 1 or lines[line_nb - 2] != "":
+        raise BlankLineError(filename, line_nb)
 
 
 def parse_command(text: str, filename: str, line_nb: int) -> Tuple[str, str]:
@@ -57,7 +54,7 @@ def simultaneous_read(
 ) -> Tuple[str, str]:
     args = iterator(args)
     line = iterator(line)
-    prev_curly = curly
+    prev_curly = False
     try:
         while True:
             char = next(args)
@@ -73,7 +70,7 @@ def simultaneous_read(
                 raise error_factory("not matching")
     except StopIteration:
         raise error_factory(curly)
-    args = "".join(iterator("".join(args)))
+    args = "".join(iterator(char + "".join(args)))
     line = "".join(iterator("".join(line)))
     return args, line
 
@@ -95,6 +92,7 @@ def action_set(
 
 
 def action_begin(
+    lines: list[str],
     enumerate_lines: Iterator[Tuple[int, str]],
     begin_args: str,
     variables: Dict[str, List[Tuple[str, int]]],
@@ -115,8 +113,9 @@ def action_begin(
         raise InvalidCommandError
     if is_markdown:
         skip_blank_line(lines, line_nb, enumerate_lines, filename)
+        line_nb += 1
         content.pop()
-    content = "".join(content)
+    content = "\n".join(content)
     variables[begin_args].append((content, line_nb))
 
 
@@ -126,7 +125,7 @@ def parse_file(
     is_markdown = filename.endswith(".md")
     variables = defaultdict(list)
     errors = []
-    enumerate_lines = enumerate(lines)
+    enumerate_lines = enumerate(lines, 1)
     while True:
         try:
             line_nb, line = next(enumerate_lines)
@@ -136,7 +135,10 @@ def parse_file(
         if index == -1:
             continue
         if is_markdown:
-            skip_blank_line(lines, line_nb, enumerate_lines, filename)
+            try:
+                skip_blank_line(lines, line_nb, enumerate_lines, filename)
+            except BlankLineError as error:
+                errors.append(error)
         command_start = index + len(METADATA_CHECKER_INVOCATION)
         action, args = parse_command(line[command_start:], filename, line_nb)
         if action == "set":
@@ -146,16 +148,18 @@ def parse_file(
                 error = InvalidCommandError(filename, line_nb, "end file")
                 errors.append(error)
                 break
-            except (InvalidCommandError, BlankLineError) as error:
+            except InvalidCommandError as error:
                 errors.append(error)
         elif action == "begin":
             try:
-                action_begin(enumerate_lines, args, variables, is_markdown, filename)
+                action_begin(
+                    lines, enumerate_lines, args, variables, is_markdown, filename
+                )
             except StopIteration:
                 error = BeginWithoutEndError(filename, line_nb)
                 errors.append(error)
                 break
-            except InvalidCommandError as error:
+            except (InvalidCommandError, BlankLineError) as error:
                 errors.append(error)
         elif action == "end":
             raise EndWithoutBeginError(filename, line_nb)
@@ -171,7 +175,6 @@ def parse_bibtex(variables: Dict[str, List[Tuple[str, int]]]) -> None:
         # use line number from begin command, position inside BibTeX might be off
         # due to blank line skip in markdown
         for line in bibtex.splitlines():
-            line = line.strip()
             if line.startswith("version = {"):
                 version = line[len("version = {") : -2]
                 variables["version"].append((version, line_nb))
@@ -189,6 +192,9 @@ def read_file(
 ) -> Tuple[Dict[str, List[Tuple[str, int]]], List[MetadataCheckerError]]:
     with open(filename, "r", encoding="utf-8") as file:
         file_content = file.readlines()
+    if file_content[-1].endswith(("\r", "\n")):
+        file_content.append("")
+    file_content = list(map(str.strip, file_content))
     if filename.endswith("CITATION.cff"):
         variables = parse_citation_file(file_content)
         errors = []
@@ -204,7 +210,7 @@ def check_should_define(
 ):
     defined = set(variables.keys())
     missing = set(should_define).difference(defined)
-    if not missing:
+    if missing:
         raise MissingRequiredDefinitionError(filename, missing)
 
 
@@ -266,7 +272,7 @@ def check_all_version_strings(
 
 
 def get_allowed_dates() -> Set[datetime.date]:
-    today = date.today()
+    today = datetime.date.today()
     yesterday = today - datetime.timedelta(days=1)
     tomorrow = today + datetime.timedelta(days=1)
     # the person doing the release might not be in the same timezone
@@ -284,8 +290,10 @@ def check_citation_date(
         raise InvalidDateFormatError(citation_file, line_nb, date_string) from None
     allowed_dates = get_allowed_dates()
     if citation_date not in allowed_dates:
-        allowed_dates = [date.isoformat() for date in allowed_dates]
-        raise WrongDateError(citation_file, line_nb, date_string, allowed_dates)
+        allowed_dates = [date.isoformat() for date in sorted(allowed_dates)]
+        raise WrongDateError(
+            citation_file, line_nb, date_string, allowed_dates, "yyyy-mm-dd"
+        )
     return citation_date
 
 
@@ -308,7 +316,13 @@ def check_bibtex_date(
     if (month, year) not in allowed_dates:
         date = f"{month}, {year}"
         allowed_dates = [f"{month}, {year}" for month, year in allowed_dates]
-        raise WrongDateError(filename, line_nb, date, allowed_dates)
+        raise WrongDateError(
+            filename,
+            line_nb,
+            date,
+            allowed_dates,
+            "standard month abbreviation, year (yyyy)",
+        )
 
 
 def check_all_dates(dates: List[Tuple[str, str, int]]) -> List[MetadataCheckerError]:
@@ -343,7 +357,7 @@ def metadata_checker(
     release: bool,
 ) -> List[Union[FileNotFoundError, MetadataCheckerError]]:
     errors = []
-    variables = {}
+    variables = defaultdict(list)
     for filename, should_define in FILES_SHOULD_DEFINE.items():
         try:
             file_variables, read_file_errors = read_file(filename)

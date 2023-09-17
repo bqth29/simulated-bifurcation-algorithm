@@ -22,13 +22,16 @@ def parse_args() -> bool:
 def main() -> None:
     release = parse_args()
     errors = metadata_checker(release)
+    print()
     if errors:
-        print(f"Metadata checker: {len(errors)} errors occurred.")
-        print()
-        print(*errors, sep="\n\n")
+        if len(errors) == 1:
+            print("Metadata checker: one error occurred.", end="\n\n")
+        else:
+            print(f"Metadata checker: {len(errors)} errors occurred.", end="\n\n")
+        print(*errors, sep="\n\n", end="\n\n")
         sys.exit(1)
     else:
-        print("Metadata are valid and consistent.")
+        print("Metadata are valid and consistent.", end="\n\n")
         sys.exit(0)
 
 

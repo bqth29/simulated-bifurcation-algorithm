@@ -4,7 +4,7 @@ BIBTEX_FILE = "README.md"
 CITATION_FILE = "CITATION.cff"
 
 FILES_SHOULD_DEFINE = {
-    "CITATION.cff": ["date-released", "version"],
+    "CITATION.cff": ["date", "version"],
     "README.md": ["BibTeX"],
     "setup.py": ["version"],
     "src/simulated_bifurcation/__init__.py": ["version"],
@@ -15,5 +15,3 @@ DEV_VERSION_REGEX = (
     r"^(([1-9][0-9]*)|0)\.(([1-9][0-9]*)|0)\.(([1-9][0-9]*)|0)"
     r"(\.dev(([1-9][0-9]*)|0))?$"
 )
-
-DATE_FORMAT = "yyyy-mm-dd"

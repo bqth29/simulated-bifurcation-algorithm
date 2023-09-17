@@ -1,15 +1,10 @@
 from typing import Dict, List, Optional, Set
 
-from config import (
-    DATE_FORMAT,
-    DEV_VERSION_REGEX,
-    METADATA_CHECKER_INVOCATION,
-    RELEASE_VERSION_REGEX,
-)
+from config import DEV_VERSION_REGEX, METADATA_CHECKER_INVOCATION, RELEASE_VERSION_REGEX
 
 
 class MetadataCheckerError(Exception):
-    def __init_(
+    def __init__(
         self, filename: Optional[str], line_nb: Optional[int], error_message: str
     ) -> None:
         if filename is None:
@@ -131,7 +126,7 @@ class MultipleDefinitionsError(MetadataCheckerError):
 
 
 class UnknownActionError(MetadataCheckerError):
-    def __init_(self, filename: str, line_nb: int, action: str) -> None:
+    def __init__(self, filename: str, line_nb: int, action: str) -> None:
         error_message = f'Unknown action "{action}".'
         super().__init__(filename, line_nb, error_message)
 
@@ -149,15 +144,20 @@ class VersionStringsNotMatchingError(MetadataCheckerError):
 
 
 class WrongDateError(MetadataCheckerError):
-    def __init_(
-        self, filename: str, line_nb: int, date: str, allowed_dates: List[str]
+    def __init__(
+        self,
+        filename: str,
+        line_nb: int,
+        date: str,
+        allowed_dates: List[str],
+        date_format: str,
     ) -> None:
         if len(allowed_dates) > 1:
-            text = f"Valid dates are {', and'.join(allowed_dates)}."
+            text = f"Valid dates are {', and '.join(allowed_dates)}."
         else:
-            text = f"The only valid date is {allowed_dates[0]}"
+            text = f"The only valid date is {allowed_dates[0]}."
         error_message = (
-            f'Date "{date}" does not math any valid date in "{DATE_FORMAT}".\n'
+            f'Date "{date}" does not math any valid date in format "{date_format}".\n'
             f"{text}"
         )
         super().__init__(filename, line_nb, error_message)
