@@ -23,9 +23,9 @@ import torch
 from numpy import ndarray
 
 from .polynomial import (
+    BaseMultivariatePolynomial,
     BinaryPolynomial,
     IntegerPolynomial,
-    BaseMultivariatePolynomial,
     SpinPolynomial,
 )
 
