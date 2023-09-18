@@ -9,10 +9,10 @@ def test_markowitz():
     expected_return = torch.tensor([0.2, 0.05, 0.17])
     model = Markowitz(covariance, expected_return, risk_coefficient=1, number_of_bits=3)
 
-    assert torch.equal(covariance, model.covariance)
+    assert torch.all(torch.isclose(covariance, model.covariance))
     assert torch.equal(expected_return, model.expected_return)
     assert model.portfolio is None
-    assert model.gains == 0.0
+    assert model.gains is None
 
     model.maximize(agents=10, verbose=False)
     assert torch.equal(torch.tensor([0.0, 7.0, 7.0]), model.portfolio)

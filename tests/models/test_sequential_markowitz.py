@@ -46,7 +46,7 @@ def test_sequential_markowitz():
     assert torch.equal(rebalancing_costs, model.rebalancing_costs)
     assert torch.equal(initial_stocks, model.initial_stocks)
     assert model.portfolio is None
-    assert model.gains == 0.0
+    assert model.gains is None
 
     assert torch.all(
         torch.isclose(
