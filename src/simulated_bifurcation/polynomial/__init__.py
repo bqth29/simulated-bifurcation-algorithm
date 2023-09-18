@@ -1,4 +1,4 @@
 from .binary_polynomial import BinaryPolynomial
 from .integer_polynomial import IntegerPolynomial
-from .ising_polynomial_interface import IsingPolynomialInterface
+from .base_multivariate_polynomial import BaseMultivariatePolynomial
 from .spin_polynomial import SpinPolynomial

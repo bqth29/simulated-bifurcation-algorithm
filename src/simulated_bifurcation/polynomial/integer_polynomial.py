@@ -4,10 +4,10 @@ import numpy as np
 import torch
 
 from ..ising_core import IsingCore
-from .ising_polynomial_interface import IsingPolynomialInterface
+from .base_multivariate_polynomial import BaseMultivariatePolynomial
 
 
-class IntegerPolynomial(IsingPolynomialInterface):
+class IntegerPolynomial(BaseMultivariatePolynomial):
 
     """
     Order two multivariate polynomial that can be translated as an equivalent

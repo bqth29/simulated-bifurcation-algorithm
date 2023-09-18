@@ -3,7 +3,7 @@ import torch
 
 from src.simulated_bifurcation import build_model
 from src.simulated_bifurcation.ising_core import IsingCore
-from src.simulated_bifurcation.polynomial import IsingPolynomialInterface
+from src.simulated_bifurcation.polynomial import BaseMultivariatePolynomial
 
 matrix = torch.tensor(
     [
@@ -17,7 +17,7 @@ vector = torch.tensor([[1], [2], [3]], dtype=torch.float32)
 constant = 1
 
 
-class IsingPolynomialInterfaceImpl(IsingPolynomialInterface):
+class IsingPolynomialInterfaceImpl(BaseMultivariatePolynomial):
     def to_ising(self):
         pass  # pragma: no cover
 
@@ -143,10 +143,10 @@ def test_call_polynomial_with_accepted_values():
 def test_ising_interface():
     with pytest.raises(NotImplementedError):
         # noinspection PyTypeChecker
-        IsingPolynomialInterface.to_ising(None)
+        BaseMultivariatePolynomial.to_ising(None)
     with pytest.raises(NotImplementedError):
         # noinspection PyTypeChecker
-        IsingPolynomialInterface.convert_spins(None, None)
+        BaseMultivariatePolynomial.convert_spins(None, None)
 
 
 def test_best_only():

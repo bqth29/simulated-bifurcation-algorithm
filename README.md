@@ -231,7 +231,7 @@ A lot of mathematical problems (QUBO, Travelling Salesman Problem, MAXCUT, ...) 
 
 You are also free to create your own models using our API. Depending on the type of model you wish to implement, you cen create a subclass of one of the `SpinPolynomial`, `BinaryPolynomial` or `IntegerPolynomial` APIs to quickly and efficiently link your custom model to an Ising problem and solve it using the SB algorithm.
 
-The advantage of doing so is that your model can directly call the `optimize` method that it inherits from the `IsingPolynomialInterface` interface without having to redefine it.
+The advantage of doing so is that your model can directly call the `optimize` method that it inherits from the `BaseMultivariatePolynomial` interface without having to redefine it.
 
 For instance, here is how the QUBO model was implemented:
 

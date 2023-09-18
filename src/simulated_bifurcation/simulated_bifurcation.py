@@ -25,7 +25,7 @@ from numpy import ndarray
 from .polynomial import (
     BinaryPolynomial,
     IntegerPolynomial,
-    IsingPolynomialInterface,
+    BaseMultivariatePolynomial,
     SpinPolynomial,
 )
 
@@ -704,7 +704,7 @@ def build_model(
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
     device: str = "cpu",
-) -> IsingPolynomialInterface:
+) -> BaseMultivariatePolynomial:
     r"""
     Instantiate a multivariate degree 2 polynomial over a given domain.
 
