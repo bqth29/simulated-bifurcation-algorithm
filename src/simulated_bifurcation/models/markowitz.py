@@ -6,52 +6,6 @@ import torch
 from ..polynomial import IntegerPolynomial
 
 
-# class Markowitz(IntegerPolynomial):
-
-#     """
-#     A representation of the Markowitz model for portfolio optimization.
-#     Portfolio only takes integer stocks.
-#     """
-
-#     def __init__(
-#         self,
-#         covariance: Union[torch.Tensor, np.ndarray],
-#         expected_return: Union[torch.Tensor, np.ndarray],
-#         risk_coefficient: float = 1,
-#         number_of_bits: int = 1,
-#         dtype: torch.dtype = torch.float32,
-#         device: str = "cpu",
-#     ) -> None:
-#         super().__init__(
-#             -risk_coefficient / 2 * covariance,
-#             expected_return,
-#             None,
-#             number_of_bits,
-#             dtype,
-#             device,
-#         )
-#         self.risk_coefficient = risk_coefficient
-
-#     @property
-#     def covariance(self) -> torch.Tensor:
-#         return -(2 / self.risk_coefficient) * self.matrix
-
-#     @property
-#     def expected_return(self) -> torch.Tensor:
-#         return self.vector
-
-#     @property
-#     def portfolio(self) -> Optional[torch.Tensor]:
-#         if self.sb_result is None:
-#             return None
-#         best_agent = torch.argmax(self(self.sb_result.t())).item()
-#         return self.sb_result[:, best_agent]
-
-#     @property
-#     def gains(self) -> float:
-#         return self(self.portfolio).item() if self.portfolio is not None else None
-
-
 class SequentialMarkowitz(IntegerPolynomial):
     def __init__(
         self,
