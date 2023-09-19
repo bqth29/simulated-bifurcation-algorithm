@@ -136,7 +136,7 @@ def optimize(
     ----------------
     use_window : bool, default=True
         Whether to use the window as a stopping criterion: an agent is said
-        to have converged is its spins have not changed over the last
+        to have converged if its spins have not changed over the last
         `convergence_threshold` spin samplings (done every
         `sampling_period` steps).
     sampling_period : int, default=50
@@ -391,7 +391,7 @@ def minimize(
     ----------------
     use_window : bool, default=True
         Whether to use the window as a stopping criterion: an agent is said
-        to have converged is its spins have not changed over the last
+        to have converged if its spins have not changed over the last
         `convergence_threshold` spin samplings (done every
         `sampling_period` steps).
     sampling_period : int, default=50
@@ -639,7 +639,7 @@ def maximize(
     ----------------
     use_window : bool, default=True
         Whether to use the window as a stopping criterion: an agent is said
-        to have converged is its spins have not changed over the last
+        to have converged if its spins have not changed over the last
         `convergence_threshold` spin samplings (done every
         `sampling_period` steps).
     sampling_period : int, default=50

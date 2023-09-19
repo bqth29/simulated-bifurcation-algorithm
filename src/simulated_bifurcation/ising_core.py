@@ -53,21 +53,21 @@ class IsingCore:
 
     Attributes
     ----------
-        dtype
-        device
-        dimension : int
-            Size of the Ising problem, i.e. number of spins.
-        computed_spins : (A, M) Tensor or None
-            Spin vectors obtained by minimizing the Ising energy. None if
-            the no solving method was called.
-        J: (M, M) Tensor
-            Square matrix representing the quadratic part of the Ising
-            model whose size is `M` the dimension of the problem.
-        h: (M,) Tensor
-            Vector representing the linear part of the Ising model whose
-            size is `M` the dimension of the problem.
-        linear_term: bool
-            Whether the model has a non-zero linear term.
+    dtype
+    device
+    dimension : int
+        Size of the Ising problem, i.e. number of spins.
+    computed_spins : (A, M) Tensor or None
+        Spin vectors obtained by minimizing the Ising energy. None if no
+        solving method has been called.
+    J: (M, M) Tensor
+        Square matrix representing the quadratic part of the Ising model
+        whose size is `M` the dimension of the problem.
+    h: (M,) Tensor
+        Vector representing the linear part of the Ising model whose size
+        is `M` the dimension of the problem.
+    linear_term: bool
+        Whether the model has a non-zero linear term.
 
     See Also
     --------
@@ -267,7 +267,7 @@ class IsingCore:
             the algorithm.
         use_window : bool, default=True
             Whether to use the window as a stopping criterion: an agent is
-            said to have converged is its spins have not changed over the
+            said to have converged if its spins have not changed over the
             last `convergence_threshold` spin samplings (done every
             `sampling_period` steps).
         sampling_period : int, default=50
