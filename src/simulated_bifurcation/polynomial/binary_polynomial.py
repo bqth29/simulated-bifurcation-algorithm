@@ -1,3 +1,33 @@
+"""
+Implementation of multivariate degree 2 polynomials over binary vectors.
+
+Multivariate degree 2 polynomials are the sum of a quadratic form and a
+linear form plus a constant term:
+`ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
+or `x.T Q x + l.T x + c` in matrix notation,
+where `Q` is a square matrix, `l` a vector a `c` a constant.
+The `x(i)`'s values must be binary (either `0` or `1`).
+
+Such polynomials can be translated into equivalent Ising problems and
+solved with the Simulated Bifurcation algorithm.
+
+See Also
+--------
+IsingPolynomialInterface:
+    Abstract class for multivariate degree 2 polynomials.
+IntegerPolynomial:
+    Multivariate degree 2 polynomials over non-negative integers with a
+    fixed number of bits.
+SpinPolynomial:
+    Multivariate degree 2 polynomials over vectors whose entries are in
+    {-1, 1}.
+models.QUBO: Implementation of the QUBO problem.
+models:
+    Package containing the implementation of several common
+    combinatorial optimization problems.
+
+"""
+
 from typing import Optional, Union
 
 import numpy as np
@@ -19,7 +49,7 @@ class BinaryPolynomial(IsingPolynomialInterface):
     where `Q` is a square matrix, `l` a vector a `c` a constant.
     The `x(i)`'s values must be binary (either `0` or `1`).
 
-    This polynomial can be translated as an equivalent Ising problem and
+    This polynomial can be translated into an equivalent Ising problem and
     solved with the Simulated Bifurcation algorithm.
 
     Parameters
