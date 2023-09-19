@@ -1,9 +1,16 @@
+from enum import Enum
 from typing import Dict, List, Union
 
 import numpy as np
 import torch
 
 from ..polynomial import BinaryQuadraticPolynomial
+
+
+class _Status(Enum):
+    FAILED = "failed"
+    NOT_OPTIMIZED = "not optimized"
+    SUCCESS = "success"
 
 
 class Knapsack(BinaryQuadraticPolynomial):
@@ -21,11 +28,30 @@ class Knapsack(BinaryQuadraticPolynomial):
         self.max_weight = max_weight
         matrix = self.__make_matrix(dtype, device)
         vector = self.__make_vector(dtype, device)
-        super().__init__(matrix, vector, None, dtype, device)
+        super().__init__(matrix, vector, self.__make_penalty(), dtype, device)
 
     @property
-    def content(self) -> Dict[str, Union[int, float, List[int]]]:
-        content = {"items": [], "total_cost": 0, "total_weight": 0}
+    def summary(self) -> Dict[str, Union[int, float, List[int]]]:
+        """
+        Displays the optimized knapsack's content and status
+        as a dictionnary.
+
+        Keys:
+        - items : the list of items put in the knapsack (0
+            list if no object)
+        - total_cost : the combined value of the objects in the
+            knapsack (0 if no object)
+        - total_weight : the combined weight of the objects in the
+            knapsack (0 if no object)
+        - status : the optimization status of the model (one of:
+            success, failed or not optimized)
+        """
+        content = {
+            "items": [],
+            "total_cost": 0,
+            "total_weight": 0,
+            "status": _Status.NOT_OPTIMIZED.value,
+        }
         if self.sb_result is not None:
             sb_result = self.sb_result[:, torch.argmin(self(self.sb_result.t())).item()]
             items = np.array(sb_result)[: self.n_items]
@@ -34,18 +60,26 @@ class Knapsack(BinaryQuadraticPolynomial):
             content["items"] = np.arange(1, self.n_items + 1)[items == 1].tolist()
             content["total_cost"] = np.sum(costs_array * items)
             content["total_weight"] = np.sum(weights_array * items)
+            content["status"] = (
+                _Status.SUCCESS
+                if content["total_weight"] <= self.max_weight
+                else _Status.FAILED
+            ).value
         return content
+
+    def __make_penalty(self) -> float:
+        return np.sum(self.costs)
 
     def __make_matrix(self, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
         weights_array = np.array(self.weights).reshape(1, -1)
         range_array = np.arange(self.max_weight + 1).reshape(1, -1)
         matrix = np.block(
             [
-                [weights_array.T @ weights_array, -2 * weights_array.T @ range_array],
-                [-2 * range_array.T @ weights_array, 1 + range_array.T @ range_array],
+                [weights_array.T @ weights_array, -weights_array.T @ range_array],
+                [-range_array.T @ weights_array, 1 + range_array.T @ range_array],
             ]
         )
-        return torch.tensor(matrix, dtype=dtype, device=device)
+        return self.__make_penalty() * torch.tensor(matrix, dtype=dtype, device=device)
 
     def __make_vector(self, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
         dim = self.n_items + self.max_weight + 1
@@ -56,6 +90,5 @@ class Knapsack(BinaryQuadraticPolynomial):
         unit_array = np.zeros(dim)
         unit_array[self.n_items :] = 1
         unit_array = unit_array.reshape(-1, 1)
-        penalty = 0.5 / costs_array.max()
-        vector = -2 * unit_array - penalty * extended_cost_array
+        vector = -2 * self.__make_penalty() * unit_array - extended_cost_array
         return torch.tensor(vector, dtype=dtype, device=device)
