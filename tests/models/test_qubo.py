@@ -13,3 +13,21 @@ def test_qubo():
     binary_vector, value = model.maximize(agents=10, verbose=False, best_only=True)
     assert torch.equal(torch.tensor([1.0, 0.0, 1.0]), binary_vector)
     assert 6.0 == value
+
+
+def test_lp_problem_formulated_as_qubo():
+    torch.manual_seed(42)
+    P = 15.5
+    Q = torch.tensor(
+        [
+            [2, -P, -P, 0, 0, 0],
+            [0, 2, -P, -P, 0, 0],
+            [0, 0, 2, -2 * P, 0, 0],
+            [0, 0, 0, 2, -P, 0],
+            [0, 0, 0, 0, 4.5, -P],
+            [0, 0, 0, 0, 0, 3],
+        ]
+    )
+    binary_vector, objective_value = QUBO(Q).maximize(agents=10, verbose=False)
+    assert torch.equal(torch.tensor([1.0, 0.0, 0.0, 1.0, 0.0, 1.0]), binary_vector)
+    assert 7.0 == objective_value

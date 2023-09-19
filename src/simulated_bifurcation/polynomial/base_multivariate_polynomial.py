@@ -404,9 +404,9 @@ class BaseMultivariateQuadraticPolynomial(ABC):
         result = self.sb_result.t()
         evaluation = self(result)
         if best_only:
-            i_min = torch.argmin(evaluation)
-            result = result[i_min]
-            evaluation = evaluation[i_min]
+            i_best = torch.argmin(evaluation) if minimize else torch.argmax(evaluation)
+            result = result[i_best]
+            evaluation = evaluation[i_best]
         return result, evaluation
 
     @final
