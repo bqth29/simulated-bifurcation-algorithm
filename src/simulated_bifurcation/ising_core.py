@@ -38,6 +38,19 @@ class IsingCore:
     `-0.5 * ΣΣ J(i,j)s(i)s(j) + Σ h(i)s(i)`
     or `-0.5 x.T J x + h.T x in matrix notation.
 
+    Parameters
+    ----------
+        J: (M, M) Tensor
+            Square matrix representing the quadratic part of the Ising
+            model whose size is `M` the dimension of the problem.
+        h: (M,) Tensor
+            Vector representing the linear part of the Ising model whose
+            size is `M` the dimension of the problem.
+        dtype: torch.dtype
+            Data-type used for storing the coefficients of the Ising model.
+        device: str | torch.device
+            Device on which the instance is located.
+
     Attributes
     ----------
         dtype
@@ -55,19 +68,6 @@ class IsingCore:
             size is `M` the dimension of the problem.
         linear_term: bool
             Whether the model has a non-zero linear term.
-
-    Parameters
-    ----------
-        J: (M, M) Tensor
-            Square matrix representing the quadratic part of the Ising
-            model whose size is `M` the dimension of the problem.
-        h: (M,) Tensor
-            Vector representing the linear part of the Ising model whose
-            size is `M` the dimension of the problem.
-        dtype: torch.dtype
-            Data-type used for storing the coefficients of the Ising model.
-        device: str | torch.device
-            Device on which the instance is located.
 
     See Also
     --------

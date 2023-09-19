@@ -14,7 +14,7 @@ Available classes
 IsingPolynomialInterface:
     Abstract class for multivariate degree 2 polynomials.
 BinaryPolynomial:
-    Multivariate degree 2 polynomials over vectors whose entries are all in
+    Multivariate degree 2 polynomials over vectors whose entries are in
     {0, 1}.
 IntegerPolynomial:
     Multivariate degree 2 polynomials over non-negative integers with a
@@ -23,7 +23,7 @@ IntegerPolynomial:
     all 7-bits integers, that is integer between 1 and 2^7 - 1 = 127
     (inclusive).
 SpinPolynomial:
-    Multivariate degree 2 polynomials over vectors whose entries are all in
+    Multivariate degree 2 polynomials over vectors whose entries are in
     {-1, 1}.
 
 See Also
