@@ -4,6 +4,10 @@ with open("README.md", "r", encoding="utf-8") as readme:
     long_description = readme.read()
 
 
+# !MDC{set}{package_version = "{version}"}
+package_version = "1.2.1.dev0"
+
+
 dependencies = [
     "torch>=2.0.1",
     "numpy",
@@ -26,7 +30,7 @@ dev = docs + lint + test
 
 setuptools.setup(
     name="simulated-bifurcation",
-    version="1.2.0",
+    version=package_version,
     description="Efficient implementation of the quantum-inspired Simulated "
     "Bifurcation (SB) algorithm to solve Ising-like problems.",
     url="https://github.com/bqth29/simulated-bifurcation-algorithm",

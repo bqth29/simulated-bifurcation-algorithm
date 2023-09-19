@@ -29,7 +29,7 @@ class IsingPolynomialInterface(ABC):
         constant: Union[int, float, None] = None,
         accepted_values: Union[torch.Tensor, np.ndarray, List[int], None] = None,
         dtype: torch.dtype = torch.float32,
-        device: str = "cpu",
+        device: Union[str, torch.device] = "cpu",
     ) -> None:
         """
         Parameters
@@ -51,7 +51,7 @@ class IsingPolynomialInterface(ABC):
         dtype : torch.dtype, optional
             the dtype used to encode polynomial's coefficients (default is
             `float32`)
-        device : str, optional
+        device : str | torch.device, optional
             the device on which to perform the computations of the Simulated
             Bifurcation algorithm (default `"cpu"`)
         """
@@ -98,12 +98,13 @@ class IsingPolynomialInterface(ABC):
         /,
         *,
         input_values_check: bool = True,
-    ) -> Union[float, torch.Tensor]:
+    ) -> torch.Tensor:
         if not isinstance(value, torch.Tensor):
             try:
                 value = torch.tensor(value, dtype=self.dtype, device=self.device)
             except Exception as err:
                 raise TypeError(f"Input value cannot be cast to Tensor.") from err
+
         if (
             input_values_check
             and self.__accepted_values is not None
@@ -112,25 +113,21 @@ class IsingPolynomialInterface(ABC):
             raise ValueError(
                 f"Input values must all belong to {self.__accepted_values.tolist()}."
             )
-        if value.shape == (self.dimension,):
-            evaluation = (
-                torch.vdot(value, torch.addmv(self.vector, self.matrix, value))
-                + self.constant
+
+        if value.shape[-1] != self.dimension:
+            raise ValueError(
+                f"Size of the input along the last axis should be "
+                f"{self.dimension}, it is {value.shape[-1]}."
             )
-            return evaluation.item()
-        if value.shape[-1] == self.dimension:
-            quadratic_term = torch.nn.functional.bilinear(
-                value,
-                value,
-                torch.unsqueeze(self.matrix, 0),
-            )
-            affine_term = value @ self.vector + self.constant
-            evaluation = torch.squeeze(quadratic_term, -1) + affine_term
-            return evaluation
-        raise ValueError(
-            f"Size of the input along the last axis should be "
-            f"{self.dimension}, it is {value.shape[-1]}."
+
+        quadratic_term = torch.nn.functional.bilinear(
+            value,
+            value,
+            torch.unsqueeze(self.matrix, 0),
         )
+        affine_term = value @ self.vector + self.constant
+        evaluation = torch.squeeze(quadratic_term, -1) + affine_term
+        return evaluation
 
     @final
     def __getitem__(self, coefficient: int) -> Union[torch.Tensor, float]:
@@ -152,7 +149,7 @@ class IsingPolynomialInterface(ABC):
             device = device.type
         elif not isinstance(device, str):
             raise TypeError(
-                f"device should a string or a torch.device, received {device}"
+                f"device should a string or a torch.device, received {device}."
             )
         if "cuda" in device and not torch.cuda.is_available():
             raise RuntimeError(
@@ -161,14 +158,18 @@ class IsingPolynomialInterface(ABC):
                 "about installing with CUDA support."
             )  # pragma: no cover
 
-    def __init_matrix(self, matrix: Iterable, dtype: torch.dtype, device: str) -> None:
-        tensor_matrix = self.__cast_matrix_to_tensor(matrix, dtype, device)
+    def __init_matrix(
+        self, matrix: Iterable, dtype: torch.dtype, device: Union[str, torch.device]
+    ) -> None:
+        tensor_matrix = self._cast_matrix_to_tensor(matrix, dtype, device)
         self.__check_square_matrix(tensor_matrix)
         self.__matrix = tensor_matrix
         self.__dimension = tensor_matrix.shape[0]
 
-    def __init_vector(self, vector: Iterable, dtype: torch.dtype, device: str) -> None:
-        tensor_vector = self.__cast_vector_to_tensor(vector, dtype, device)
+    def __init_vector(
+        self, vector: Iterable, dtype: torch.dtype, device: Union[str, torch.device]
+    ) -> None:
+        tensor_vector = self._cast_vector_to_tensor(vector, dtype, device)
         self.__check_vector_shape(tensor_vector)
         self.__vector = tensor_vector
 
@@ -178,11 +179,11 @@ class IsingPolynomialInterface(ABC):
         dtype: torch.dtype,
         device: Union[str, torch.device],
     ) -> None:
-        self.__constant = self.__cast_constant_to_float(constant, dtype, device)
+        self.__constant = self._cast_constant_to_scalar_tensor(constant, dtype, device)
 
     @staticmethod
-    def __cast_matrix_to_tensor(
-        matrix: Iterable, dtype: torch.dtype, device: str
+    def _cast_matrix_to_tensor(
+        matrix: Iterable, dtype: torch.dtype, device: Union[str, torch.device]
     ) -> torch.Tensor:
         if isinstance(matrix, torch.Tensor):
             return matrix.to(dtype=dtype, device=device)
@@ -191,8 +192,11 @@ class IsingPolynomialInterface(ABC):
         except Exception as err:
             raise TypeError("Matrix cannot be cast to tensor.") from err
 
-    def __cast_vector_to_tensor(
-        self, vector: Optional[Iterable], dtype: torch.dtype, device: str
+    def _cast_vector_to_tensor(
+        self,
+        vector: Optional[Iterable],
+        dtype: torch.dtype,
+        device: Union[str, torch.device],
     ) -> torch.Tensor:
         if vector is None:
             return torch.zeros(self.dimension, dtype=dtype, device=device)
@@ -204,15 +208,17 @@ class IsingPolynomialInterface(ABC):
             raise TypeError("Vector cannot be cast to tensor.") from err
 
     @staticmethod
-    def __cast_constant_to_float(
-        constant: Union[float, int, None], dtype, device
+    def _cast_constant_to_scalar_tensor(
+        constant: Union[float, int, None],
+        dtype: torch.dtype,
+        device: Union[str, torch.device],
     ) -> torch.Tensor:
         if constant is None:
             return torch.tensor(0.0, dtype=dtype, device=device)
         try:
             return torch.tensor(float(constant), dtype=dtype, device=device)
         except Exception as err:
-            raise TypeError("Constant cannot be cast to float.") from err
+            raise TypeError("Constant cannot be cast to scalar tensor.") from err
 
     @staticmethod
     def __check_square_matrix(matrix: torch.Tensor) -> None:
@@ -227,6 +233,21 @@ class IsingPolynomialInterface(ABC):
             raise ValueError(
                 f"Vector must be of size {self.dimension}, got {vector.shape}."
             )
+
+    @final
+    def to(
+        self,
+        device: Optional[Union[str, torch.device]] = None,
+        dtype: Optional[torch.dtype] = None,
+    ) -> None:
+        args = {}
+        if device is not None:
+            args["device"] = device
+        if dtype is not None:
+            args["dtype"] = dtype
+        self.__matrix = self.__matrix.to(**args)
+        self.__vector = self.__vector.to(**args)
+        self.__constant = self.__constant.to(**args)
 
     @abstractmethod
     def to_ising(self) -> IsingCore:
@@ -274,7 +295,7 @@ class IsingPolynomialInterface(ABC):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-    ) -> Tuple[torch.Tensor, Union[torch.Tensor, float]]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local extremum of the model by optimizing
         the equivalent Ising model using the Simulated Bifurcation (SB)
@@ -353,7 +374,7 @@ class IsingPolynomialInterface(ABC):
             ising_equivalent = self.to_ising()
         else:
             ising_equivalent = -self.to_ising()
-        ising_equivalent.optimize(
+        ising_equivalent.minimize(
             agents,
             max_steps,
             ballistic,
@@ -369,7 +390,7 @@ class IsingPolynomialInterface(ABC):
         if best_only:
             i_min = torch.argmin(evaluation)
             result = result[i_min]
-            evaluation = evaluation[i_min].item()
+            evaluation = evaluation[i_min]
         return result, evaluation
 
     @final
@@ -385,7 +406,7 @@ class IsingPolynomialInterface(ABC):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-    ) -> Tuple[torch.Tensor, Union[torch.Tensor, float]]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local minimum of the model by optimizing
         the equivalent Ising model using the Simulated Bifurcation (SB)
@@ -483,7 +504,7 @@ class IsingPolynomialInterface(ABC):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-    ) -> Tuple[torch.Tensor, Union[torch.Tensor, float]]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local maximum of the model by optimizing
         the equivalent Ising model using the Simulated Bifurcation (SB)

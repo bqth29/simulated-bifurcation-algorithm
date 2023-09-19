@@ -44,6 +44,16 @@ constraints are embedded as penalties in the polynomial, that is adding
 terms that ensure that any global maximum satisfies the constraints, the
 return values may violate these constraints.
 
+The SB algorithm uses a randomized initialization, and this package is
+implemented with a PyTorch backend. To ensure a consistent initialization
+when running the same script multiple times, use `torch.manual_seed`.
+However, results may not be reproducible between CPU and GPU executions,
+even when using identical seeds. Furthermore, certain PyTorch operations
+are not deterministic.
+For more comprehensive details on reproducibility, refer to the PyTorch
+documentation available at:
+https://pytorch.org/docs/stable/notes/randomness.html.
+
 The original version of the SB algorithm [2] is not implemented since it is
 less efficient than the more recent variants of the SB algorithm described
 in [3] :
@@ -62,7 +72,7 @@ vary depending on the properties of the instances. They can respectively be
 modified and reset through the `set_env` and `reset_env` functions.
 
 The time complexity is O(`max_steps` * `agents` * M^2) where M is the
-dimension of the instance. The space complexity O(M^2 + `agents` * N).
+dimension of the instance. The space complexity O(M^2 + `agents` * M).
 
 For instances in low dimension (~100), running computations on GPU is
 slower than running computations on CPU unless a large number of
@@ -87,17 +97,16 @@ https://doi.org/10.1038/s42005-022-00929-9
 Examples
 --------
 Minimize a polynomial over {0, 1} x {0, 1}
-
-  >>> matrix = torch.tensor([[1, -2], [0, 3]], dtype=torch.float32)
-  >>> vector = torch.tensor([3.5, 2.2], dtype=torch.float32)
-  >>> constant = 3.1415
-  >>> best_vector, best_value = sb.minimize(
-  ...     matrix, vector, constant, "binary"
-  ... )
-  >>> best_vector
-  tensor([0, 0])
-  >>> best_value
-  3.1415
+>>> matrix = torch.tensor([[1, -2], [0, 3]], dtype=torch.float32)
+>>> vector = torch.tensor([3.5, 2.2], dtype=torch.float32)
+>>> constant = 3.14
+>>> best_vector, best_value = sb.minimize(
+...     matrix, vector, constant, "binary"
+... )
+>>> best_vector
+tensor([0., 0.])
+>>> best_value
+tensor(3.14)
 
 Instantiate a polynomial over vectors whose entries are 3-bits integers
 ({0, 1, 2, ..., 6, 7})
@@ -105,34 +114,41 @@ Instantiate a polynomial over vectors whose entries are 3-bits integers
   >>> poly = sb.build_model(matrix, vector, constant, "int3")
 
 Maximize the polynomial over vectors whose entries are 3-bits integers
-
-  >>> best_vector, best_value = poly.maximize()
+>>> best_vector, best_value = poly.maximize()
+>>> best_vector
+tensor([0., 7.])
+>>> best_value
+tensor(165.54)
 
 Evaluate the polynomial at a single point
-
-  >>> point = torch.tensor([0, 0], dtype=torch.float32)
-  >>> poly(point)
-  3.1415
+>>> point = torch.tensor([6, 3], dtype=torch.float32)
+>>> poly(point)
+tensor(57.74)
 
 Evaluate the polynomial at several points simultaneously
-
-  >>> points = torch.tensor(
-  ...     [[3, 5], [0, 0], [7, 1], [2, 6]],
-  ...     dtype=torch.float32,
-  ... )
-  >>> poly(points)
-  tensor([0, 3, 1, 2])
+>>> points = torch.tensor(
+...     [[3, 5], [4, 4], [7, 1], [2, 6]],
+...     dtype=torch.float32,
+... )
+>>> poly(points)
+tensor([78.64, 57.94, 67.84, 111.34])
 
 Create a QUBO instance and minimize it using a GPU to run the SB algorithm
-
-  >>> qubo = sb.models.QUBO(matrix, device="cuda")
-  >>> best_vector, best_value = qubo.minimize()
+>>> qubo = sb.models.QUBO(matrix, device="cuda")
+>>> best_vector, best_value = qubo.minimize()  # Output is located on GPU
+>>> best_vector
+tensor([0., 0.], device='cuda:0')
 
 """
 
 
+from . import models
 from .optimizer import get_env, reset_env, set_env
 from .polynomial import BinaryPolynomial, IntegerPolynomial, SpinPolynomial
 from .simulated_bifurcation import build_model, maximize, minimize, optimize
 
 reset_env()
+
+
+# !MDC{set}{__version__ = "{version}"}
+__version__ = "1.2.1.dev0"
