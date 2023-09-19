@@ -5,7 +5,7 @@ Multivariate degree 2 polynomials are the sum of a quadratic form and a
 linear form plus a constant term:
 `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
 or `x.T Q x + l.T x + c` in matrix notation,
-where `Q` is a square matrix, `l` a vector a `c` a constant.
+where `Q` is a square matrix, `l` is a vector and `c` is a constant.
 The `x(i)`'s values must be binary (either `0` or `1`).
 
 Such polynomials can be translated into equivalent Ising problems and
@@ -46,7 +46,7 @@ class BinaryPolynomial(IsingPolynomialInterface):
     linear form plus a constant term:
     `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
     or `x.T Q x + l.T x + c` in matrix notation,
-    where `Q` is a square matrix, `l` a vector a `c` a constant.
+    where `Q` is a square matrix, `l` is a vector and `c` is a constant.
     The `x(i)`'s values must be binary (either `0` or `1`).
 
     This polynomial can be translated into an equivalent Ising problem and
