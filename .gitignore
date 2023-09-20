@@ -145,3 +145,6 @@ cython_debug/
 
 # Test file
 __main__.py
+
+# Do not ignore scripts
+!.github/scripts/**/__main__.py

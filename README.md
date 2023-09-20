@@ -30,12 +30,13 @@ It also provides an API to define Ising models or other NP-hard and NP-complete 
 ```console
 pip install simulated-bifurcation     
 ```
-  
+
 </td>
 <td>
 
 &nbsp;&nbsp;&nbsp;
 Install [PyTorch](https://pytorch.org/get-started/locally/) with GPU support
+
 ```console
 pip install simulated-bifurcation     
 ```
@@ -45,11 +46,11 @@ pip install simulated-bifurcation
 </tbody>
 </table>
 
-## 🧪 The *Simulated Bifurcation* (SB) algorithm
+## 🧪 The _Simulated Bifurcation_ (SB) algorithm
 
 ### Ising model
 
-An Ising problem, given a null-diagonal square symmetrical matrix $J$ of size $N \times N$ and a vector $h$ of size $N$, consists in finding the spin vector $\mathbf{s} = (s_{1}, ... s_{N})$ called the *ground state*, (each $s_{i}$ being equal to either 1 or -1) such that the following value, called *Ising energy*, is minimal:
+An Ising problem, given a null-diagonal square symmetrical matrix $J$ of size $N \times N$ and a vector $h$ of size $N$, consists in finding the spin vector $\mathbf{s} = (s_{1}, ... s_{N})$ called the _ground state_, (each $s_{i}$ being equal to either 1 or -1) such that the following value, called _Ising energy_, is minimal:
 
 $$- \frac{1}{2} \sum_{i=1}^{N} \sum_{j=1}^{N} J_{ij}s_{i}s_{j} + \sum_{i=1}^{N} h_{i}s_{i}$$
 
@@ -70,9 +71,10 @@ This can also be seen as the sum of a quadratic form, a linear form and a consta
 The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated input vector.
 
 The input types must be passed to the `input_type` argument:
+
 - `spin` (default value) for a spin optimization: the optimal vector will only have ±1 values
 - `binary` for a binary optimization: the optimal vector will only have 0 or 1 values
-- `intX` for a `X`-bits encoded integer optimization:  the optimal vector will only have integer value encoded with `X` bits or less, i.e. belonging to the range 0 to $2^{X} - 1$.
+- `intX` for a `X`-bits encoded integer optimization: the optimal vector will only have integer value encoded with `X` bits or less, i.e. belonging to the range 0 to $2^{X} - 1$.
 
 > For instance, 9-bits integer correspond to the `int9` input type and the accepted values span from 0 to 511.
 
@@ -114,7 +116,6 @@ int_value, int_vector = sb.maximize(matrix, vector, constant, input_type='int10'
 
 > For both functions, only the matrix is required, the vector and constant terms are optional.
 
-
 ### Parallelization (multi-agent search)
 
 The Simulated Bifurcation algorithm is highly parallelizable since it only relies on linear matrices equations. To take advantage of this property, this implementation offers the possibility to perform a multi-agent search of the optimal solution by evolving several spin vectors in parallel (each one being called an **agent**). The number of agents is set by the `agents` parameter in the `minimize` and `maximize` functions.
@@ -140,7 +141,7 @@ sb.minimize(matrix, device='cuda')
 
 ### Early stopping
 
-The Simulated Bifurcation algorithm stops after a certain number of iterations, defined by the parameter `max_steps` of the `minimize` and `maximize` functions. However, this implementation comes with the possibility to perform early stopping and save computation time by defining convergence conditions. 
+The Simulated Bifurcation algorithm stops after a certain number of iterations, defined by the parameter `max_steps` of the `minimize` and `maximize` functions. However, this implementation comes with the possibility to perform early stopping and save computation time by defining convergence conditions.
 
 At regular intervals, the state of the spins is sampled and compared with its previous value to calculate their stability period. If an agent's stability period exceeds a convergence threshold, it is considered to have converged and its value is frozen. If all agents converge before the maximum number of iterations has been reached, the algorithm stops.
 
@@ -172,15 +173,15 @@ vectors, values = sb.maximize(matrix, best_only=False)
 
 ## 💡 Advanced usages
 
-This section deals with a more complex use of the SB algorithm, as it is closer to the quantum theory from which it is derived. To better understand the significance of the subjects at stake, we recommend reading the theory behind the SB algorithm by Goto *et al.*.
+This section deals with a more complex use of the SB algorithm, as it is closer to the quantum theory from which it is derived. To better understand the significance of the subjects at stake, we recommend reading the theory behind the SB algorithm by Goto _et al._.
 
-- Goto, H., Tatsumura, K., & Dixon, A. R. (2019). Combinatorial optimization by simulating adiabatic bifurcations in nonlinear Hamiltonian systems. *Science advances, 5*(4), eaav2372.
-- Kanao, T., & Goto, H. (2022). Simulated bifurcation assisted by thermal fluctuation. *Communications Physics, 5*(1), 153.
-- Goto, H., Endo, K., Suzuki, M., Sakai, Y., Kanao, T., Hamakawa, Y., ... & Tatsumura, K. (2021). High-performance combinatorial optimization based on classical mechanics. *Science Advances, 7*(6), eabe7953.
+- Goto, H., Tatsumura, K., & Dixon, A. R. (2019). Combinatorial optimization by simulating adiabatic bifurcations in nonlinear Hamiltonian systems. _Science advances, 5_(4), eaav2372.
+- Kanao, T., & Goto, H. (2022). Simulated bifurcation assisted by thermal fluctuation. _Communications Physics, 5_(1), 153.
+- Goto, H., Endo, K., Suzuki, M., Sakai, Y., Kanao, T., Hamakawa, Y., ... & Tatsumura, K. (2021). High-performance combinatorial optimization based on classical mechanics. _Science Advances, 7_(6), eabe7953.
 
 ### SB Algorithm modes
 
-The SB algorithm is available in four different versions (Goto *et al.*) that result in small variations in the algorithm general operation. The four modes are:
+The SB algorithm is available in four different versions (Goto _et al._) that result in small variations in the algorithm general operation. The four modes are:
 
 1. **Ballistic SB (bSB)**: uses the particles' position for the SB matrix computations; usually faster but less accurate.
 2. **Discrete SB (dSB)**: uses the sign of the particles' position for the SB matrix computations; usually slower but more accurate.
@@ -199,7 +200,7 @@ sb.maximize(matrix, ballistic=True, heated=True)  # HbSB
 
 ### SB Algorithm's hyperparameters setting
 
-The SB algorithm has a set of hyperparameters corresponding to physical constants derived from quantum theory, which have been fine-tuned (Goto *et al.*) to give the best results most of the time. Nevertheless, the relevance of specific hyperparameters may vary depending on the properties of the instances. For this purpose, the `set_env` function can be used to modify their value.
+The SB algorithm has a set of hyperparameters corresponding to physical constants derived from quantum theory, which have been fine-tuned (Goto _et al._) to give the best results most of the time. Nevertheless, the relevance of specific hyperparameters may vary depending on the properties of the instances. For this purpose, the `set_env` function can be used to modify their value.
 
 ```python
 # Custom hyperparameters values
@@ -234,7 +235,7 @@ The advantage of doing so is that your model can directly call the `optimize` me
 
 For instance, here is how the QUBO model was implemented:
 
-> The QUBO problem consists, given an upper triangular matrix $Q$, in finding the binary vector that minimizes  the value
+> The QUBO problem consists, given an upper triangular matrix $Q$, in finding the binary vector that minimizes the value
 > $$\sum_{i=1}^{N} \sum_{j=1}^{N} Q_{ij}x_{i}x_{j}$$
 
 ```python
@@ -251,18 +252,23 @@ class QUBO(BinaryPolynomial):
 
 > You can check Andrew Lucas' paper on Ising formulations of NP-complete and NP-hard problems, including all of Karp's 21 NP-complete problems.
 > 
-> 🔎 Lucas, A. (2014). Ising formulations of many NP problems. *Frontiers in physics, 2*, 5.
+> [🔎 Lucas, A. (2014). Ising formulations of many NP problems. _Frontiers in physics, 2_, 5.](https://www.frontiersin.org/articles/10.3389/fphy.2014.00005/full)
 
 ## 🔗 Cite this work
 
 If you are using this code for your own projects please cite our work:
 
+[comment]: # (!MDC{begin}{BibTeX})
+
 ```bibtex
-@software{Ageron_Simulated_Bifurcation_SB_2022,
+@software{Ageron_Simulated_Bifurcation_SB_2023,
     author = {Ageron, Romain and Bouquet, Thomas and Pugliese, Lorenzo},
-    month = {7},
+    month = aug,
     title = {{Simulated Bifurcation (SB) algorithm for Python}},
+    url = {https://github.com/bqth29/simulated-bifurcation-algorithm},
     version = {1.2.0},
-    year = {2023}
+    year = {2023},
 }
 ```
+
+[comment]: # (!MDC{end}{BibTeX})
