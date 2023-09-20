@@ -19,6 +19,16 @@ def parse_citation_file(content: List[str]) -> Dict[str, List[Tuple[str, int]]]:
     return variables
 
 
+def parse_license_file(content: List[str]) -> Dict[str, List[Tuple[str, int]]]:
+    variables = defaultdict(list)
+    for line_nb, line in enumerate(content):
+        if line.strip().startswith(LICENSE_DATE_LINE):
+            line = line[len(LICENSE_DATE_LINE) :]
+            year = line.split()[0]
+            variables["date"].append((year, line_nb))
+    return variables
+
+
 def skip_blank_line(
     lines: List[str],
     line_nb: int,
@@ -195,8 +205,11 @@ def read_file(
     if file_content[-1].endswith(("\r", "\n")):
         file_content.append("")
     file_content = list(map(str.strip, file_content))
-    if filename.endswith("CITATION.cff"):
+    if filename == CITATION_FILE:
         variables = parse_citation_file(file_content)
+        errors = []
+    elif filename == LICENSE_FILE:
+        variables = parse_license_file(file_content)
         errors = []
     else:
         variables, errors = parse_file(file_content, filename)
@@ -249,7 +262,7 @@ def version_strings_are_consistent(
 ):
     versions = defaultdict(list)
     for version, filename, line_nb in version_strings:
-        if release or filename not in ["CITATION.cff", "README.md"]:
+        if release or filename not in [CITATION_FILE, BIBTEX_FILE]:
             versions[version].append((filename, line_nb))
     if len(versions) >= 2:
         raise VersionStringsNotMatchingError(versions)
@@ -297,6 +310,15 @@ def check_citation_date(
     return citation_date
 
 
+def check_license_date(
+    year: str, license_file: str, line_nb: int, allowed_dates: Set[datetime.date]
+):
+    allowed_dates = {str(date.year) for date in allowed_dates}
+    if year not in allowed_dates:
+        allowed_dates = list(allowed_dates)
+        raise WrongDateError(license_file, line_nb, year, allowed_dates, "year (yyyy)")
+
+
 def get_month_abbreviation(month_number: int) -> str:
     with calendar.different_locale(("en-US", None)) as encoding:
         abbreviation = calendar.month_abbr[month_number]
@@ -327,10 +349,13 @@ def check_bibtex_date(
 
 def check_all_dates(dates: List[Tuple[str, str, int]]) -> List[MetadataCheckerError]:
     citation_date = None
+    license_date = None
     bibtex_date = None
     for date in dates:
         if date[1] == CITATION_FILE:
             citation_date = date
+        elif date[1] == LICENSE_FILE:
+            license_date = date
         elif date[1] == BIBTEX_FILE:
             bibtex_date = date
     errors = []
@@ -343,9 +368,14 @@ def check_all_dates(dates: List[Tuple[str, str, int]]) -> List[MetadataCheckerEr
         except (InvalidDateFormatError, WrongDateError) as error:
             errors.append(error)
             allowed_dates = None
+    if allowed_dates is None:
+        allowed_dates = get_allowed_dates()
+    if license_date is not None:
+        try:
+            check_license_date(*license_date, allowed_dates=allowed_dates)
+        except WrongDateError as error:
+            errors.append(error)
     if bibtex_date is not None:
-        if allowed_dates is None:
-            allowed_dates = get_allowed_dates()
         try:
             check_bibtex_date(*bibtex_date, allowed_dates=allowed_dates)
         except WrongDateError as error:
