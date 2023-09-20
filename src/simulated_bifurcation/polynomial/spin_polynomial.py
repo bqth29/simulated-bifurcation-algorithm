@@ -130,4 +130,19 @@ class SpinPolynomial(IsingPolynomialInterface):
         return IsingCore(-2 * self.matrix, self.vector, self.dtype, self.device)
 
     def convert_spins(self, ising: IsingCore) -> torch.Tensor:
+        """
+        Retrieve the spins from an Ising problem.
+
+        Parameters
+        ----------
+        ising : IsingCore
+            The Ising problem containing the spins.
+
+        Returns
+        -------
+        Tensor | None
+            The spins of `ising`, it is None if `ising.computed_spins` is
+            None.
+
+        """
         return ising.computed_spins

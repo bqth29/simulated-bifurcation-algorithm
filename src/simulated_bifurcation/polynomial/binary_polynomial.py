@@ -119,6 +119,22 @@ class BinaryPolynomial(IsingPolynomialInterface):
         return IsingCore(J, h, self.dtype, self.device)
 
     def convert_spins(self, ising: IsingCore) -> Optional[torch.Tensor]:
+        """
+        Convert the spins of an Ising problem into binary variables.
+
+        Parameters
+        ----------
+        ising : IsingCore
+            The Ising problem whose spins are converted into binary
+            variables.
+
+        Returns
+        -------
+        binary_vars : Tensor | None
+            The binary variables corresponding to the spins of `ising`, it
+            is None if `ising.computed_spins` is None.
+
+        """
         if ising.computed_spins is not None:
             binary_vars = (ising.computed_spins + 1) / 2
         else:
