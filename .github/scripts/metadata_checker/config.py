@@ -1,16 +1,19 @@
 METADATA_CHECKER_INVOCATION = "!MDC"
 
-BIBTEX_FILE = "README.md"
 CITATION_FILE = "CITATION.cff"
 LICENSE_FILE = "LICENSE"
+BIBTEX_FILE = "README.md"
 
 FILES_SHOULD_DEFINE = {
     CITATION_FILE: ["date", "version"],
     LICENSE_FILE: ["date"],
-    "README.md": ["BibTeX"],
     "setup.py": ["version"],
     "src/simulated_bifurcation/__init__.py": ["version"],
 }
+try:
+    FILES_SHOULD_DEFINE[BIBTEX_FILE].append("BibTeX")
+except KeyError:
+    FILES_SHOULD_DEFINE[BIBTEX_FILE] = ["BibTeX"]
 
 LICENSE_DATE_LINE = "Copyright (c) "
 
