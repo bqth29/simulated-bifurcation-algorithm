@@ -40,16 +40,17 @@ class IsingCore:
 
     Parameters
     ----------
-        J: (M, M) Tensor
-            Square matrix representing the quadratic part of the Ising
-            model whose size is `M` the dimension of the problem.
-        h: (M,) Tensor
-            Vector representing the linear part of the Ising model whose
-            size is `M` the dimension of the problem.
-        dtype: torch.dtype
-            Data-type used for storing the coefficients of the Ising model.
-        device: str | torch.device
-            Device on which the instance is located.
+    J: (M, M) Tensor
+        Square matrix representing the quadratic part of the Ising model
+        whose size is `M` the dimension of the problem.
+    h: (M,) Tensor | None, optional
+        Vector representing the linear part of the Ising model whose size
+        is `M` the dimension of the problem. If this argument is not
+        provided (`h is None`), it defaults to the null vector.
+    dtype: torch.dtype, default=torch.float32
+        Data-type used for storing the coefficients of the Ising model.
+    device: str | torch.device, default="cpu"
+        Device on which the instance is located.
 
     Attributes
     ----------
@@ -57,7 +58,7 @@ class IsingCore:
     device
     dimension : int
         Size of the Ising problem, i.e. number of spins.
-    computed_spins : (A, M) Tensor or None
+    computed_spins : (A, M) Tensor | None
         Spin vectors obtained by minimizing the Ising energy. None if no
         solving method has been called.
     J: (M, M) Tensor
@@ -127,8 +128,8 @@ class IsingCore:
 
         Returns
         -------
-            tensor: Tensor
-                Matrix describing the new Ising model.
+        tensor: Tensor
+            Matrix describing the new Ising model.
 
         Notes
         -----
@@ -168,8 +169,8 @@ class IsingCore:
 
         Returns
         -------
-            None
-                The input is modified in place.
+        None
+            The input is modified in place.
 
         """
         torch.diagonal(tensor)[...] = 0
@@ -186,9 +187,9 @@ class IsingCore:
 
         Returns
         -------
-            Tensor
-                Symmetric tensor defining the same quadratic form as
-                `tensor`.
+        Tensor
+            Symmetric tensor defining the same quadratic form as `tensor`.
+
         """
         return (tensor + tensor.t()) / 2.0
 
@@ -201,8 +202,9 @@ class IsingCore:
 
         Returns
         -------
-            sb_tensor : Tensor
-                Equivalent tensor compatible with the SB algorithm.
+        sb_tensor : Tensor
+            Equivalent tensor compatible with the SB algorithm.
+
         """
         tensor = self.symmetrize(self.J)
         self.remove_diagonal_(tensor)
