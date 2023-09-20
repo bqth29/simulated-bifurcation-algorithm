@@ -44,7 +44,7 @@ class SpinPolynomial(IsingPolynomialInterface):
             the constant term of the polynomial. `None` means no constant term
             (default is `None`)
         dtype : torch.dtype, optional
-            the dtype used to encode polynomial's coefficients (default is 
+            the dtype used to encode polynomial's coefficients (default is
             `float32`)
         device : str, optional
             the device on which to perform the computations of the Simulated
