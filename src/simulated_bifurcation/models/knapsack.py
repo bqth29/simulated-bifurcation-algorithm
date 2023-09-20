@@ -57,7 +57,7 @@ class Knapsack(BinaryQuadraticPolynomial):
             items = np.array(sb_result)[: self.n_items]
             weights_array = np.array(self.weights)
             costs_array = np.array(self.costs)
-            content["items"] = np.arange(1, self.n_items + 1)[items == 1].tolist()
+            content["items"] = np.arange(self.n_items)[items == 1].tolist()
             content["total_cost"] = np.sum(costs_array * items)
             content["total_weight"] = np.sum(weights_array * items)
             content["status"] = (

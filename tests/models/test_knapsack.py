@@ -18,7 +18,7 @@ def test_markowitz():
     }
 
     model.minimize(verbose=False)
-    assert model.summary["items"] == [2, 3, 4, 5]
+    assert model.summary["items"] == [1, 2, 3, 4]
     assert model.summary["total_cost"] == 15
     assert model.summary["total_weight"] == 8
     assert model.summary["status"] == "success"
