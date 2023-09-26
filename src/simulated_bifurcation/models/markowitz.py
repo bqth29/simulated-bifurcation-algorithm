@@ -71,7 +71,7 @@ class SequentialMarkowitz(IntegerPolynomial):
         expected_returns : T x N
         rebalancing_costs : T x N x N
         """
-        self.covariances = cast_to_tensor(covariances)
+        self.covariances = self.__cast_to_tensor(covariances, dtype, device)
         self.expected_returns = cast_to_tensor(expected_returns)
         self.rebalancing_costs = cast_to_tensor(rebalancing_costs)
         self.risk_coefficient = risk_coefficient
