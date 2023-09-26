@@ -4,7 +4,6 @@ import numpy as np
 import torch
 
 from ..polynomial import IntegerPolynomial
-from .utils import cast_to_tensor
 
 
 class Markowitz(IntegerPolynomial):
