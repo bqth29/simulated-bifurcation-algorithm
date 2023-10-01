@@ -23,7 +23,7 @@ def test_optimizer():
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
-    ising.optimize(
+    ising.minimize(
         20,
         10000,
         False,
@@ -48,7 +48,7 @@ def test_optimizer_without_bifurcation():
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
-    ising.optimize(
+    ising.minimize(
         5,
         10,
         False,
@@ -83,7 +83,7 @@ def test_optimizer_with_window():
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
-    ising.optimize(
+    ising.minimize(
         20,
         30000,
         False,
@@ -108,7 +108,7 @@ def test_optimizer_with_heating():
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
-    ising.optimize(
+    ising.minimize(
         20,
         10000,
         False,

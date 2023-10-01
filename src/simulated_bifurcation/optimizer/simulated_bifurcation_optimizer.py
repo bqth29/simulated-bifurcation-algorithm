@@ -1,6 +1,6 @@
 import logging
 from time import time
-from typing import Tuple
+from typing import Tuple, Union
 
 import torch
 from numpy import minimum
@@ -125,13 +125,13 @@ class SimulatedBifurcationOptimizer:
             self.agents,
             self.convergence_threshold,
             matrix.dtype,
-            str(matrix.device),
+            matrix.device,
             (self.verbose and use_window),
         )
 
     def __init_symplectic_integrator(self, matrix: torch.Tensor) -> None:
         self.symplectic_integrator = SymplecticIntegrator(
-            (matrix.shape[0], self.agents), self.mode, matrix.dtype, str(matrix.device)
+            (matrix.shape[0], self.agents), self.mode, matrix.dtype, matrix.device
         )
 
     def __step_update(self) -> None:

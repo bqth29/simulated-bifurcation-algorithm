@@ -1,3 +1,34 @@
+"""
+Implementation of multivariate degree 2 polynomials over integer vectors.
+
+Multivariate degree 2 polynomials are the sum of a quadratic form and a
+linear form plus a constant term:
+`ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
+or `x.T Q x + l.T x + c` in matrix notation,
+where `Q` is a square matrix, `l` is a vector and `c` is a constant.
+The `x(i)`'s values must be non-negative integers.
+
+Such polynomials can be translated into equivalent Ising problems and
+solved with the Simulated Bifurcation algorithm (provided the entries of
+the input vectors have a fixed bit-width; for instance 7-bits integers,
+that is integers between 0 and 127 inclusive).
+
+See Also
+--------
+IsingPolynomialInterface:
+    Abstract class for multivariate degree 2 polynomials.
+BinaryPolynomial:
+    Multivariate degree 2 polynomials over vectors whose entries are in
+    {0, 1}.
+SpinPolynomial:
+    Multivariate degree 2 polynomials over vectors whose entries are in
+    {-1, 1}.
+models:
+    Package containing the implementation of several common
+    combinatorial optimization problems.
+
+"""
+
 from typing import Optional, Union
 
 import numpy as np
@@ -10,17 +41,71 @@ from .ising_polynomial_interface import IsingPolynomialInterface
 class IntegerPolynomial(IsingPolynomialInterface):
 
     """
-    Order two multivariate polynomial that can be translated as an equivalent
-    Ising problem to be solved with the Simulated Bifurcation algorithm.
+    Multivariate degree 2 polynomials over fixed bit-width integer vectors.
 
-    The polynomial is the combination of a quadratic and a linear form plus a
-    constant term:
-
+    Multivariate degree 2 polynomials are the sum of a quadratic form and a
+    linear form plus a constant term:
     `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
+    or `x.T Q x + l.T x + c` in matrix notation,
+    where `Q` is a square matrix, `l` is a vector and `c` is a constant.
+    The `x(i)`'s values  must be non-negative integers with a fixed
+    bit-width. For instance 7-bits integers are the integers between 0 and
+    127 inclusive.
 
-    where `Q` is a square matrix, `l` a vector a `c` a constant.
+    This polynomial can be translated into an equivalent Ising problem and
+    solved with the Simulated Bifurcation algorithm.
 
-    The `n(i)`'s values must be integers.
+    Parameters
+    ----------
+    matrix : (M, M) Tensor | ndarray
+        Matrix corresponding to the quadratic terms of the polynomial
+        (quadratic form). It should be a square matrix, but not necessarily
+        symmetric.
+    vector : (M,) Tensor | ndarray | None, optional
+        Vector corresponding to the linear terms of the polynomial (linear
+        form). The default is None which signifies there are no linear
+        terms, that is `vector` is the null vector.
+    constant : int | float | None, optional
+        Constant of the polynomial. The default is None which signifies
+        there is no constant term, that is `constant` = 0.
+    number_of_bits: int, default=1
+        The number of bits of the input vectors. For instance 7-bits
+        integers are the integers between 0 and 127 inclusive.
+    dtype : torch.dtype, default=torch.float32
+        Data-type used for storing the coefficients of the polynomial.
+    device : str | torch.device, default="cpu"
+        Device on which the polynomial is located. If available, use "cuda"
+        to use the polynomial on a GPU.
+
+    Attributes
+    ----------
+    matrix
+    vector
+    constant
+    dimension
+    device
+    dtype
+    sb_result : (M, A) Tensor | None
+        Spin vectors obtained after optimizing the polynomial. None if no
+        optimization method has been called.
+    number_of_bits : int
+        The number of bits of the input vectors. For instance 7-bits
+        integers are the integers between 0 and 127 inclusive.
+
+    See Also
+    --------
+    BinaryPolynomial:
+        Multivariate degree 2 polynomials over vectors whose entries are in
+        {0, 1}.
+    IsingPolynomialInterface:
+        Abstract class for multivariate degree 2 polynomials.
+    SpinPolynomial:
+        Multivariate degree 2 polynomials over vectors whose entries are in
+        {-1, 1}.
+    models:
+        Package containing the implementation of several common
+        combinatorial optimization problems.
+
     """
 
     def __init__(
@@ -30,30 +115,8 @@ class IntegerPolynomial(IsingPolynomialInterface):
         constant: Union[float, int, None] = None,
         number_of_bits: int = 1,
         dtype: torch.dtype = torch.float32,
-        device: str = "cpu",
+        device: Union[str, torch.device] = "cpu",
     ) -> None:
-        """
-        Parameters
-        ----------
-        matrix : Tensor | ndarray
-            the square matrix that manages the order-two terms in the
-            polynomial (quadratic form matrix).
-        vector : Tensor | ndarray | None, optional
-            the vector that manages the order-one terms in the polynomial
-            (linear form vector). `None` means no vector (default is `None`)
-        constant : float | int | None, optional
-            the constant term of the polynomial. `None` means no constant term
-            (default is `None`)
-        number_of_bits : int, optional
-            the number of bits on which the input values are encoded (default
-            is `1`)
-        dtype : torch.dtype, optional
-            the dtype used to encode polynomial's coefficients (default is
-            `float32`)
-        device : str, optional
-            the device on which to perform the computations of the Simulated
-            Bifurcation algorithm (default `"cpu"`)
-        """
         if not isinstance(number_of_bits, int) or number_of_bits < 1:
             raise ValueError("The number of bits must be a non-negative integer.")
         super().__init__(
@@ -66,7 +129,7 @@ class IntegerPolynomial(IsingPolynomialInterface):
 
     @staticmethod
     def integer_to_binary_matrix(
-        dimension: int, number_of_bits: int, device: str
+        dimension: int, number_of_bits: int, device: Union[str, torch.device]
     ) -> torch.Tensor:
         matrix = torch.zeros((dimension * number_of_bits, dimension), device=device)
         for row in range(dimension):
@@ -97,6 +160,24 @@ class IntegerPolynomial(IsingPolynomialInterface):
         return IsingCore(J, h, self.dtype, self.device)
 
     def convert_spins(self, ising: IsingCore) -> Optional[torch.Tensor]:
+        """
+        Convert the spins of an Ising problem into integer variables.
+
+        Parameters
+        ----------
+        ising : IsingCore
+            The Ising problem whose spins are converted into integer
+            variables.
+
+        Returns
+        -------
+        binary_vars : Tensor | None
+            The integer variables corresponding to the spins of `ising`, it
+            is None if `ising.computed_spins` is None.
+
+        """
         if ising.computed_spins is not None:
-            return 0.5 * self.__int_to_bin_matrix.t() @ (ising.computed_spins + 1)
-        return None
+            int_vars = 0.5 * self.__int_to_bin_matrix.t() @ (ising.computed_spins + 1)
+        else:
+            int_vars = None
+        return int_vars

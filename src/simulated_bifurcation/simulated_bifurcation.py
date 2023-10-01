@@ -13,6 +13,12 @@ maximize:
 build_model:
     Instantiate a multivariate degree 2 polynomial over a given domain.
 
+See Also
+--------
+models:
+    Package containing the implementation of several common combinatorial
+    optimization problems.
+
 """
 
 
@@ -36,7 +42,7 @@ def optimize(
     constant: Union[int, float, None] = None,
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
-    device: str = "cpu",
+    device: Union[str, torch.device] = "cpu",
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
@@ -49,8 +55,8 @@ def optimize(
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
-) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
-    r"""
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
     Optimize a multivariate degree 2 polynomial using the SB algorithm.
 
     The simulated bifurcated (SB) algorithm is a randomized approximation
@@ -76,15 +82,15 @@ def optimize(
     constant : int | float | None, optional
         Constant of the polynomial. The default is None which signifies
         there is no constant term, that is `constant` = 0.
-    input_type : {"spin", "binary", "int(\d+)"}, default=spin
+    input_type : {"spin", "binary", "int..."}, default="spin"
         Domain over which the optimization is done.
         • "spin" : Optimize the polynomial over vectors whose entries are
         in {-1, 1}.
         • "binary" : Optimize the polynomial over vectors whose entries are
         in {0, 1}.
-        • "int(\d+)" : Optimize the polynomial over vectors whose entries
+        • "int..." : Optimize the polynomial over vectors whose entries
         are n-bits non-negative integers, that is integers between 0 and
-        2^n - 1 inclusive. "int(\d+)" represents any string starting with
+        2^n - 1 inclusive. "int..." represents any string starting with
         "int" and followed by a positive integer n, e.g. "int3", "int42".
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
@@ -92,7 +98,7 @@ def optimize(
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
         dimensional instances or when running the algorithm with many
-        agents).
+        agents). Output tensors are located on this device.
     agents : int, default=128
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
@@ -124,13 +130,16 @@ def optimize(
     result : ([`agents`], M) Tensor
         Best vector found, or all the vectors found is `best_only` is
         False.
-    evaluation : float | (`agents`) Tensor
+    evaluation : ([`agents`],) Tensor
         Value of the polynomial at `result`.
 
     Other Parameters
     ----------------
     use_window : bool, default=True
-        Whether to use the window as a stopping criterion.
+        Whether to use the window as a stopping criterion: an agent is said
+        to have converged if its spins have not changed over the last
+        `convergence_threshold` spin samplings (done every
+        `sampling_period` steps).
     sampling_period : int, default=50
         Number of iterations between two consecutive spin samplings by the
         window.
@@ -138,8 +147,8 @@ def optimize(
         Number of consecutive identical spin samplings considered as a
         proof of convergence by the window.
     timeout : float, default=None
-        Time, in seconds, after which the simulation will be stopped. None
-        means no timeout.
+        Time, in seconds, after which the simulation will be stopped.
+        None means no timeout.
     Hyperparameters corresponding to physical constants :
         These parameters have been fine-tuned (Goto et al.) to give the
         best results most of the time. Nevertheless, the relevance of
@@ -150,28 +159,44 @@ def optimize(
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int(\d+)"}.
+        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        "int..." designates any string starting with "int" and followed by
+        a positive integer, or more formally, any string matching the
+        following regular expression: ^int[1-9][0-9]*$.
 
     Warns
     -----
     If `use_window` is True and no agent has reached the convergence
     criterion defined by `sampling_period` and `convergence_threshold`
     within `max_steps` iterations, a warning is logged in the console.
-    This is just an indication however; the returned solutions may still
-    be of good quality. If the returned solutions are not of good quality,
-    solutions include increasing `max_steps` (at the expense of runtime),
-    changing the values of `ballistic` and `heated` to use different
-    variants of the SB algorithm and changing the values of some
-    hyperparameters corresponding to physical constants (advanced usage,
-    see Other Parameters).
+    This is just an indication however; the returned vectors may still be
+    of good quality. Solutions to this warning include:
+        - increasing the time step in the SB algorithm (may decrease
+            numerical stability), see the `set_env` function.
+        - increasing `max_steps` (at the expense of runtime).
+        - changing the values of `ballistic` and `heated` to use different
+            variants of the SB algorithm.
+        - changing the values of some hyperparameters corresponding to
+            physical constants (advanced usage, see Other Parameters).
 
     Warnings
     --------
-    The SB algorithm is an approximation algorithm, which implies that
-    the returned values may not correspond to global optima. Therefore, if
-    some constraints are embedded as penalties in the polynomial, that is
-    adding terms that ensure that any global optimum satisfies the
-    constraints, the return values may violate these constraints.
+    Approximation algorithm:
+        The SB algorithm is an approximation algorithm, which implies that
+        the returned values may not correspond to global optima. Therefore,
+        if some constraints are embedded as penalties in the polynomial,
+        that is adding terms that ensure that any global optimum satisfies
+        the constraints, the return values may violate these constraints.
+    Non-deterministic behaviour:
+        The SB algorithm uses a randomized initialization, and this package
+        is implemented with a PyTorch backend. To ensure a consistent
+        initialization when running the same script multiple times, use
+        `torch.manual_seed`. However, results may not be reproducible
+        between CPU and GPU executions, even when using identical seeds.
+        Furthermore, certain PyTorch operations are not deterministic.
+        For more comprehensive details on reproducibility, refer to the
+        PyTorch documentation available at:
+        https://pytorch.org/docs/stable/notes/randomness.html.
 
     See Also
     --------
@@ -199,7 +224,7 @@ def optimize(
     additional term by setting `heated=True`.
 
     The time complexity is O(`max_steps` * `agents` * M^2) where M is the
-    dimension of the instance. The space complexity O(M^2 + `agents` * N).
+    dimension of the instance. The space complexity O(M^2 + `agents` * M).
 
     For instances in low dimension (~100), running computations on GPU is
     slower than running computations on CPU unless a large number of
@@ -226,18 +251,29 @@ def optimize(
     ...     Q, minimize=False, input_type="binary"
     ... )
     >>> best_vector
-    tensor([0, 1])
+    tensor([0., 1.])
     >>> best_value
-    3
+    tensor(3.)
 
-    Minimize Q and return all the solutions found using 42 agents
+    Minimize a polynomial over {-1, 1} x {-1, 1} and return all the
+    solutions found using 42 agents
     >>> best_vectors, best_values = sb.optimize(
-    ...     Q, input_type="binary", agents=42, best_only=False
+    ...     Q, input_type="spin", agents=42, best_only=False
     ... )
     >>> best_vectors.shape  # (agents, dimension of the instance)
     (42, 2)
     >>> best_values.shape  # (agents,)
     (42,)
+
+    Minimize a polynomial over {0, 1, 2, ..., 6, 7} x {0, 1, 2, ..., 6, 7}
+    using the GPU to run the SB algorithm. Outputs are located on the GPU.
+    >>> best_vector, best_value = sb.optimize(
+    ...     Q, input_type="int3", device="cuda"
+    ... )
+    >>> best_vector
+    tensor([0., 0.], device='cuda:0')
+    >>> best_value
+    tensor(0., device='cuda:0')
 
     """
     model = build_model(
@@ -270,7 +306,7 @@ def minimize(
     constant: Union[int, float, None] = None,
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
-    device: str = "cpu",
+    device: Union[str, torch.device] = "cpu",
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
@@ -282,8 +318,8 @@ def minimize(
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
-) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
-    r"""
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
     Minimize a multivariate degree 2 polynomial using the SB algorithm.
 
     The simulated bifurcated (SB) algorithm is a randomized approximation
@@ -309,15 +345,15 @@ def minimize(
     constant : int | float | None, optional
         Constant of the polynomial. The default is None which signifies
         there is no constant term, that is `constant` = 0.
-    input_type : {"spin", "binary", "int(\d+)"}, default=spin
+    input_type : {"spin", "binary", "int..."}, default="spin"
         Domain over which the minimization is done.
         • "spin" : Minimize the polynomial over vectors whose entries are
         in {-1, 1}.
         • "binary" : Minimize the polynomial over vectors whose entries are
         in {0, 1}.
-        • "int(\d+)" : Minimize the polynomial over vectors whose entries
+        • "int..." : Minimize the polynomial over vectors whose entries
         are n-bits non-negative integers, that is integers between 0 and
-        2^n - 1 inclusive. "int(\d+)" represents any string starting with
+        2^n - 1 inclusive. "int..." represents any string starting with
         "int" and followed by a positive integer n, e.g. "int3", "int42".
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
@@ -325,7 +361,7 @@ def minimize(
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
         dimensional instances or when running the algorithm with many
-        agents).
+        agents). Output tensors are located on this device.
     agents : int, default=128
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
@@ -354,13 +390,16 @@ def minimize(
     result : ([`agents`], M) Tensor
         Best vector found, or all the vectors found is `best_only` is
         False.
-    evaluation : float | (`agents`) Tensor
+    evaluation : ([`agents`],) Tensor
         Value of the polynomial at `result`.
 
     Other Parameters
     ----------------
     use_window : bool, default=True
-        Whether to use the window as a stopping criterion.
+        Whether to use the window as a stopping criterion: an agent is said
+        to have converged if its spins have not changed over the last
+        `convergence_threshold` spin samplings (done every
+        `sampling_period` steps).
     sampling_period : int, default=50
         Number of iterations between two consecutive spin samplings by the
         window.
@@ -380,28 +419,44 @@ def minimize(
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int(\d+)"}.
+        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        "int..." designates any string starting with "int" and followed by
+        a positive integer, or more formally, any string matching the
+        following regular expression: ^int[1-9][0-9]*$.
 
     Warns
     -----
     If `use_window` is True and no agent has reached the convergence
     criterion defined by `sampling_period` and `convergence_threshold`
     within `max_steps` iterations, a warning is logged in the console.
-    This is just an indication however; the returned solutions may still
-    be of good quality. If the returned solutions are not of good quality,
-    solutions include increasing `max_steps` (at the expense of runtime),
-    changing the values of `ballistic` and `heated` to use different
-    variants of the SB algorithm and changing the values of some
-    hyperparameters corresponding to physical constants (advanced usage,
-    see Other Parameters).
+    This is just an indication however; the returned vectors may still be
+    of good quality. Solutions to this warning include:
+        - increasing the time step in the SB algorithm (may decrease
+            numerical stability), see the `set_env` function.
+        - increasing `max_steps` (at the expense of runtime).
+        - changing the values of `ballistic` and `heated` to use different
+            variants of the SB algorithm.
+        - changing the values of some hyperparameters corresponding to
+            physical constants (advanced usage, see Other Parameters).
 
     Warnings
     --------
-    The SB algorithm is an approximation algorithm, which implies that
-    the returned values may not correspond to global minima. Therefore, if
-    some constraints are embedded as penalties in the polynomial, that is
-    adding terms that ensure that any global minimum satisfies the
-    constraints, the return values may violate these constraints.
+    Approximation algorithm:
+        The SB algorithm is an approximation algorithm, which implies that
+        the returned values may not correspond to global minima. Therefore,
+        if some constraints are embedded as penalties in the polynomial,
+        that is adding terms that ensure that any global minimum satisfies
+        the constraints, the return values may violate these constraints.
+    Non-deterministic behaviour:
+        The SB algorithm uses a randomized initialization, and this package
+        is implemented with a PyTorch backend. To ensure a consistent
+        initialization when running the same script multiple times, use
+        `torch.manual_seed`. However, results may not be reproducible
+        between CPU and GPU executions, even when using identical seeds.
+        Furthermore, certain PyTorch operations are not deterministic.
+        For more comprehensive details on reproducibility, refer to the
+        PyTorch documentation available at:
+        https://pytorch.org/docs/stable/notes/randomness.html.
 
     See Also
     --------
@@ -428,7 +483,7 @@ def minimize(
     additional term by setting `heated=True`.
 
     The time complexity is O(`max_steps` * `agents` * M^2) where M is the
-    dimension of the instance. The space complexity O(M^2 + `agents` * N).
+    dimension of the instance. The space complexity O(M^2 + `agents` * M).
 
     For instances in low dimension (~100), running computations on GPU is
     slower than running computations on CPU unless a large number of
@@ -453,9 +508,9 @@ def minimize(
     ...                   [0, 3]])
     >>> best_vector, best_value = sb.minimize(Q, input_type="binary")
     >>> best_vector
-    tensor([0, 0])
+    tensor([0., 0.])
     >>> best_value
-    0
+    tensor(0.)
 
     Return all the solutions found using 42 agents
     >>> best_vectors, best_values = sb.minimize(
@@ -465,6 +520,16 @@ def minimize(
     (42, 2)
     >>> best_values.shape  # (agents,)
     (42,)
+
+    Minimize a polynomial over {0, 1, 2, ..., 6, 7} x {0, 1, 2, ..., 6, 7}
+    using the GPU to run the SB algorithm. Outputs are located on the GPU.
+    >>> best_vector, best_value = sb.minimize(
+    ...     Q, input_type="int3", device="cuda"
+    ... )
+    >>> best_vector
+    tensor([0., 0.], device='cuda:0')
+    >>> best_value
+    tensor(0., device='cuda:0')
 
     """
     return optimize(
@@ -494,7 +559,7 @@ def maximize(
     constant: Union[int, float, None] = None,
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
-    device: str = "cpu",
+    device: Union[str, torch.device] = "cpu",
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
@@ -506,8 +571,8 @@ def maximize(
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
-) -> Tuple[torch.Tensor, Union[float, torch.Tensor]]:
-    r"""
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
     Maximize a multivariate degree 2 polynomial using the SB algorithm.
 
     The simulated bifurcated (SB) algorithm is a randomized approximation
@@ -533,15 +598,15 @@ def maximize(
     constant : int | float | None, optional
         Constant of the polynomial. The default is None which signifies
         there is no constant term, that is `constant` = 0.
-    input_type : {"spin", "binary", "int(\d+)"}, default=spin
+    input_type : {"spin", "binary", "int..."}, default="spin"
         Domain over which the maximization is done.
         • "spin" : Maximize the polynomial over vectors whose entries are
         in {-1, 1}.
         • "binary" : Maximize the polynomial over vectors whose entries are
         in {0, 1}.
-        • "int(\d+)" : Maximize the polynomial over vectors whose entries
+        • "int..." : Maximize the polynomial over vectors whose entries
         are n-bits non-negative integers, that is integers between 0 and
-        2^n - 1 inclusive. "int(\d+)" represents any string starting with
+        2^n - 1 inclusive. "int..." represents any string starting with
         "int" and followed by a positive integer n, e.g. "int3", "int42".
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
@@ -549,7 +614,7 @@ def maximize(
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
         dimensional instances or when running the algorithm with many
-        agents).
+        agents). Output tensors are located on this device.
     agents : int, default=128
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
@@ -578,13 +643,16 @@ def maximize(
     result : ([`agents`], M) Tensor
         Best vector found, or all the vectors found is `best_only` is
         False.
-    evaluation : float | (`agents`) Tensor
+    evaluation : ([`agents`],) Tensor
         Value of the polynomial at `result`.
 
     Other Parameters
     ----------------
     use_window : bool, default=True
-        Whether to use the window as a stopping criterion.
+        Whether to use the window as a stopping criterion: an agent is said
+        to have converged if its spins have not changed over the last
+        `convergence_threshold` spin samplings (done every
+        `sampling_period` steps).
     sampling_period : int, default=50
         Number of iterations between two consecutive spin samplings by the
         window.
@@ -592,8 +660,8 @@ def maximize(
         Number of consecutive identical spin samplings considered as a
         proof of convergence by the window.
     timeout : float, default=None
-        Time, in seconds, after which the simulation will be stopped. None
-        means no timeout.
+        Time, in seconds, after which the simulation will be stopped.
+        None means no timeout.
     Hyperparameters corresponding to physical constants :
         These parameters have been fine-tuned (Goto et al.) to give the
         best results most of the time. Nevertheless, the relevance of
@@ -604,28 +672,44 @@ def maximize(
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int(\d+)"}.
+        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        "int..." designates any string starting with "int" and followed by
+        a positive integer, or more formally, any string matching the
+        following regular expression: ^int[1-9][0-9]*$.
 
     Warns
     -----
     If `use_window` is True and no agent has reached the convergence
     criterion defined by `sampling_period` and `convergence_threshold`
     within `max_steps` iterations, a warning is logged in the console.
-    This is just an indication however; the returned solutions may still
-    be of good quality. If the returned solutions are not of good quality,
-    solutions include increasing `max_steps` (at the expense of runtime),
-    changing the values of `ballistic` and `heated` to use different
-    variants of the SB algorithm and changing the values of some
-    hyperparameters corresponding to physical constants (advanced usage,
-    see Other Parameters).
+    This is just an indication however; the returned vectors may still be
+    of good quality. Solutions to this warning include:
+        - increasing the time step in the SB algorithm (may decrease
+            numerical stability), see the `set_env` function.
+        - increasing `max_steps` (at the expense of runtime).
+        - changing the values of `ballistic` and `heated` to use different
+            variants of the SB algorithm.
+        - changing the values of some hyperparameters corresponding to
+            physical constants (advanced usage, see Other Parameters).
 
     Warnings
     --------
-    The SB algorithm is an approximation algorithm, which implies that
-    the returned values may not correspond to global maxima. Therefore, if
-    some constraints are embedded as penalties in the polynomial, that is
-    adding terms that ensure that any global maximum satisfies the
-    constraints, the return values may violate these constraints.
+    Approximation algorithm:
+        The SB algorithm is an approximation algorithm, which implies that
+        the returned values may not correspond to global maxima. Therefore,
+        if some constraints are embedded as penalties in the polynomial,
+        that is adding terms that ensure that any global maximum satisfies
+        the constraints, the return values may violate these constraints.
+    Non-deterministic behaviour:
+        The SB algorithm uses a randomized initialization, and this package
+        is implemented with a PyTorch backend. To ensure a consistent
+        initialization when running the same script multiple times, use
+        `torch.manual_seed`. However, results may not be reproducible
+        between CPU and GPU executions, even when using identical seeds.
+        Furthermore, certain PyTorch operations are not deterministic.
+        For more comprehensive details on reproducibility, refer to the
+        PyTorch documentation available at:
+        https://pytorch.org/docs/stable/notes/randomness.html.
 
     See Also
     --------
@@ -652,7 +736,7 @@ def maximize(
     additional term by setting `heated=True`.
 
     The time complexity is O(`max_steps` * `agents` * M^2) where M is the
-    dimension of the instance. The space complexity O(M^2 + `agents` * N).
+    dimension of the instance. The space complexity O(M^2 + `agents` * M).
 
     For instances in low dimension (~100), running computations on GPU is
     slower than running computations on CPU unless a large number of
@@ -677,9 +761,9 @@ def maximize(
     ...                   [0, 3]])
     >>> best_vector, best_value = sb.maximize(Q, input_type="binary")
     >>> best_vector
-    tensor([0, 1])
+    tensor([0., 1.])
     >>> best_value
-    3
+    tensor(3.)
 
     Return all the solutions found using 42 agents
     >>> best_vectors, best_values = sb.maximize(
@@ -689,6 +773,16 @@ def maximize(
     (42, 2)
     >>> best_values.shape  # (agents,)
     (42,)
+
+    Maximize a polynomial over {0, 1, 2, ..., 6, 7} x {0, 1, 2, ..., 6, 7}
+    using the GPU to run the SB algorithm. Outputs are located on the GPU.
+    >>> best_vector, best_value = sb.maximize(
+    ...     Q, input_type="int3", device="cuda"
+    ... )
+    >>> best_vector
+    tensor([0., 7.], device='cuda:0')
+    >>> best_value
+    tensor(147., device='cuda:0')
 
     """
     return optimize(
@@ -718,9 +812,9 @@ def build_model(
     constant: Union[int, float, None] = None,
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
-    device: str = "cpu",
+    device: Union[str, torch.device] = "cpu",
 ) -> IsingPolynomialInterface:
-    r"""
+    """
     Instantiate a multivariate degree 2 polynomial over a given domain.
 
     The polynomial is the sum of a quadratic form and a linear form plus
@@ -742,13 +836,13 @@ def build_model(
     constant : int | float | None, optional
         Constant of the polynomial. The default is None which signifies
         there is no constant term, that is `constant` = 0.
-    input_type : {"spin", "binary", "int(\d+)"}, default=spin
+    input_type : {"spin", "binary", "int..."}, default="spin"
         Domain over which the maximization is done.
         - "spin" : Polynomial over vectors whose entries are in {-1, 1}.
         - "binary" : Polynomial over vectors whose entries are in {0, 1}.
-        - "int(\d+)" : Polynomial over vectors whose entries are n-bits
+        - "int..." : Polynomial over vectors whose entries are n-bits
         non-negative integers, that is integers between 0 and 2^n - 1
-        inclusive. "int(\d+)" represents any string starting with "int" and
+        inclusive. "int..." represents any string starting with "int" and
         followed by a positive integer n, e.g. "int3", "int42", ...
     dtype : torch.dtype, default=torch.float32
         Data-type used for storing the coefficients of the polynomial.
@@ -763,12 +857,15 @@ def build_model(
         the domain specified by `input_type`.
         - `input_type="spin"` : SpinPolynomial.
         - `input_type="binary"` : BinaryPolynomial.
-        - `input_type="binary"` : IntegerPolynomial.
+        - `input_type="int..."` : IntegerPolynomial.
 
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int(\d+)"}.
+        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        "int..." designates any string starting with "int" and followed by
+        a positive integer, or more formally, any string matching the
+        following regular expression: ^int[1-9][0-9]*$.
 
     Warnings
     --------
@@ -799,7 +896,7 @@ def build_model(
     >>> best_vector
     tensor([0, 1])
     >>> best_value
-    3
+    tensor(3)
 
     Return all the solutions found using 42 agents
     >>> best_vectors, best_values = poly.maximize(
@@ -813,7 +910,7 @@ def build_model(
     Evaluate the polynomial at a single point
     >>> point = torch.tensor([1, 1], dtype=torch.float32)
     >>> poly(point)
-    2
+    tensor(2)
 
     Evaluate the polynomial at several points simultaneously
     >>> points = torch.tensor(
@@ -823,8 +920,29 @@ def build_model(
     >>> poly(points)
     tensor([0, 3, 1, 2])
 
+    Instantiate a polynomial over {0, 1, ..., 14, 15} x {0, 1, ..., 14, 15}
+    and use it on the GPU
+    >>> Q = torch.tensor([[1, -2],
+    ...                   [0, 3]])
+    >>> poly = sb.build_model(Q, input_type="int4", device="cuda")
+
+    Maximize this polynomial (outputs are located on the GPU)
+    >>> best_vector, best_value = poly.maximize()
+    >>> best_vector
+    tensor([ 0., 15.], device='cuda:0')
+    >>> best_value
+    tensor(675., device='cuda:0')
+
+    Evaluate this polynomial at a given point
+    >>> point = torch.tensor([12, 7], dtype=torch.float32)
+    >>> point = point.to(device="cuda")  # send tensor to GPU
+    >>> poly(point)  # (output is located on GPU)
+    tensor(123., device='cuda:0')
+
     """
-    int_type_regex = re.compile(r"int(\d+)")
+    int_type_regex = "^int[1-9][0-9]*$"
+    int_type_pattern = re.compile(int_type_regex)
+
     if input_type == "spin":
         return SpinPolynomial(
             matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device
@@ -833,14 +951,20 @@ def build_model(
         return BinaryPolynomial(
             matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device
         )
-    if int_type_regex.match(input_type):
-        number_of_bits = int(int_type_regex.findall(input_type)[0])
-        return IntegerPolynomial(
-            matrix=matrix,
-            vector=vector,
-            constant=constant,
-            dtype=dtype,
-            device=device,
-            number_of_bits=number_of_bits,
+    if int_type_pattern.match(input_type) is None:
+        raise ValueError(
+            f'Input type must be one of "spin" or "binary", or be a string starting'
+            f'with "int" and be followed by a positive integer.\n'
+            f"More formally, it should match the following regular expression.\n"
+            f"{int_type_regex}\n"
+            f'Examples: "int7", "int42", ...'
         )
-    raise ValueError(r'Input type must match "spin", "binary" or "int(\d+)".')
+    number_of_bits = int(input_type[3:])
+    return IntegerPolynomial(
+        matrix=matrix,
+        vector=vector,
+        constant=constant,
+        dtype=dtype,
+        device=device,
+        number_of_bits=number_of_bits,
+    )

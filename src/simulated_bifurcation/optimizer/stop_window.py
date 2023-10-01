@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Union
 
 import torch
 from tqdm import tqdm
@@ -18,7 +18,7 @@ class StopWindow:
         n_agents: int,
         convergence_threshold: int,
         dtype: torch.dtype,
-        device: str,
+        device: Union[str, torch.device],
         verbose: bool,
     ) -> None:
         self.n_spins = n_spins
