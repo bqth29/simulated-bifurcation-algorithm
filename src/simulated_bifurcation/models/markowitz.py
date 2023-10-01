@@ -83,10 +83,10 @@ class SequentialMarkowitz(IntegerPolynomial):
         constant = (
             -initial_portfolio.t() @ self.rebalancing_costs[0] @ initial_portfolio
         )
-        return round(constant.item(), 4)
+        return constant.item()
 
     @property
-    def portfolio(self) -> torch.Tensor:
+    def portfolio(self) -> Optional[torch.Tensor]:
         if self.sb_result is None:
             return None
         best_agent = torch.argmax(self(self.sb_result.t())).item()
@@ -117,10 +117,13 @@ class Markowitz(SequentialMarkowitz):
         dtype: torch.dtype = torch.float32,
         device: str = "cpu",
     ) -> None:
+        covariance = torch.unsqueeze(covariance, 0)
+        expected_return = torch.unsqueeze(expected_return, 0)
+        rebalancing_costs = torch.zeros_like(covariance)
         super().__init__(
-            covariance.reshape((1,) + covariance.shape),
-            expected_return.reshape((1,) + expected_return.shape),
-            torch.zeros((1,) + covariance.shape, device=device, dtype=dtype),
+            covariance,
+            expected_return,
+            rebalancing_costs,
             None,
             risk_coefficient,
             number_of_bits,
