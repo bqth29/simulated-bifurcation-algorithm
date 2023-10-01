@@ -94,19 +94,20 @@ def test_init_with_wrong_parameters():
 
 
 def test_check_device():
-    IsingPolynomialInterfaceImpl(matrix, device=torch.device("cpu"))
+    IsingPolynomialInterfaceImpl(matrix, device="cpu")
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
         IsingPolynomialInterfaceImpl(matrix, device=1)
-    if not torch.cuda.is_available():
-        with pytest.raises(RuntimeError):  # pragma: no cover
+    if not torch.cuda.is_available():  # pragma: no cover
+        with pytest.raises(RuntimeError):
             IsingPolynomialInterfaceImpl(matrix, device="cuda")
+    else:  # pragma: no cover
+        IsingPolynomialInterfaceImpl(matrix, device="cuda")
 
 
 def test_call_polynomial():
     polynomial = IsingPolynomialInterfaceImpl(matrix)
     assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0.0
-    assert isinstance(polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)), float)
     assert torch.equal(
         polynomial(
             torch.tensor(
@@ -119,6 +120,11 @@ def test_call_polynomial():
         ),
         torch.tensor([0, 228], dtype=torch.float32),
     )
+    assert isinstance(
+        polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)), torch.Tensor
+    )
+    assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)).shape == ()
+    assert polynomial(torch.tensor([[0, 0, 0]], dtype=torch.float32)).shape == (1,)
     assert polynomial(torch.zeros((1, 5, 3, 1, 2, 1, 3))).shape == (1, 5, 3, 1, 2, 1)
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
@@ -161,7 +167,8 @@ def test_best_only():
     spins_best_only, energy_best_only = model.optimize(agents=42, best_only=True)
     assert model.sb_result.shape == (3, 42)
     assert spins_best_only.shape == (3,)
-    assert isinstance(energy_best_only, float)
+    assert isinstance(energy_best_only, torch.Tensor)
+    assert energy_best_only.shape == ()
     assert energy_best_only == -2
     spins_all, energies_all = model.optimize(agents=42, best_only=False)
     assert model.sb_result.shape == (3, 42)

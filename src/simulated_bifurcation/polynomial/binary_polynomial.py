@@ -1,3 +1,33 @@
+"""
+Implementation of multivariate degree 2 polynomials over binary vectors.
+
+Multivariate degree 2 polynomials are the sum of a quadratic form and a
+linear form plus a constant term:
+`ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
+or `x.T Q x + l.T x + c` in matrix notation,
+where `Q` is a square matrix, `l` is a vector and `c` is a constant.
+The `x(i)`'s values must be binary (either `0` or `1`).
+
+Such polynomials can be translated into equivalent Ising problems and
+solved with the Simulated Bifurcation algorithm.
+
+See Also
+--------
+IsingPolynomialInterface:
+    Abstract class for multivariate degree 2 polynomials.
+IntegerPolynomial:
+    Multivariate degree 2 polynomials over non-negative integers with a
+    fixed number of bits.
+SpinPolynomial:
+    Multivariate degree 2 polynomials over vectors whose entries are in
+    {-1, 1}.
+models.QUBO: Implementation of the QUBO problem.
+models:
+    Package containing the implementation of several common
+    combinatorial optimization problems.
+
+"""
+
 from typing import Optional, Union
 
 import numpy as np
@@ -10,17 +40,64 @@ from .ising_polynomial_interface import IsingPolynomialInterface
 class BinaryPolynomial(IsingPolynomialInterface):
 
     """
-    Order two multivariate polynomial that can be translated as an equivalent
-    Ising problem to be solved with the Simulated Bifurcation algorithm.
+    Multivariate degree 2 polynomials over binary vectors.
 
-    The polynomial is the combination of a quadratic and a linear form plus a
-    constant term:
+    Multivariate degree 2 polynomials are the sum of a quadratic form and a
+    linear form plus a constant term:
+    `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
+    or `x.T Q x + l.T x + c` in matrix notation,
+    where `Q` is a square matrix, `l` is a vector and `c` is a constant.
+    The `x(i)`'s values must be binary (either `0` or `1`).
 
-    `ΣΣ Q(i,j)b(i)b(j) + Σ l(i)b(i) + c`
+    This polynomial can be translated into an equivalent Ising problem and
+    solved with the Simulated Bifurcation algorithm.
 
-    where `Q` is a square matrix, `l` a vector a `c` a constant.
+    Parameters
+    ----------
+    matrix : (M, M) Tensor | ndarray
+        Matrix corresponding to the quadratic terms of the polynomial
+        (quadratic form). It should be a square matrix, but not necessarily
+        symmetric.
+    vector : (M,) Tensor | ndarray | None, optional
+        Vector corresponding to the linear terms of the polynomial (linear
+        form). The default is None which signifies there are no linear
+        terms, that is `vector` is the null vector.
+    constant : int | float | None, optional
+        Constant of the polynomial. The default is None which signifies
+        there is no constant term, that is `constant` = 0.
+    dtype : torch.dtype, default=torch.float32
+        Data-type used for storing the coefficients of the polynomial.
+    device : str | torch.device, default="cpu"
+        Device on which the polynomial is located. If available, use "cuda"
+        to use the polynomial on a GPU.
 
-    The `b(i)`'s values must be binary (either `0` or `1`).
+    Attributes
+    ----------
+    matrix
+    vector
+    constant
+    dimension
+    device
+    dtype
+    sb_result : (M, A) Tensor | None
+        Spin vectors obtained after optimizing the polynomial. None if no
+        optimization method has been called.
+
+    See Also
+    --------
+    IsingPolynomialInterface:
+        Abstract class for multivariate degree 2 polynomials.
+    IntegerPolynomial:
+        Multivariate degree 2 polynomials over non-negative integers with a
+        fixed number of bits.
+    SpinPolynomial:
+        Multivariate degree 2 polynomials over vectors whose entries are in
+        {-1, 1}.
+    models.QUBO: Implementation of the QUBO problem.
+    models:
+        Package containing the implementation of several common
+        combinatorial optimization problems.
+
     """
 
     def __init__(
@@ -29,27 +106,8 @@ class BinaryPolynomial(IsingPolynomialInterface):
         vector: Union[torch.Tensor, np.ndarray, None] = None,
         constant: Union[float, int, None] = None,
         dtype: torch.dtype = torch.float32,
-        device: str = "cpu",
+        device: Union[str, torch.device] = "cpu",
     ) -> None:
-        """
-        Parameters
-        ----------
-        matrix : Tensor | ndarray
-            the square matrix that manages the order-two terms in the
-            polynomial (quadratic form matrix).
-        vector : Tensor | ndarray | None, optional
-            the vector that manages the order-one terms in the polynomial
-            (linear form vector). `None` means no vector (default is `None`)
-        constant : float | int | None, optional
-            the constant term of the polynomial. `None` means no constant term
-            (default is `None`)
-        dtype : torch.dtype, optional
-            the dtype used to encode polynomial's coefficients (default is
-            `float32`)
-        device : str, optional
-            the device on which to perform the computations of the Simulated
-            Bifurcation algorithm (default `"cpu"`)
-        """
         super().__init__(matrix, vector, constant, [0, 1], dtype, device)
 
     def to_ising(self) -> IsingCore:
@@ -61,6 +119,22 @@ class BinaryPolynomial(IsingPolynomialInterface):
         return IsingCore(J, h, self.dtype, self.device)
 
     def convert_spins(self, ising: IsingCore) -> Optional[torch.Tensor]:
+        """
+        Convert the spins of an Ising problem into binary variables.
+
+        Parameters
+        ----------
+        ising : IsingCore
+            The Ising problem whose spins are converted into binary
+            variables.
+
+        Returns
+        -------
+        binary_vars : Tensor | None
+            The binary variables corresponding to the spins of `ising`, it
+            is None if `ising.computed_spins` is None.
+
+        """
         if ising.computed_spins is not None:
             binary_vars = (ising.computed_spins + 1) / 2
         else:
