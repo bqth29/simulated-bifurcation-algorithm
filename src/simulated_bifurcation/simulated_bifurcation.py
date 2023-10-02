@@ -146,7 +146,7 @@ def optimize(
     convergence_threshold : int, default=50
         Number of consecutive identical spin samplings considered as a
         proof of convergence by the window.
-    timeout : float, default=None
+    timeout : float | None, default=None
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
     Hyperparameters corresponding to physical constants :
@@ -406,9 +406,9 @@ def minimize(
     convergence_threshold : int, default=50
         Number of consecutive identical spin samplings considered as a
         proof of convergence by the window.
-    timeout : float, default=None
-        Time, in seconds, after which the simulation will be stopped. None
-        means no timeout.
+    timeout : float | None, default=None
+        Time, in seconds, after which the simulation will be stopped.
+        None means no timeout.
     Hyperparameters corresponding to physical constants :
         These parameters have been fine-tuned (Goto et al.) to give the
         best results most of the time. Nevertheless, the relevance of
@@ -659,7 +659,7 @@ def maximize(
     convergence_threshold : int, default=50
         Number of consecutive identical spin samplings considered as a
         proof of convergence by the window.
-    timeout : float, default=None
+    timeout : float | None, default=None
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
     Hyperparameters corresponding to physical constants :

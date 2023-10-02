@@ -350,9 +350,9 @@ class IsingPolynomialInterface(ABC):
         use_window : bool, optional
             indicates whether to use the window as a stopping criterion or not
             (default is True)
-        timeout : float, optional
-            the time, in seconds, after which the simulation will be stopped
-            (default is inf, i.e. no timeout)
+        timeout : float | None, default=None
+            Time in seconds after which the simulation is stopped.
+            None means no timeout.
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
@@ -466,9 +466,9 @@ class IsingPolynomialInterface(ABC):
         use_window : bool, optional
             indicates whether to use the window as a stopping criterion or not
             (default is True)
-        timeout : float, optional
-            the time, in seconds, after which the simulation will be stopped
-            (default is inf, i.e. no timeout)
+        timeout : float | None, default=None
+            Time in seconds after which the simulation is stopped.
+            None means no timeout.
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
@@ -568,9 +568,9 @@ class IsingPolynomialInterface(ABC):
         use_window : bool, optional
             indicates whether to use the window as a stopping criterion or not
             (default is True)
-        timeout : float, optional
-            the time, in seconds, after which the simulation will be stopped
-            (default is inf, i.e. no timeout)
+        timeout : float | None, default=None
+            Time in seconds after which the simulation is stopped.
+            None means no timeout.
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
