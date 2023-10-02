@@ -1,6 +1,6 @@
 import logging
 from time import time
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import torch
 from numpy import minimum
@@ -59,8 +59,8 @@ class SimulatedBifurcationOptimizer:
     def __init__(
         self,
         agents: int,
-        max_steps: int,
-        timeout: float,
+        max_steps: Optional[int],
+        timeout: Optional[float],
         mode: OptimizerMode,
         heated: bool,
         verbose: bool,

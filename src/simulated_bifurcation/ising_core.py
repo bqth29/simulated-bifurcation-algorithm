@@ -279,9 +279,9 @@ class IsingCore:
         convergence_threshold : int, default=50
             Number of consecutive identical spin samplings considered as a
             proof of convergence by the window.
-        timeout : float, optional
+        timeout : float, default=None
             Time in seconds after which the simulation is stopped.
-            None means no timeout (default is None).
+            None means no timeout.
 
         Returns
         -------
