@@ -1,3 +1,5 @@
+from time import time
+
 import pytest
 import torch
 
@@ -123,7 +125,7 @@ def test_set_optimization_environment():
     torch.manual_seed(42)
     set_env(time_step=0.05, pressure_slope=0.005, heat_coefficient=0.1)
     optimizer = SimulatedBifurcationOptimizer(
-        128, 10000, OptimizerMode.BALLISTIC, True, True, 50, 50
+        128, 10000, None, OptimizerMode.BALLISTIC, True, True, 50, 50
     )
     assert optimizer.heat_coefficient == 0.1
     assert optimizer.pressure_slope == 0.005
@@ -135,7 +137,7 @@ def test_set_only_one_optimization_variable():
     torch.manual_seed(42)
     set_env(time_step=0.05)
     optimizer = SimulatedBifurcationOptimizer(
-        128, 10000, OptimizerMode.BALLISTIC, True, True, 50, 50
+        128, 10000, None, OptimizerMode.BALLISTIC, True, True, 50, 50
     )
     assert optimizer.heat_coefficient == 0.06
     assert optimizer.pressure_slope == 0.01
@@ -149,8 +151,83 @@ def test_wrong_value_throws_exception_and_variables_not_updated():
         # noinspection PyTypeChecker
         set_env(heat_coefficient="Hello world!")
     optimizer = SimulatedBifurcationOptimizer(
-        128, 10000, OptimizerMode.BALLISTIC, True, True, 50, 50
+        128, 10000, None, OptimizerMode.BALLISTIC, True, True, 50, 50
     )
     assert optimizer.heat_coefficient == 0.06
     assert optimizer.pressure_slope == 0.01
     assert optimizer.time_step == 0.1
+
+
+def test_timeout():
+    torch.manual_seed(42)
+    J = torch.tensor(
+        [
+            [1, 2, 3],
+            [2, 1, 4],
+            [3, 4, 1],
+        ],
+        dtype=torch.float32,
+    )
+    h = torch.tensor([1, 0, -2], dtype=torch.float32)
+    ising = IsingCore(J, h)
+    optimizer = SimulatedBifurcationOptimizer(
+        128, 100000, 3.0, OptimizerMode.BALLISTIC, True, True, 50, 50
+    )
+    optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
+    assert optimizer.simulation_time > 3.0
+
+
+def test_window():
+    torch.manual_seed(42)
+    J = torch.tensor(
+        [
+            [1, 2, 3],
+            [2, 1, 4],
+            [3, 4, 1],
+        ],
+        dtype=torch.float32,
+    )
+    h = torch.tensor([1, 0, -2], dtype=torch.float32)
+    ising = IsingCore(J, h)
+    optimizer = SimulatedBifurcationOptimizer(
+        1, 100000, None, OptimizerMode.BALLISTIC, True, True, 1, 1
+    )
+    optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), True)
+
+
+def test_max_steps():
+    torch.manual_seed(42)
+    J = torch.tensor(
+        [
+            [1, 2, 3],
+            [2, 1, 4],
+            [3, 4, 1],
+        ],
+        dtype=torch.float32,
+    )
+    h = torch.tensor([1, 0, -2], dtype=torch.float32)
+    ising = IsingCore(J, h)
+    optimizer = SimulatedBifurcationOptimizer(
+        1, 10, None, OptimizerMode.BALLISTIC, True, True, 50, 50
+    )
+    optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
+    assert optimizer.step == 10
+
+
+def test_no_stop_criterion():
+    torch.manual_seed(42)
+    J = torch.tensor(
+        [
+            [1, 2, 3],
+            [2, 1, 4],
+            [3, 4, 1],
+        ],
+        dtype=torch.float32,
+    )
+    h = torch.tensor([1, 0, -2], dtype=torch.float32)
+    ising = IsingCore(J, h)
+    optimizer = SimulatedBifurcationOptimizer(
+        1, None, None, OptimizerMode.BALLISTIC, True, True, 50, 50
+    )
+    with pytest.raises(ValueError, match="No stopping criterion provided."):
+        optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
