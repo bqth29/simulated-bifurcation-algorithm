@@ -295,6 +295,7 @@ class IsingPolynomialInterface(ABC):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
+        timeout: Optional[float] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local extremum of the model by optimizing
@@ -349,6 +350,9 @@ class IsingPolynomialInterface(ABC):
         use_window : bool, optional
             indicates whether to use the window as a stopping criterion or not
             (default is True)
+        timeout : float | None, default=None
+            Time in seconds after which the simulation is stopped.
+            None means no timeout.
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
@@ -383,6 +387,7 @@ class IsingPolynomialInterface(ABC):
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
+            timeout=timeout,
         )
         self.sb_result = self.convert_spins(ising_equivalent)
         result = self.sb_result.t()
@@ -406,6 +411,7 @@ class IsingPolynomialInterface(ABC):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
+        timeout: Optional[float] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local minimum of the model by optimizing
@@ -460,6 +466,9 @@ class IsingPolynomialInterface(ABC):
         use_window : bool, optional
             indicates whether to use the window as a stopping criterion or not
             (default is True)
+        timeout : float | None, default=None
+            Time in seconds after which the simulation is stopped.
+            None means no timeout.
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
@@ -489,6 +498,7 @@ class IsingPolynomialInterface(ABC):
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
+            timeout=timeout,
         )
 
     @final
@@ -504,6 +514,7 @@ class IsingPolynomialInterface(ABC):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
+        timeout: Optional[float] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local maximum of the model by optimizing
@@ -557,6 +568,9 @@ class IsingPolynomialInterface(ABC):
         use_window : bool, optional
             indicates whether to use the window as a stopping criterion or not
             (default is True)
+        timeout : float | None, default=None
+            Time in seconds after which the simulation is stopped.
+            None means no timeout.
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
@@ -586,4 +600,5 @@ class IsingPolynomialInterface(ABC):
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
+            timeout=timeout,
         )

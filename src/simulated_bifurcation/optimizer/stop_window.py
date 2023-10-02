@@ -38,9 +38,10 @@ class StopWindow:
     def __init_progress_bar(self, verbose: bool) -> tqdm:
         return tqdm(
             total=self.n_agents,
-            desc="Bifurcated agents",
+            desc="🏁 Bifurcated agents",
             disable=not verbose,
             smoothing=0,
+            unit=" agents",
         )
 
     def __init_convergence_threshold(self, convergence_threshold: int) -> None:
