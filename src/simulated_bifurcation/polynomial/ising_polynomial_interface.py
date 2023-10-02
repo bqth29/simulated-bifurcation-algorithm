@@ -295,7 +295,7 @@ class IsingPolynomialInterface(ABC):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-        timeout: float = float("inf"),
+        timeout: Optional[float] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local extremum of the model by optimizing
@@ -411,7 +411,7 @@ class IsingPolynomialInterface(ABC):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-        timeout: float = float("inf"),
+        timeout: Optional[float] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local minimum of the model by optimizing
@@ -514,7 +514,7 @@ class IsingPolynomialInterface(ABC):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-        timeout: float = float("inf"),
+        timeout: Optional[float] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local maximum of the model by optimizing

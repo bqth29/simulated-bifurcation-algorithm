@@ -125,7 +125,7 @@ def test_set_optimization_environment():
     torch.manual_seed(42)
     set_env(time_step=0.05, pressure_slope=0.005, heat_coefficient=0.1)
     optimizer = SimulatedBifurcationOptimizer(
-        128, 10000, float("inf"), OptimizerMode.BALLISTIC, True, True, 50, 50
+        128, 10000, None, OptimizerMode.BALLISTIC, True, True, 50, 50
     )
     assert optimizer.heat_coefficient == 0.1
     assert optimizer.pressure_slope == 0.005
@@ -137,7 +137,7 @@ def test_set_only_one_optimization_variable():
     torch.manual_seed(42)
     set_env(time_step=0.05)
     optimizer = SimulatedBifurcationOptimizer(
-        128, 10000, float("inf"), OptimizerMode.BALLISTIC, True, True, 50, 50
+        128, 10000, None, OptimizerMode.BALLISTIC, True, True, 50, 50
     )
     assert optimizer.heat_coefficient == 0.06
     assert optimizer.pressure_slope == 0.01
@@ -151,7 +151,7 @@ def test_wrong_value_throws_exception_and_variables_not_updated():
         # noinspection PyTypeChecker
         set_env(heat_coefficient="Hello world!")
     optimizer = SimulatedBifurcationOptimizer(
-        128, 10000, float("inf"), OptimizerMode.BALLISTIC, True, True, 50, 50
+        128, 10000, None, OptimizerMode.BALLISTIC, True, True, 50, 50
     )
     assert optimizer.heat_coefficient == 0.06
     assert optimizer.pressure_slope == 0.01
