@@ -29,6 +29,7 @@ models:
 
 """
 
+import warnings
 from typing import Optional, Union
 
 import numpy as np
@@ -185,5 +186,12 @@ class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
 
 class IntegerPolynomial(IntegerQuadraticPolynomial):
     def __init__(self, *args, **kwargs) -> None:
-        # TODO: deprecation warning
+        # 2023-10-03, 1.2.1
+        warnings.warn(
+            "`IntegerPolynomial` is deprecated as of simulated-bifurcation 1.2.1, and "
+            "its behaviour will change in simulated-bifurcation 1.3.0. Please use "
+            "`IntegerQuadraticPolynomial` instead.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
         super().__init__(*args, **kwargs)

@@ -36,6 +36,7 @@ IsingCore class:
 
 """
 
+import warnings
 from typing import Union
 
 import numpy as np
@@ -150,5 +151,12 @@ class SpinQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
 
 class SpinPolynomial(SpinQuadraticPolynomial):
     def __init__(self, *args, **kwargs) -> None:
-        # TODO: deprecation warning
+        # 2023-10-03, 1.2.1
+        warnings.warn(
+            "`SpinPolynomial` is deprecated as of simulated-bifurcation 1.2.1, and "
+            "its behaviour will change in simulated-bifurcation 1.3.0. Please use "
+            "`SpinQuadraticPolynomial` instead.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
         super().__init__(*args, **kwargs)

@@ -28,6 +28,7 @@ models:
 
 """
 
+import warnings
 from typing import Optional, Union
 
 import numpy as np
@@ -144,5 +145,12 @@ class BinaryQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
 
 class BinaryPolynomial(BinaryQuadraticPolynomial):
     def __init__(self, *args, **kwargs) -> None:
-        # TODO: deprecation warning
+        # 2023-10-03, 1.2.1
+        warnings.warn(
+            "`BinaryPolynomial` is deprecated as of simulated-bifurcation 1.2.1, and "
+            "its behaviour will change in simulated-bifurcation 1.3.0. Please use "
+            "`BinaryQuadraticPolynomial` instead.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
         super().__init__(*args, **kwargs)

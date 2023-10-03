@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC, abstractmethod
 from typing import Iterable, List, Optional, Tuple, Union, final
 
@@ -606,5 +607,12 @@ class BaseMultivariateQuadraticPolynomial(ABC):
 
 class IsingPolynomialInterface(BaseMultivariateQuadraticPolynomial, ABC):
     def __init__(self, *args, **kwargs) -> None:
-        # TODO: deprecation warning
+        # 2023-10-03, 1.2.1
+        warnings.warn(
+            "`IsingPolynomialInterface` is deprecated as of simulated-bifurcation "
+            "1.2.1, and will be removed in simulated-bifurcation 1.3.0. Please use "
+            "`BaseQuadraticMultivariatePolynomial` instead.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
         super().__init__(*args, **kwargs)
