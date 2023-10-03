@@ -1,3 +1,13 @@
+"""
+.. deprecated:: 1.2.1
+    `IsingPolynomialInterface` will be removed in simulated-bifurcation
+    1.3.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
+    prevision of the addition of multivariate polynomials of an arbitrary
+    degree.
+
+"""
+
+
 import warnings
 from abc import ABC, abstractmethod
 from typing import Iterable, List, Optional, Tuple, Union, final
@@ -606,6 +616,16 @@ class BaseMultivariateQuadraticPolynomial(ABC):
 
 
 class IsingPolynomialInterface(BaseMultivariateQuadraticPolynomial, ABC):
+
+    """
+    .. deprecated:: 1.2.1
+        `IsingPolynomialInterface` will be removed in simulated-bifurcation
+        1.3.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
+        prevision of the addition of multivariate polynomials of an
+        arbitrary degree.
+
+    """
+
     def __init__(self, *args, **kwargs) -> None:
         # 2023-10-03, 1.2.1
         warnings.warn(
