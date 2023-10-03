@@ -1,6 +1,11 @@
 """
 Implementation of multivariate degree 2 polynomials over spin vectors.
 
+.. deprecated:: 1.2.1
+    `SpinPolynomial` will be modified in simulated-bifurcation 1.3.0, it is
+    replaced by `SpinQuadraticPolynomial` in prevision of the addition of
+    multivariate polynomials of an arbitrary degree.
+
 Multivariate degree 2 polynomials are the sum of a quadratic form and a
 linear form plus a constant term:
 `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
@@ -13,12 +18,12 @@ solved with the Simulated Bifurcation algorithm.
 
 See Also
 --------
-BinaryPolynomial:
+BinaryQuadraticPolynomial:
     Multivariate degree 2 polynomials over vectors whose entries are in
     {0, 1}.
-IsingPolynomialInterface:
+BaseMultivariateQuadraticPolynomial:
     Abstract class for multivariate degree 2 polynomials.
-IntegerPolynomial:
+IntegerQuadraticPolynomial:
     Multivariate degree 2 polynomials over non-negative integers with a
     fixed number of bits.
 models.Ising: Implementation of the Ising problem.
@@ -36,16 +41,17 @@ IsingCore class:
 
 """
 
+import warnings
 from typing import Union
 
 import numpy as np
 import torch
 
 from ..ising_core import IsingCore
-from .ising_polynomial_interface import IsingPolynomialInterface
+from .base_multivariate_polynomial import BaseMultivariateQuadraticPolynomial
 
 
-class SpinPolynomial(IsingPolynomialInterface):
+class SpinQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
 
     """
     Multivariate degree 2 polynomials over spin vectors.
@@ -93,12 +99,12 @@ class SpinPolynomial(IsingPolynomialInterface):
 
     See Also
     --------
-    BinaryPolynomial:
+    BinaryQuadraticPolynomial:
         Multivariate degree 2 polynomials over vectors whose entries are in
         {0, 1}.
-    IsingPolynomialInterface:
+    BaseMultivariateQuadraticPolynomial:
         Abstract class for multivariate degree 2 polynomials.
-    IntegerPolynomial:
+    IntegerQuadraticPolynomial:
         Multivariate degree 2 polynomials over non-negative integers with a
         fixed number of bits.
     models.Ising: Implementation of the Ising problem.
@@ -146,3 +152,25 @@ class SpinPolynomial(IsingPolynomialInterface):
 
         """
         return ising.computed_spins
+
+
+class SpinPolynomial(SpinQuadraticPolynomial):
+
+    """
+    .. deprecated:: 1.2.1
+        `SpinPolynomial` will be modified in simulated-bifurcation 1.3.0,
+        it is replaced by `SpinQuadraticPolynomial` in prevision of the
+        addition of multivariate polynomials of an arbitrary degree.
+
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        # 2023-10-03, 1.2.1
+        warnings.warn(
+            "`SpinPolynomial` is deprecated as of simulated-bifurcation 1.2.1, and "
+            "its behaviour will change in simulated-bifurcation 1.3.0. Please use "
+            "`SpinQuadraticPolynomial` instead.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        super().__init__(*args, **kwargs)

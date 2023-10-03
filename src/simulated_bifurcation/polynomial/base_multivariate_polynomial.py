@@ -1,3 +1,14 @@
+"""
+.. deprecated:: 1.2.1
+    `IsingPolynomialInterface` will be removed in simulated-bifurcation
+    1.3.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
+    prevision of the addition of multivariate polynomials of an arbitrary
+    degree.
+
+"""
+
+
+import warnings
 from abc import ABC, abstractmethod
 from typing import Iterable, List, Optional, Tuple, Union, final
 
@@ -7,7 +18,7 @@ import torch
 from ..ising_core import IsingCore
 
 
-class IsingPolynomialInterface(ABC):
+class BaseMultivariateQuadraticPolynomial(ABC):
 
     """
     Abstract class to implement an order two multivariate polynomial that can
@@ -602,3 +613,26 @@ class IsingPolynomialInterface(ABC):
             convergence_threshold=convergence_threshold,
             timeout=timeout,
         )
+
+
+class IsingPolynomialInterface(BaseMultivariateQuadraticPolynomial, ABC):
+
+    """
+    .. deprecated:: 1.2.1
+        `IsingPolynomialInterface` will be removed in simulated-bifurcation
+        1.3.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
+        prevision of the addition of multivariate polynomials of an
+        arbitrary degree.
+
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        # 2023-10-03, 1.2.1
+        warnings.warn(
+            "`IsingPolynomialInterface` is deprecated as of simulated-bifurcation "
+            "1.2.1, and will be removed in simulated-bifurcation 1.3.0. Please use "
+            "`BaseQuadraticMultivariatePolynomial` instead.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        super().__init__(*args, **kwargs)

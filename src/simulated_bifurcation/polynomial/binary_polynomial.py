@@ -1,6 +1,11 @@
 """
 Implementation of multivariate degree 2 polynomials over binary vectors.
 
+.. deprecated:: 1.2.1
+    `BinaryPolynomial` will be modified in simulated-bifurcation 1.3.0, it
+    is replaced by `BinaryQuadraticPolynomial` in prevision of the addition
+    of multivariate polynomials of an arbitrary degree.
+
 Multivariate degree 2 polynomials are the sum of a quadratic form and a
 linear form plus a constant term:
 `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
@@ -13,12 +18,12 @@ solved with the Simulated Bifurcation algorithm.
 
 See Also
 --------
-IsingPolynomialInterface:
+BaseMultivariateQuadraticPolynomial:
     Abstract class for multivariate degree 2 polynomials.
-IntegerPolynomial:
+IntegerQuadraticPolynomial:
     Multivariate degree 2 polynomials over non-negative integers with a
     fixed number of bits.
-SpinPolynomial:
+SpinQuadraticPolynomial:
     Multivariate degree 2 polynomials over vectors whose entries are in
     {-1, 1}.
 models.QUBO: Implementation of the QUBO problem.
@@ -28,16 +33,17 @@ models:
 
 """
 
+import warnings
 from typing import Optional, Union
 
 import numpy as np
 import torch
 
 from ..ising_core import IsingCore
-from .ising_polynomial_interface import IsingPolynomialInterface
+from .base_multivariate_polynomial import BaseMultivariateQuadraticPolynomial
 
 
-class BinaryPolynomial(IsingPolynomialInterface):
+class BinaryQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
 
     """
     Multivariate degree 2 polynomials over binary vectors.
@@ -85,12 +91,12 @@ class BinaryPolynomial(IsingPolynomialInterface):
 
     See Also
     --------
-    IsingPolynomialInterface:
+    BaseMultivariateQuadraticPolynomial:
         Abstract class for multivariate degree 2 polynomials.
-    IntegerPolynomial:
+    IntegerQuadraticPolynomial:
         Multivariate degree 2 polynomials over non-negative integers with a
         fixed number of bits.
-    SpinPolynomial:
+    SpinQuadraticPolynomial:
         Multivariate degree 2 polynomials over vectors whose entries are in
         {-1, 1}.
     models.QUBO: Implementation of the QUBO problem.
@@ -140,3 +146,25 @@ class BinaryPolynomial(IsingPolynomialInterface):
         else:
             binary_vars = None
         return binary_vars
+
+
+class BinaryPolynomial(BinaryQuadraticPolynomial):
+
+    """
+    .. deprecated:: 1.2.1
+        `BinaryPolynomial` will be modified in simulated-bifurcation 1.3.0,
+        it is replaced by `BinaryQuadraticPolynomial` in prevision of the
+        addition of multivariate polynomials of an arbitrary degree.
+
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        # 2023-10-03, 1.2.1
+        warnings.warn(
+            "`BinaryPolynomial` is deprecated as of simulated-bifurcation 1.2.1, and "
+            "its behaviour will change in simulated-bifurcation 1.3.0. Please use "
+            "`BinaryQuadraticPolynomial` instead.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        super().__init__(*args, **kwargs)

@@ -10,7 +10,7 @@ See Also
 models.Ising:
     Implementation of the Ising model which behaves like other models and
     polynomials.
-IsingPolynomialInterface: Abstract multivariate polynomial class.
+BaseMultivariateQuadraticPolynomial: Abstract multivariate polynomial class.
 
 """
 
@@ -338,7 +338,7 @@ class IsingCore:
         models.Ising:
             Implementation of the Ising model which behaves like other
             models and polynomials.
-        IsingPolynomialInterface: Abstract multivariate polynomial class.
+        BaseMultivariateQuadraticPolynomial: Abstract multivariate polynomial class.
 
         Notes
         -----

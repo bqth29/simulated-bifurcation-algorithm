@@ -3,10 +3,10 @@ from typing import Dict, List, Union
 import torch
 from numpy import sum
 
-from ..polynomial import SpinPolynomial
+from ..polynomial import SpinQuadraticPolynomial
 
 
-class NumberPartitioning(SpinPolynomial):
+class NumberPartitioning(SpinQuadraticPolynomial):
 
     """
     A solver that separates a set of numbers into two subsets, the
