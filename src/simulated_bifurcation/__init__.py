@@ -143,8 +143,11 @@ tensor([0., 0.], device='cuda:0')
 from . import models
 from .optimizer import get_env, reset_env, set_env
 from .polynomial import (
+    BinaryPolynomial,
     BinaryQuadraticPolynomial,
+    IntegerPolynomial,
     IntegerQuadraticPolynomial,
+    SpinPolynomial,
     SpinQuadraticPolynomial,
 )
 from .simulated_bifurcation import build_model, maximize, minimize, optimize

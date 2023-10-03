@@ -146,3 +146,9 @@ class SpinQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
 
         """
         return ising.computed_spins
+
+
+class SpinPolynomial(SpinQuadraticPolynomial):
+    def __init__(self, *args, **kwargs) -> None:
+        # TODO: deprecation warning
+        super().__init__(*args, **kwargs)

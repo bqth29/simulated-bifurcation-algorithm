@@ -602,3 +602,9 @@ class BaseMultivariateQuadraticPolynomial(ABC):
             convergence_threshold=convergence_threshold,
             timeout=timeout,
         )
+
+
+class IsingPolynomialInterface(BaseMultivariateQuadraticPolynomial, ABC):
+    def __init__(self, *args, **kwargs) -> None:
+        # TODO: deprecation warning
+        super().__init__(*args, **kwargs)

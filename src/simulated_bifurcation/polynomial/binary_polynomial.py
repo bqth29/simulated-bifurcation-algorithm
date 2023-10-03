@@ -140,3 +140,9 @@ class BinaryQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
         else:
             binary_vars = None
         return binary_vars
+
+
+class BinaryPolynomial(BinaryQuadraticPolynomial):
+    def __init__(self, *args, **kwargs) -> None:
+        # TODO: deprecation warning
+        super().__init__(*args, **kwargs)

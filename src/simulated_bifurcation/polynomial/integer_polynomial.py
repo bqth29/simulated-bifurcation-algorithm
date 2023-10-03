@@ -181,3 +181,9 @@ class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
         else:
             int_vars = None
         return int_vars
+
+
+class IntegerPolynomial(IntegerQuadraticPolynomial):
+    def __init__(self, *args, **kwargs) -> None:
+        # TODO: deprecation warning
+        super().__init__(*args, **kwargs)

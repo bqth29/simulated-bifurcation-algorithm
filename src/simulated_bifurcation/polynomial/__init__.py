@@ -37,7 +37,10 @@ models:
 """
 
 
-from .base_multivariate_polynomial import BaseMultivariateQuadraticPolynomial
-from .binary_polynomial import BinaryQuadraticPolynomial
-from .integer_polynomial import IntegerQuadraticPolynomial
-from .spin_polynomial import SpinQuadraticPolynomial
+from .base_multivariate_polynomial import (
+    BaseMultivariateQuadraticPolynomial,
+    IsingPolynomialInterface,
+)
+from .binary_polynomial import BinaryPolynomial, BinaryQuadraticPolynomial
+from .integer_polynomial import IntegerPolynomial, IntegerQuadraticPolynomial
+from .spin_polynomial import SpinPolynomial, SpinQuadraticPolynomial
