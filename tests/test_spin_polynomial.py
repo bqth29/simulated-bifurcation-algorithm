@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from src.simulated_bifurcation.polynomial import SpinQuadraticPolynomial
+from src.simulated_bifurcation.polynomial import SpinPolynomial, SpinQuadraticPolynomial
 
 matrix = torch.tensor(
     [
@@ -91,3 +91,8 @@ def test_to():
 
     spin_polynomial.to()
     check_device_and_dtype(torch.float64)
+
+
+def test_deprecation_warning():
+    with pytest.warns(DeprecationWarning):
+        SpinPolynomial(matrix, vector, constant)

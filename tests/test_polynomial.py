@@ -3,7 +3,10 @@ import torch
 
 from src.simulated_bifurcation import build_model
 from src.simulated_bifurcation.ising_core import IsingCore
-from src.simulated_bifurcation.polynomial import BaseMultivariateQuadraticPolynomial
+from src.simulated_bifurcation.polynomial import (
+    BaseMultivariateQuadraticPolynomial,
+    IsingPolynomialInterface,
+)
 
 matrix = torch.tensor(
     [
@@ -18,6 +21,14 @@ constant = 1
 
 
 class BaseMultivariateQuadraticPolynomialImpl(BaseMultivariateQuadraticPolynomial):
+    def to_ising(self):
+        pass  # pragma: no cover
+
+    def convert_spins(self, ising: IsingCore):
+        pass  # pragma: no cover
+
+
+class IsingPolynomialInterfaceImpl(IsingPolynomialInterface):
     def to_ising(self):
         pass  # pragma: no cover
 
@@ -212,3 +223,8 @@ def test_maximize():
         best_combination, torch.tensor([1.0, 1.0, 1.0], dtype=torch.float32)
     )
     assert 52.0 == best_value
+
+
+def test_deprecation_warning():
+    with pytest.warns(DeprecationWarning):
+        IsingPolynomialInterfaceImpl(matrix, accepted_values=[0, 1])

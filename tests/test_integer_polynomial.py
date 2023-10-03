@@ -1,7 +1,10 @@
 import pytest
 import torch
 
-from src.simulated_bifurcation.polynomial import IntegerQuadraticPolynomial
+from src.simulated_bifurcation.polynomial import (
+    IntegerPolynomial,
+    IntegerQuadraticPolynomial,
+)
 
 matrix = torch.tensor(
     [
@@ -77,3 +80,8 @@ def test_optimize_integer_polynomial():
     int_vars, value = integer_polynomial.optimize(verbose=False)
     assert torch.equal(int_vars, torch.tensor([3, 0, 3], dtype=torch.float32))
     assert value == -23.0
+
+
+def test_deprecation_warning():
+    with pytest.warns(DeprecationWarning):
+        IntegerPolynomial(matrix, vector, constant)

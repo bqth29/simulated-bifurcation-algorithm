@@ -1,7 +1,10 @@
 import pytest
 import torch
 
-from src.simulated_bifurcation.polynomial import BinaryQuadraticPolynomial
+from src.simulated_bifurcation.polynomial import (
+    BinaryPolynomial,
+    BinaryQuadraticPolynomial,
+)
 
 matrix = torch.tensor(
     [
@@ -64,3 +67,8 @@ def test_optimize_binary_polynomial():
     binary_vars, value = binary_polynomial.optimize(verbose=False)
     assert torch.equal(binary_vars, torch.tensor([1, 0, 1], dtype=torch.float32))
     assert value == -3.0
+
+
+def test_deprecation_warning():
+    with pytest.warns(DeprecationWarning):
+        BinaryPolynomial(matrix, vector, constant)
