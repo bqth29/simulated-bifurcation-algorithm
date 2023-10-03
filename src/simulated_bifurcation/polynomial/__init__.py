@@ -11,7 +11,7 @@ the polynomial is said to be defined over a domain.
 
 Available classes
 -----------------
-IsingPolynomialInterface:
+BaseMultivariatePolynomial:
     Abstract class for multivariate degree 2 polynomials.
 BinaryPolynomial:
     Multivariate degree 2 polynomials over vectors whose entries are in
@@ -37,7 +37,7 @@ models:
 """
 
 
+from .base_multivariate_polynomial import BaseMultivariatePolynomial
 from .binary_polynomial import BinaryPolynomial
 from .integer_polynomial import IntegerPolynomial
-from .ising_polynomial_interface import IsingPolynomialInterface
 from .spin_polynomial import SpinPolynomial

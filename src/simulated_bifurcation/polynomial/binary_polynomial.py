@@ -13,7 +13,7 @@ solved with the Simulated Bifurcation algorithm.
 
 See Also
 --------
-IsingPolynomialInterface:
+BaseMultivariatePolynomial:
     Abstract class for multivariate degree 2 polynomials.
 IntegerPolynomial:
     Multivariate degree 2 polynomials over non-negative integers with a
@@ -34,10 +34,10 @@ import numpy as np
 import torch
 
 from ..ising_core import IsingCore
-from .ising_polynomial_interface import IsingPolynomialInterface
+from .base_multivariate_polynomial import BaseMultivariatePolynomial
 
 
-class BinaryPolynomial(IsingPolynomialInterface):
+class BinaryPolynomial(BaseMultivariatePolynomial):
 
     """
     Multivariate degree 2 polynomials over binary vectors.
@@ -85,7 +85,7 @@ class BinaryPolynomial(IsingPolynomialInterface):
 
     See Also
     --------
-    IsingPolynomialInterface:
+    BaseMultivariatePolynomial:
         Abstract class for multivariate degree 2 polynomials.
     IntegerPolynomial:
         Multivariate degree 2 polynomials over non-negative integers with a

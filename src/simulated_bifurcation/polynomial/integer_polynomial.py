@@ -15,7 +15,7 @@ that is integers between 0 and 127 inclusive).
 
 See Also
 --------
-IsingPolynomialInterface:
+BaseMultivariatePolynomial:
     Abstract class for multivariate degree 2 polynomials.
 BinaryPolynomial:
     Multivariate degree 2 polynomials over vectors whose entries are in
@@ -35,10 +35,10 @@ import numpy as np
 import torch
 
 from ..ising_core import IsingCore
-from .ising_polynomial_interface import IsingPolynomialInterface
+from .base_multivariate_polynomial import BaseMultivariatePolynomial
 
 
-class IntegerPolynomial(IsingPolynomialInterface):
+class IntegerPolynomial(BaseMultivariatePolynomial):
 
     """
     Multivariate degree 2 polynomials over fixed bit-width integer vectors.
@@ -97,7 +97,7 @@ class IntegerPolynomial(IsingPolynomialInterface):
     BinaryPolynomial:
         Multivariate degree 2 polynomials over vectors whose entries are in
         {0, 1}.
-    IsingPolynomialInterface:
+    BaseMultivariatePolynomial:
         Abstract class for multivariate degree 2 polynomials.
     SpinPolynomial:
         Multivariate degree 2 polynomials over vectors whose entries are in

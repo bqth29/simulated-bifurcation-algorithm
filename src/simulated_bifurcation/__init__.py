@@ -24,7 +24,7 @@ Several common combinatorial optimization problems are reframed as Ising
 problems in the `models` module, e.g.: QUBO, knapsack, Markowitz model...
 Polynomials over vectors whose entries are in {0, 1} or whose entries are
 fixed bit-width integers are also implemented, as well as an abstract
-polynomial class `IsingPolynomialInterface` for further customization.
+polynomial class `BaseMultivariatePolynomial` for further customization.
 
 The docstring examples assume that `torch` (PyTorch) has been imported and
 that simulated_bifurcation has been imported as `sb`:

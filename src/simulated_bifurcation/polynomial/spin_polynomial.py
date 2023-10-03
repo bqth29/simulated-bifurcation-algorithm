@@ -16,7 +16,7 @@ See Also
 BinaryPolynomial:
     Multivariate degree 2 polynomials over vectors whose entries are in
     {0, 1}.
-IsingPolynomialInterface:
+BaseMultivariatePolynomial:
     Abstract class for multivariate degree 2 polynomials.
 IntegerPolynomial:
     Multivariate degree 2 polynomials over non-negative integers with a
@@ -42,10 +42,10 @@ import numpy as np
 import torch
 
 from ..ising_core import IsingCore
-from .ising_polynomial_interface import IsingPolynomialInterface
+from .base_multivariate_polynomial import BaseMultivariatePolynomial
 
 
-class SpinPolynomial(IsingPolynomialInterface):
+class SpinPolynomial(BaseMultivariatePolynomial):
 
     """
     Multivariate degree 2 polynomials over spin vectors.
@@ -96,7 +96,7 @@ class SpinPolynomial(IsingPolynomialInterface):
     BinaryPolynomial:
         Multivariate degree 2 polynomials over vectors whose entries are in
         {0, 1}.
-    IsingPolynomialInterface:
+    BaseMultivariatePolynomial:
         Abstract class for multivariate degree 2 polynomials.
     IntegerPolynomial:
         Multivariate degree 2 polynomials over non-negative integers with a

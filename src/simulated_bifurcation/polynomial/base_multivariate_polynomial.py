@@ -7,7 +7,7 @@ import torch
 from ..ising_core import IsingCore
 
 
-class IsingPolynomialInterface(ABC):
+class BaseMultivariatePolynomial(ABC):
 
     """
     Abstract class to implement an order two multivariate polynomial that can

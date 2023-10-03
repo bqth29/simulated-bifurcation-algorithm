@@ -29,9 +29,9 @@ import torch
 from numpy import ndarray
 
 from .polynomial import (
+    BaseMultivariatePolynomial,
     BinaryPolynomial,
     IntegerPolynomial,
-    IsingPolynomialInterface,
     SpinPolynomial,
 )
 
@@ -813,7 +813,7 @@ def build_model(
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
     device: Union[str, torch.device] = "cpu",
-) -> IsingPolynomialInterface:
+) -> BaseMultivariatePolynomial:
     """
     Instantiate a multivariate degree 2 polynomial over a given domain.
 
@@ -879,7 +879,7 @@ def build_model(
         Shorthands for polynomial creation and optimization.
     polynomial :
         Module providing some polynomial types as well as an abstract
-        polynomial class `IsingPolynomialInterface`.
+        polynomial class `BaseMultivariatePolynomial`.
     models :
         Module containing the implementation of several common
         combinatorial optimization problems.

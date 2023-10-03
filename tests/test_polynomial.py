@@ -3,7 +3,7 @@ import torch
 
 from src.simulated_bifurcation import build_model
 from src.simulated_bifurcation.ising_core import IsingCore
-from src.simulated_bifurcation.polynomial import IsingPolynomialInterface
+from src.simulated_bifurcation.polynomial import BaseMultivariatePolynomial
 
 matrix = torch.tensor(
     [
@@ -17,7 +17,7 @@ vector = torch.tensor([[1], [2], [3]], dtype=torch.float32)
 constant = 1
 
 
-class IsingPolynomialInterfaceImpl(IsingPolynomialInterface):
+class BaseMultivariatePolynomialImpl(BaseMultivariatePolynomial):
     def to_ising(self):
         pass  # pragma: no cover
 
@@ -26,7 +26,7 @@ class IsingPolynomialInterfaceImpl(IsingPolynomialInterface):
 
 
 def test_init_polynomial_from_tensors():
-    polynomial = IsingPolynomialInterfaceImpl(matrix, vector, constant)
+    polynomial = BaseMultivariatePolynomialImpl(matrix, vector, constant)
     assert torch.equal(polynomial.matrix, matrix)
     assert torch.equal(polynomial.vector, vector.reshape(3))
     assert polynomial.constant == 1.0
@@ -43,7 +43,9 @@ def test_init_polynomial_from_tensors():
 
 
 def test_init_polynomial_from_arrays():
-    polynomial = IsingPolynomialInterfaceImpl(matrix.numpy(), vector.numpy(), constant)
+    polynomial = BaseMultivariatePolynomialImpl(
+        matrix.numpy(), vector.numpy(), constant
+    )
     assert torch.equal(polynomial.matrix, matrix)
     assert torch.equal(polynomial.vector, vector.reshape(3))
     assert polynomial.constant == 1.0
@@ -55,7 +57,7 @@ def test_init_polynomial_from_arrays():
 
 
 def test_init_polynomial_without_order_one_and_zero():
-    polynomial = IsingPolynomialInterfaceImpl(matrix)
+    polynomial = BaseMultivariatePolynomialImpl(matrix)
     assert torch.equal(polynomial.matrix, matrix)
     assert torch.equal(polynomial.vector, torch.zeros(polynomial.dimension))
     assert polynomial.constant == 0.0
@@ -69,11 +71,11 @@ def test_init_polynomial_without_order_one_and_zero():
 def test_init_with_wrong_parameters():
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
-        IsingPolynomialInterfaceImpl(None)
+        BaseMultivariatePolynomialImpl(None)
     with pytest.raises(ValueError):
-        IsingPolynomialInterfaceImpl(torch.unsqueeze(matrix, 0))
+        BaseMultivariatePolynomialImpl(torch.unsqueeze(matrix, 0))
     with pytest.raises(ValueError):
-        IsingPolynomialInterfaceImpl(
+        BaseMultivariatePolynomialImpl(
             torch.tensor(
                 [
                     [1, 2, 3],
@@ -84,29 +86,29 @@ def test_init_with_wrong_parameters():
         )
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
-        IsingPolynomialInterfaceImpl(matrix, ("hello", "world!"))
+        BaseMultivariatePolynomialImpl(matrix, ("hello", "world!"))
     with pytest.raises(ValueError):
         # noinspection PyTypeChecker
-        IsingPolynomialInterfaceImpl(matrix, 1)
+        BaseMultivariatePolynomialImpl(matrix, 1)
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
-        IsingPolynomialInterfaceImpl(matrix, constant="hello world!")
+        BaseMultivariatePolynomialImpl(matrix, constant="hello world!")
 
 
 def test_check_device():
-    IsingPolynomialInterfaceImpl(matrix, device="cpu")
+    BaseMultivariatePolynomialImpl(matrix, device="cpu")
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
-        IsingPolynomialInterfaceImpl(matrix, device=1)
+        BaseMultivariatePolynomialImpl(matrix, device=1)
     if not torch.cuda.is_available():  # pragma: no cover
         with pytest.raises(RuntimeError):
-            IsingPolynomialInterfaceImpl(matrix, device="cuda")
+            BaseMultivariatePolynomialImpl(matrix, device="cuda")
     else:  # pragma: no cover
-        IsingPolynomialInterfaceImpl(matrix, device="cuda")
+        BaseMultivariatePolynomialImpl(matrix, device="cuda")
 
 
 def test_call_polynomial():
-    polynomial = IsingPolynomialInterfaceImpl(matrix)
+    polynomial = BaseMultivariatePolynomialImpl(matrix)
     assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0.0
     assert torch.equal(
         polynomial(
@@ -134,7 +136,7 @@ def test_call_polynomial():
 
 
 def test_call_polynomial_with_accepted_values():
-    polynomial = IsingPolynomialInterfaceImpl(matrix, accepted_values=[0, 1])
+    polynomial = BaseMultivariatePolynomialImpl(matrix, accepted_values=[0, 1])
     assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0
     with pytest.raises(ValueError):
         polynomial(torch.tensor([0, 1, 2], dtype=torch.float32))
@@ -149,10 +151,10 @@ def test_call_polynomial_with_accepted_values():
 def test_ising_interface():
     with pytest.raises(NotImplementedError):
         # noinspection PyTypeChecker
-        IsingPolynomialInterface.to_ising(None)
+        BaseMultivariatePolynomial.to_ising(None)
     with pytest.raises(NotImplementedError):
         # noinspection PyTypeChecker
-        IsingPolynomialInterface.convert_spins(None, None)
+        BaseMultivariatePolynomial.convert_spins(None, None)
 
 
 def test_best_only():
