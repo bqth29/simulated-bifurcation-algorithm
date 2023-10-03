@@ -3,7 +3,7 @@ import torch
 
 from src.simulated_bifurcation import build_model
 from src.simulated_bifurcation.ising_core import IsingCore
-from src.simulated_bifurcation.polynomial import BaseMultivariatePolynomial
+from src.simulated_bifurcation.polynomial import BaseMultivariateQuadraticPolynomial
 
 matrix = torch.tensor(
     [
@@ -17,7 +17,7 @@ vector = torch.tensor([[1], [2], [3]], dtype=torch.float32)
 constant = 1
 
 
-class BaseMultivariatePolynomialImpl(BaseMultivariatePolynomial):
+class BaseMultivariateQuadraticPolynomialImpl(BaseMultivariateQuadraticPolynomial):
     def to_ising(self):
         pass  # pragma: no cover
 
@@ -26,7 +26,7 @@ class BaseMultivariatePolynomialImpl(BaseMultivariatePolynomial):
 
 
 def test_init_polynomial_from_tensors():
-    polynomial = BaseMultivariatePolynomialImpl(matrix, vector, constant)
+    polynomial = BaseMultivariateQuadraticPolynomialImpl(matrix, vector, constant)
     assert torch.equal(polynomial.matrix, matrix)
     assert torch.equal(polynomial.vector, vector.reshape(3))
     assert polynomial.constant == 1.0
@@ -43,7 +43,7 @@ def test_init_polynomial_from_tensors():
 
 
 def test_init_polynomial_from_arrays():
-    polynomial = BaseMultivariatePolynomialImpl(
+    polynomial = BaseMultivariateQuadraticPolynomialImpl(
         matrix.numpy(), vector.numpy(), constant
     )
     assert torch.equal(polynomial.matrix, matrix)
@@ -57,7 +57,7 @@ def test_init_polynomial_from_arrays():
 
 
 def test_init_polynomial_without_order_one_and_zero():
-    polynomial = BaseMultivariatePolynomialImpl(matrix)
+    polynomial = BaseMultivariateQuadraticPolynomialImpl(matrix)
     assert torch.equal(polynomial.matrix, matrix)
     assert torch.equal(polynomial.vector, torch.zeros(polynomial.dimension))
     assert polynomial.constant == 0.0
@@ -71,11 +71,11 @@ def test_init_polynomial_without_order_one_and_zero():
 def test_init_with_wrong_parameters():
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
-        BaseMultivariatePolynomialImpl(None)
+        BaseMultivariateQuadraticPolynomialImpl(None)
     with pytest.raises(ValueError):
-        BaseMultivariatePolynomialImpl(torch.unsqueeze(matrix, 0))
+        BaseMultivariateQuadraticPolynomialImpl(torch.unsqueeze(matrix, 0))
     with pytest.raises(ValueError):
-        BaseMultivariatePolynomialImpl(
+        BaseMultivariateQuadraticPolynomialImpl(
             torch.tensor(
                 [
                     [1, 2, 3],
@@ -86,29 +86,29 @@ def test_init_with_wrong_parameters():
         )
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
-        BaseMultivariatePolynomialImpl(matrix, ("hello", "world!"))
+        BaseMultivariateQuadraticPolynomialImpl(matrix, ("hello", "world!"))
     with pytest.raises(ValueError):
         # noinspection PyTypeChecker
-        BaseMultivariatePolynomialImpl(matrix, 1)
+        BaseMultivariateQuadraticPolynomialImpl(matrix, 1)
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
-        BaseMultivariatePolynomialImpl(matrix, constant="hello world!")
+        BaseMultivariateQuadraticPolynomialImpl(matrix, constant="hello world!")
 
 
 def test_check_device():
-    BaseMultivariatePolynomialImpl(matrix, device="cpu")
+    BaseMultivariateQuadraticPolynomialImpl(matrix, device="cpu")
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
-        BaseMultivariatePolynomialImpl(matrix, device=1)
+        BaseMultivariateQuadraticPolynomialImpl(matrix, device=1)
     if not torch.cuda.is_available():  # pragma: no cover
         with pytest.raises(RuntimeError):
-            BaseMultivariatePolynomialImpl(matrix, device="cuda")
+            BaseMultivariateQuadraticPolynomialImpl(matrix, device="cuda")
     else:  # pragma: no cover
-        BaseMultivariatePolynomialImpl(matrix, device="cuda")
+        BaseMultivariateQuadraticPolynomialImpl(matrix, device="cuda")
 
 
 def test_call_polynomial():
-    polynomial = BaseMultivariatePolynomialImpl(matrix)
+    polynomial = BaseMultivariateQuadraticPolynomialImpl(matrix)
     assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0.0
     assert torch.equal(
         polynomial(
@@ -136,7 +136,7 @@ def test_call_polynomial():
 
 
 def test_call_polynomial_with_accepted_values():
-    polynomial = BaseMultivariatePolynomialImpl(matrix, accepted_values=[0, 1])
+    polynomial = BaseMultivariateQuadraticPolynomialImpl(matrix, accepted_values=[0, 1])
     assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0
     with pytest.raises(ValueError):
         polynomial(torch.tensor([0, 1, 2], dtype=torch.float32))
@@ -151,10 +151,10 @@ def test_call_polynomial_with_accepted_values():
 def test_ising_interface():
     with pytest.raises(NotImplementedError):
         # noinspection PyTypeChecker
-        BaseMultivariatePolynomial.to_ising(None)
+        BaseMultivariateQuadraticPolynomial.to_ising(None)
     with pytest.raises(NotImplementedError):
         # noinspection PyTypeChecker
-        BaseMultivariatePolynomial.convert_spins(None, None)
+        BaseMultivariateQuadraticPolynomial.convert_spins(None, None)
 
 
 def test_best_only():

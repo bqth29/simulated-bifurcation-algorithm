@@ -13,12 +13,12 @@ solved with the Simulated Bifurcation algorithm.
 
 See Also
 --------
-BaseMultivariatePolynomial:
+BaseMultivariateQuadraticPolynomial:
     Abstract class for multivariate degree 2 polynomials.
-IntegerPolynomial:
+IntegerQuadraticPolynomial:
     Multivariate degree 2 polynomials over non-negative integers with a
     fixed number of bits.
-SpinPolynomial:
+SpinQuadraticPolynomial:
     Multivariate degree 2 polynomials over vectors whose entries are in
     {-1, 1}.
 models.QUBO: Implementation of the QUBO problem.
@@ -34,10 +34,10 @@ import numpy as np
 import torch
 
 from ..ising_core import IsingCore
-from .base_multivariate_polynomial import BaseMultivariatePolynomial
+from .base_multivariate_polynomial import BaseMultivariateQuadraticPolynomial
 
 
-class BinaryPolynomial(BaseMultivariatePolynomial):
+class BinaryQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
 
     """
     Multivariate degree 2 polynomials over binary vectors.
@@ -85,12 +85,12 @@ class BinaryPolynomial(BaseMultivariatePolynomial):
 
     See Also
     --------
-    BaseMultivariatePolynomial:
+    BaseMultivariateQuadraticPolynomial:
         Abstract class for multivariate degree 2 polynomials.
-    IntegerPolynomial:
+    IntegerQuadraticPolynomial:
         Multivariate degree 2 polynomials over non-negative integers with a
         fixed number of bits.
-    SpinPolynomial:
+    SpinQuadraticPolynomial:
         Multivariate degree 2 polynomials over vectors whose entries are in
         {-1, 1}.
     models.QUBO: Implementation of the QUBO problem.

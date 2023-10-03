@@ -3,10 +3,10 @@ from typing import Union
 import numpy as np
 import torch
 
-from ..polynomial import SpinPolynomial
+from ..polynomial import SpinQuadraticPolynomial
 
 
-class Ising(SpinPolynomial):
+class Ising(SpinQuadraticPolynomial):
 
     """
     Implementation of the Ising model.

@@ -13,12 +13,12 @@ solved with the Simulated Bifurcation algorithm.
 
 See Also
 --------
-BinaryPolynomial:
+BinaryQuadraticPolynomial:
     Multivariate degree 2 polynomials over vectors whose entries are in
     {0, 1}.
-BaseMultivariatePolynomial:
+BaseMultivariateQuadraticPolynomial:
     Abstract class for multivariate degree 2 polynomials.
-IntegerPolynomial:
+IntegerQuadraticPolynomial:
     Multivariate degree 2 polynomials over non-negative integers with a
     fixed number of bits.
 models.Ising: Implementation of the Ising problem.
@@ -42,10 +42,10 @@ import numpy as np
 import torch
 
 from ..ising_core import IsingCore
-from .base_multivariate_polynomial import BaseMultivariatePolynomial
+from .base_multivariate_polynomial import BaseMultivariateQuadraticPolynomial
 
 
-class SpinPolynomial(BaseMultivariatePolynomial):
+class SpinQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
 
     """
     Multivariate degree 2 polynomials over spin vectors.
@@ -93,12 +93,12 @@ class SpinPolynomial(BaseMultivariatePolynomial):
 
     See Also
     --------
-    BinaryPolynomial:
+    BinaryQuadraticPolynomial:
         Multivariate degree 2 polynomials over vectors whose entries are in
         {0, 1}.
-    BaseMultivariatePolynomial:
+    BaseMultivariateQuadraticPolynomial:
         Abstract class for multivariate degree 2 polynomials.
-    IntegerPolynomial:
+    IntegerQuadraticPolynomial:
         Multivariate degree 2 polynomials over non-negative integers with a
         fixed number of bits.
     models.Ising: Implementation of the Ising problem.

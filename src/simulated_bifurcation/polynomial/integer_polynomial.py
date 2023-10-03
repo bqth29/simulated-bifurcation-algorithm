@@ -15,12 +15,12 @@ that is integers between 0 and 127 inclusive).
 
 See Also
 --------
-BaseMultivariatePolynomial:
+BaseMultivariateQuadraticPolynomial:
     Abstract class for multivariate degree 2 polynomials.
-BinaryPolynomial:
+BinaryQuadraticPolynomial:
     Multivariate degree 2 polynomials over vectors whose entries are in
     {0, 1}.
-SpinPolynomial:
+SpinQuadraticPolynomial:
     Multivariate degree 2 polynomials over vectors whose entries are in
     {-1, 1}.
 models:
@@ -35,10 +35,10 @@ import numpy as np
 import torch
 
 from ..ising_core import IsingCore
-from .base_multivariate_polynomial import BaseMultivariatePolynomial
+from .base_multivariate_polynomial import BaseMultivariateQuadraticPolynomial
 
 
-class IntegerPolynomial(BaseMultivariatePolynomial):
+class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
 
     """
     Multivariate degree 2 polynomials over fixed bit-width integer vectors.
@@ -94,12 +94,12 @@ class IntegerPolynomial(BaseMultivariatePolynomial):
 
     See Also
     --------
-    BinaryPolynomial:
+    BinaryQuadraticPolynomial:
         Multivariate degree 2 polynomials over vectors whose entries are in
         {0, 1}.
-    BaseMultivariatePolynomial:
+    BaseMultivariateQuadraticPolynomial:
         Abstract class for multivariate degree 2 polynomials.
-    SpinPolynomial:
+    SpinQuadraticPolynomial:
         Multivariate degree 2 polynomials over vectors whose entries are in
         {-1, 1}.
     models:

@@ -3,10 +3,10 @@ from typing import Dict, List, Union
 import numpy as np
 import torch
 
-from ..polynomial import BinaryPolynomial
+from ..polynomial import BinaryQuadraticPolynomial
 
 
-class Knapsack(BinaryPolynomial):
+class Knapsack(BinaryQuadraticPolynomial):
     def __init__(
         self,
         weights: List[int],
