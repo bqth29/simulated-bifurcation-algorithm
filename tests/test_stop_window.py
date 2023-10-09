@@ -88,7 +88,7 @@ def test_wrong_convergence_threshold_value():
 def test_use_scenario():
     """
     Ground state is degenerate: [-1, 1, -1] and [1, -1, 1]
-    both reach the minimal energie value -6.
+    both reach the minimal energy value -6.
 
     Test of the stop window's behavior on 2 agents:
     - agent 1 converges to an optimal vector from step 3;
