@@ -33,7 +33,7 @@ jobs:
 
       - name: Run tests with Pytest
         run: |
-          coverage run -m pytest
+          coverage run -m pytest -p no:warnings
 
       - name: Coverage
         run: |

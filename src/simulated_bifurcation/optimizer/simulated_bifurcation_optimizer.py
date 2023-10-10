@@ -1,6 +1,7 @@
 import logging
+import warnings
 from time import time
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import torch
 from numpy import minimum
@@ -251,7 +252,7 @@ class SimulatedBifurcationOptimizer:
         """
         if use_window:
             if not self.window.has_bifurcated_spins():
-                LOGGER.warning(
+                warnings.warn(
                     "No agent has converged. Returned final positions' signs instead."
                 )
             return self.window.get_bifurcated_spins(spins)
