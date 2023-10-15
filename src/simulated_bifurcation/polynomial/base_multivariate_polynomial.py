@@ -14,8 +14,10 @@ from typing import Iterable, List, Optional, Tuple, Union, final
 
 import numpy as np
 import torch
+from sympy import Poly
 
 from ..ising_core import IsingCore
+from .polynomial_compiler import Order2MultivariatePolynomialCompiler as O2MPC
 
 
 class BaseMultivariateQuadraticPolynomial(ABC):
@@ -613,6 +615,16 @@ class BaseMultivariateQuadraticPolynomial(ABC):
             convergence_threshold=convergence_threshold,
             timeout=timeout,
         )
+
+    @classmethod
+    def from_polynomial(
+        cls,
+        polynomial: Poly,
+        dtype: torch.dtype = torch.float32,
+        device: Union[str, torch.device] = "cpu",
+    ):
+        constant, vector, matrix = O2MPC(polynomial).compile()
+        return cls(matrix, vector, constant, dtype, device)
 
 
 class IsingPolynomialInterface(BaseMultivariateQuadraticPolynomial, ABC):

@@ -39,9 +39,11 @@ from typing import Optional, Union
 
 import numpy as np
 import torch
+from sympy import Poly
 
 from ..ising_core import IsingCore
 from .base_multivariate_polynomial import BaseMultivariateQuadraticPolynomial
+from .polynomial_compiler import Order2MultivariatePolynomialCompiler as O2MPC
 
 
 class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
@@ -187,6 +189,19 @@ class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
         else:
             int_vars = None
         return int_vars
+
+    @classmethod
+    def from_polynomial(
+        cls,
+        polynomial: Poly,
+        number_of_bits: int = 1,
+        dtype: torch.dtype = torch.float32,
+        device: Union[str, torch.device] = "cpu",
+    ):
+        constant, vector, matrix = O2MPC(polynomial).compile()
+        return IntegerQuadraticPolynomial(
+            matrix, vector, constant, number_of_bits, dtype, device
+        )
 
 
 class IntegerPolynomial(IntegerQuadraticPolynomial):
