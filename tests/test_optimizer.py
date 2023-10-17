@@ -3,10 +3,9 @@ from time import time
 import pytest
 import torch
 
-from src.simulated_bifurcation import reset_env, set_env
+from src.simulated_bifurcation import ConvergenceWarning, reset_env, set_env
 from src.simulated_bifurcation.ising_core import IsingCore
 from src.simulated_bifurcation.optimizer import (
-    ConvergenceWarning,
     OptimizerMode,
     SimulatedBifurcationOptimizer,
 )
