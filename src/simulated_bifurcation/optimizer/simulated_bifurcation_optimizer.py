@@ -21,6 +21,11 @@ CONSOLE_HANDLER.setFormatter(
 LOGGER.addHandler(CONSOLE_HANDLER)
 
 
+class ConvergenceWarning(Warning):
+    def __str__(self) -> str:
+        return "No agent has converged. Returned final positions' signs instead."
+
+
 class SimulatedBifurcationOptimizer:
 
     """
@@ -252,9 +257,7 @@ class SimulatedBifurcationOptimizer:
         """
         if use_window:
             if not self.window.has_bifurcated_spins():
-                warnings.warn(
-                    "No agent has converged. Returned final positions' signs instead."
-                )
+                warnings.warn(ConvergenceWarning(), stacklevel=2)
             return self.window.get_bifurcated_spins(spins)
         else:
             return spins
