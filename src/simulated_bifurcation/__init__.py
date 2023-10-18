@@ -152,7 +152,7 @@ tensor([0., 0.], device='cuda:0')
 
 
 from . import models
-from .optimizer import get_env, reset_env, set_env
+from .optimizer import ConvergenceWarning, get_env, reset_env, set_env
 from .polynomial import (
     BinaryPolynomial,
     BinaryQuadraticPolynomial,

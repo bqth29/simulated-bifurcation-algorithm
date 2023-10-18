@@ -3,7 +3,7 @@ from time import time
 import pytest
 import torch
 
-from src.simulated_bifurcation import reset_env, set_env
+from src.simulated_bifurcation import ConvergenceWarning, reset_env, set_env
 from src.simulated_bifurcation.ising_core import IsingCore
 from src.simulated_bifurcation.optimizer import (
     OptimizerMode,
@@ -48,16 +48,17 @@ def test_optimizer_without_bifurcation():
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = IsingCore(J, h)
-    ising.minimize(
-        5,
-        10,
-        False,
-        False,
-        False,
-        use_window=True,
-        sampling_period=50,
-        convergence_threshold=50,
-    )
+    with pytest.warns(ConvergenceWarning):
+        ising.minimize(
+            5,
+            10,
+            False,
+            False,
+            False,
+            use_window=True,
+            sampling_period=50,
+            convergence_threshold=50,
+        )
     assert torch.equal(
         torch.tensor(
             [
