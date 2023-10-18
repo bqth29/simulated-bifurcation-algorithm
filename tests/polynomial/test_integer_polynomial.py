@@ -1,5 +1,6 @@
 import pytest
 import torch
+from sympy import poly, symbols
 
 from src.simulated_bifurcation.polynomial import (
     IntegerPolynomial,
@@ -85,3 +86,14 @@ def test_optimize_integer_polynomial():
 def test_deprecation_warning():
     with pytest.warns(DeprecationWarning):
         IntegerPolynomial(matrix, vector, constant)
+
+
+def test_from_expression():
+    x, y = symbols("x y")
+    expression = poly((x + y) ** 2 + x - y + 2)
+    polynomial = IntegerQuadraticPolynomial.from_expression(expression, 3)
+    assert isinstance(polynomial, IntegerQuadraticPolynomial)
+    assert torch.equal(torch.tensor([[1.0, 2.0], [0.0, 1.0]]), polynomial.matrix)
+    assert torch.equal(torch.tensor([1.0, -1.0]), polynomial.vector)
+    assert torch.equal(torch.tensor(2.0), polynomial.constant)
+    assert 3 == polynomial.number_of_bits

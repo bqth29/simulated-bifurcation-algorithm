@@ -43,7 +43,7 @@ from sympy import Poly
 
 from ..ising_core import IsingCore
 from .base_multivariate_polynomial import BaseMultivariateQuadraticPolynomial
-from .polynomial_compiler import Order2MultivariatePolynomialCompiler as O2MPC
+from .expression_compiler import ExpressionCompiler
 
 
 class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
@@ -191,14 +191,14 @@ class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
         return int_vars
 
     @classmethod
-    def from_polynomial(
+    def from_expression(
         cls,
-        polynomial: Poly,
+        expression: Poly,
         number_of_bits: int = 1,
         dtype: torch.dtype = torch.float32,
         device: Union[str, torch.device] = "cpu",
     ):
-        constant, vector, matrix = O2MPC(polynomial).compile()
+        constant, vector, matrix = ExpressionCompiler(expression).compile()
         return IntegerQuadraticPolynomial(
             matrix, vector, constant, number_of_bits, dtype, device
         )

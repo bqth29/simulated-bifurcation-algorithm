@@ -17,7 +17,7 @@ import torch
 from sympy import Poly
 
 from ..ising_core import IsingCore
-from .polynomial_compiler import Order2MultivariatePolynomialCompiler as O2MPC
+from .expression_compiler import ExpressionCompiler
 
 
 class BaseMultivariateQuadraticPolynomial(ABC):
@@ -617,13 +617,13 @@ class BaseMultivariateQuadraticPolynomial(ABC):
         )
 
     @classmethod
-    def from_polynomial(
+    def from_expression(
         cls,
-        polynomial: Poly,
+        expression: Poly,
         dtype: torch.dtype = torch.float32,
         device: Union[str, torch.device] = "cpu",
     ):
-        constant, vector, matrix = O2MPC(polynomial).compile()
+        constant, vector, matrix = ExpressionCompiler(expression).compile()
         return cls(matrix, vector, constant, dtype, device)
 
 

@@ -5,9 +5,9 @@ import torch
 from sympy import Poly
 
 
-class Order2MultivariatePolynomialCompiler:
+class ExpressionCompiler:
     def __init__(self, polynomial: Poly) -> None:
-        Order2MultivariatePolynomialCompiler.__check_polynomial_degree(polynomial)
+        ExpressionCompiler.__check_polynomial_degree(polynomial)
         self.polynomial = polynomial
         self.variables = len(self.polynomial.gens)
         self.order_2_tensor = torch.zeros(self.variables, self.variables)
