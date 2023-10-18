@@ -623,6 +623,24 @@ class BaseMultivariateQuadraticPolynomial(ABC):
         dtype: torch.dtype = torch.float32,
         device: Union[str, torch.device] = "cpu",
     ):
+        """
+        Build a SB native polynomial from a Sympy polynomial expression.
+
+        Parameters
+        ----------
+        expression : Sympy
+            the natural mathematical writing of the polynomial.
+        dtype : torch.dtype, optional
+            the dtype used to encode polynomial's coefficients (default is
+            `float32`)
+        device : str | torch.device, optional
+            the device on which to perform the computations of the Simulated
+            Bifurcation algorithm (default `"cpu"`)
+
+        Returns
+        -------
+        BaseMultivariateQuadraticPolynomial
+        """
         constant, vector, matrix = ExpressionCompiler(expression).compile()
         return cls(matrix, vector, constant, dtype, device)
 

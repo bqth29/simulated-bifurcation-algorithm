@@ -198,6 +198,27 @@ class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
         dtype: torch.dtype = torch.float32,
         device: Union[str, torch.device] = "cpu",
     ):
+        """
+        Build a SB native polynomial from a Sympy polynomial expression.
+
+        Parameters
+        ----------
+        expression : Sympy
+            the natural mathematical writing of the polynomial.
+        number_of_bits: int, default=1
+            The number of bits of the input vectors. For instance 7-bits
+            integers are the integers between 0 and 127 inclusive.
+        dtype : torch.dtype, optional
+            the dtype used to encode polynomial's coefficients (default is
+            `float32`)
+        device : str | torch.device, optional
+            the device on which to perform the computations of the Simulated
+            Bifurcation algorithm (default `"cpu"`)
+
+        Returns
+        -------
+        BaseMultivariateQuadraticPolynomial
+        """
         constant, vector, matrix = ExpressionCompiler(expression).compile()
         return IntegerQuadraticPolynomial(
             matrix, vector, constant, number_of_bits, dtype, device
