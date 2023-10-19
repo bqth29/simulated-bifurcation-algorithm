@@ -111,8 +111,8 @@ class BinaryQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
         matrix: Union[torch.Tensor, np.ndarray],
         vector: Union[torch.Tensor, np.ndarray, None] = None,
         constant: Union[float, int, None] = None,
-        dtype: torch.dtype = torch.float32,
-        device: Union[str, torch.device] = "cpu",
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         super().__init__(matrix, vector, constant, [0, 1], dtype, device)
 
