@@ -65,9 +65,14 @@ def optimize(
     it is done over a discrete domain specified through `input_type`.
     The polynomial is the sum of a quadratic form and a linear form plus
     a constant term:
-    `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
-    or `x.T Q x + l.T x + c` in matrix notation,
-    where `Q` is a square matrix, `l` a vector a `c` a constant.
+
+    .. math::
+
+        \sum_{i = 1}^{N} \sum_{i = 1}^{N} Q_{ij} x_{i} x_{j} +
+        \sum_{i = 1}^{N} l_{i} x_{i} + c
+
+    :math:`x^{T} Q x + l^{T} x + c` in matrix notation, where :math:`Q`
+    is a square matrix, :math:`l` a vector and :math:`c` a constant.
 
     Parameters
     ----------

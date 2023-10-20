@@ -12,6 +12,7 @@ Content
 
    pages/general/getting_started
    pages/general/background
+   pages/general/presentation
 
 .. toctree::
    :maxdepth: 3

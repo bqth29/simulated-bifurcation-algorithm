@@ -8,16 +8,21 @@ Provides
 2. Implementation of several common combinatorial optimization problems.
 3. A polynomial API for further customization.
 
-The simulated bifurcation (SB) algorithm is a randomized approximation
+The Simulated Bifurcation (SB) algorithm is a randomized approximation
 algorithm for combinatorial optimization problems. More specifically, it
 solves the Ising problem, an NP-hard optimization problem which consists
 in finding the ground state of an Ising model. It corresponds to the
 minimization (or equivalently maximization) of a multivariate degree 2
 polynomial over vectors whose entries are in {-1, 1}. Such polynomial is
 the sum of a quadratic form and a linear form plus a constant term :
-`ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
-or `x.T Q x + l.T x + c` in matrix notation,
-where `Q` is a square matrix, `l` a vector a `c` a constant.
+
+.. math::
+
+        \sum_{i = 1}^{N} \sum_{i = 1}^{N} Q_{ij} x_{i} x_{j} +
+        \sum_{i = 1}^{N} l_{i} x_{i} + c
+
+:math:`x^{T} Q x + l^{T} x + c` in matrix notation, where :math:`Q`
+is a square matrix, :math:`l` a vector and :math:`c` a constant.
 
 Several common combinatorial optimization problems are reframed as Ising
 problems in the `models` module, e.g.: QUBO, knapsack, Markowitz model...
