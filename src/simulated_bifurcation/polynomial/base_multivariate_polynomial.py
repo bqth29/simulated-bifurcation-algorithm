@@ -1,3 +1,14 @@
+"""
+.. deprecated:: 1.2.1
+    `IsingPolynomialInterface` will be removed in simulated-bifurcation
+    1.3.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
+    prevision of the addition of multivariate polynomials of an arbitrary
+    degree.
+
+"""
+
+
+import warnings
 from abc import ABC, abstractmethod
 from typing import Iterable, List, Optional, Tuple, Union, final
 
@@ -7,7 +18,7 @@ import torch
 from ..ising_core import IsingCore
 
 
-class IsingPolynomialInterface(ABC):
+class BaseMultivariateQuadraticPolynomial(ABC):
 
     """
     Abstract class to implement an order two multivariate polynomial that can
@@ -295,6 +306,7 @@ class IsingPolynomialInterface(ABC):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
+        timeout: Optional[float] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local extremum of the model by optimizing
@@ -349,6 +361,9 @@ class IsingPolynomialInterface(ABC):
         use_window : bool, optional
             indicates whether to use the window as a stopping criterion or not
             (default is True)
+        timeout : float | None, default=None
+            Time in seconds after which the simulation is stopped.
+            None means no timeout.
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
@@ -383,14 +398,15 @@ class IsingPolynomialInterface(ABC):
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
+            timeout=timeout,
         )
         self.sb_result = self.convert_spins(ising_equivalent)
         result = self.sb_result.t()
         evaluation = self(result)
         if best_only:
-            i_min = torch.argmin(evaluation)
-            result = result[i_min]
-            evaluation = evaluation[i_min]
+            i_best = torch.argmin(evaluation) if minimize else torch.argmax(evaluation)
+            result = result[i_best]
+            evaluation = evaluation[i_best]
         return result, evaluation
 
     @final
@@ -406,6 +422,7 @@ class IsingPolynomialInterface(ABC):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
+        timeout: Optional[float] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local minimum of the model by optimizing
@@ -460,6 +477,9 @@ class IsingPolynomialInterface(ABC):
         use_window : bool, optional
             indicates whether to use the window as a stopping criterion or not
             (default is True)
+        timeout : float | None, default=None
+            Time in seconds after which the simulation is stopped.
+            None means no timeout.
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
@@ -489,6 +509,7 @@ class IsingPolynomialInterface(ABC):
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
+            timeout=timeout,
         )
 
     @final
@@ -504,6 +525,7 @@ class IsingPolynomialInterface(ABC):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
+        timeout: Optional[float] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local maximum of the model by optimizing
@@ -557,6 +579,9 @@ class IsingPolynomialInterface(ABC):
         use_window : bool, optional
             indicates whether to use the window as a stopping criterion or not
             (default is True)
+        timeout : float | None, default=None
+            Time in seconds after which the simulation is stopped.
+            None means no timeout.
         ballistic : bool, optional
             if True, the ballistic SB will be used, else it will be the
             discrete SB (default is True)
@@ -586,4 +611,28 @@ class IsingPolynomialInterface(ABC):
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
+            timeout=timeout,
         )
+
+
+class IsingPolynomialInterface(BaseMultivariateQuadraticPolynomial, ABC):
+
+    """
+    .. deprecated:: 1.2.1
+        `IsingPolynomialInterface` will be removed in simulated-bifurcation
+        1.3.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
+        prevision of the addition of multivariate polynomials of an
+        arbitrary degree.
+
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        # 2023-10-03, 1.2.1
+        warnings.warn(
+            "`IsingPolynomialInterface` is deprecated as of simulated-bifurcation "
+            "1.2.1, and will be removed in simulated-bifurcation 1.3.0. Please use "
+            "`BaseQuadraticMultivariatePolynomial` instead.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        super().__init__(*args, **kwargs)

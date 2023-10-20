@@ -23,16 +23,16 @@ models:
 
 
 import re
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import torch
 from numpy import ndarray
 
 from .polynomial import (
-    BinaryPolynomial,
-    IntegerPolynomial,
-    IsingPolynomialInterface,
-    SpinPolynomial,
+    BaseMultivariateQuadraticPolynomial,
+    BinaryQuadraticPolynomial,
+    IntegerQuadraticPolynomial,
+    SpinQuadraticPolynomial,
 )
 
 
@@ -54,6 +54,7 @@ def optimize(
     use_window: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
+    timeout: Optional[float] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Optimize a multivariate degree 2 polynomial using the SB algorithm.
@@ -146,6 +147,9 @@ def optimize(
     convergence_threshold : int, default=50
         Number of consecutive identical spin samplings considered as a
         proof of convergence by the window.
+    timeout : float | None, default=None
+        Time, in seconds, after which the simulation will be stopped.
+        None means no timeout.
     Hyperparameters corresponding to physical constants :
         These parameters have been fine-tuned (Goto et al.) to give the
         best results most of the time. Nevertheless, the relevance of
@@ -297,6 +301,7 @@ def optimize(
         use_window=use_window,
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
+        timeout=timeout,
     )
     return result, evaluation
 
@@ -318,6 +323,7 @@ def minimize(
     use_window: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
+    timeout: Optional[float] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Minimize a multivariate degree 2 polynomial using the SB algorithm.
@@ -406,6 +412,9 @@ def minimize(
     convergence_threshold : int, default=50
         Number of consecutive identical spin samplings considered as a
         proof of convergence by the window.
+    timeout : float | None, default=None
+        Time, in seconds, after which the simulation will be stopped.
+        None means no timeout.
     Hyperparameters corresponding to physical constants :
         These parameters have been fine-tuned (Goto et al.) to give the
         best results most of the time. Nevertheless, the relevance of
@@ -546,6 +555,7 @@ def minimize(
         use_window=use_window,
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
+        timeout=timeout,
     )
 
 
@@ -566,6 +576,7 @@ def maximize(
     use_window: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
+    timeout: Optional[float] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Maximize a multivariate degree 2 polynomial using the SB algorithm.
@@ -654,6 +665,9 @@ def maximize(
     convergence_threshold : int, default=50
         Number of consecutive identical spin samplings considered as a
         proof of convergence by the window.
+    timeout : float | None, default=None
+        Time, in seconds, after which the simulation will be stopped.
+        None means no timeout.
     Hyperparameters corresponding to physical constants :
         These parameters have been fine-tuned (Goto et al.) to give the
         best results most of the time. Nevertheless, the relevance of
@@ -794,6 +808,7 @@ def maximize(
         use_window=use_window,
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
+        timeout=timeout,
     )
 
 
@@ -804,7 +819,7 @@ def build_model(
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
     device: Union[str, torch.device] = "cpu",
-) -> IsingPolynomialInterface:
+) -> BaseMultivariateQuadraticPolynomial:
     """
     Instantiate a multivariate degree 2 polynomial over a given domain.
 
@@ -843,12 +858,12 @@ def build_model(
 
     Returns
     -------
-    SpinPolynomial | BinaryPolynomial | IntegerPolynomial
+    SpinQuadraticPolynomial | BinaryQuadraticPolynomial | IntegerQuadraticPolynomial
         The polynomial described by `matrix`, `vector` and `constant` on
         the domain specified by `input_type`.
-        - `input_type="spin"` : SpinPolynomial.
-        - `input_type="binary"` : BinaryPolynomial.
-        - `input_type="int..."` : IntegerPolynomial.
+        - `input_type="spin"` : SpinQuadraticPolynomial.
+        - `input_type="binary"` : BinaryQuadraticPolynomial.
+        - `input_type="int..."` : IntegerQuadraticPolynomial.
 
     Raises
     ------
@@ -870,7 +885,7 @@ def build_model(
         Shorthands for polynomial creation and optimization.
     polynomial :
         Module providing some polynomial types as well as an abstract
-        polynomial class `IsingPolynomialInterface`.
+        polynomial class `BaseMultivariateQuadraticPolynomial`.
     models :
         Module containing the implementation of several common
         combinatorial optimization problems.
@@ -935,11 +950,11 @@ def build_model(
     int_type_pattern = re.compile(int_type_regex)
 
     if input_type == "spin":
-        return SpinPolynomial(
+        return SpinQuadraticPolynomial(
             matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device
         )
     if input_type == "binary":
-        return BinaryPolynomial(
+        return BinaryQuadraticPolynomial(
             matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device
         )
     if int_type_pattern.match(input_type) is None:
@@ -951,7 +966,7 @@ def build_model(
             f'Examples: "int7", "int42", ...'
         )
     number_of_bits = int(input_type[3:])
-    return IntegerPolynomial(
+    return IntegerQuadraticPolynomial(
         matrix=matrix,
         vector=vector,
         constant=constant,

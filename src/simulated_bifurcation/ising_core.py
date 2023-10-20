@@ -10,7 +10,7 @@ See Also
 models.Ising:
     Implementation of the Ising model which behaves like other models and
     polynomials.
-IsingPolynomialInterface: Abstract multivariate polynomial class.
+BaseMultivariateQuadraticPolynomial: Abstract multivariate polynomial class.
 
 """
 
@@ -100,7 +100,7 @@ class IsingCore:
     def __len__(self) -> int:
         return self.dimension
 
-    def __neg__(self: SelfIsingCore) -> SelfIsingCore:
+    def __neg__(self) -> SelfIsingCore:
         return self.__class__(-self.J, -self.h, self.dtype, self.device)
 
     def __init_from_tensor(
@@ -243,6 +243,7 @@ class IsingCore:
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
+        timeout: Optional[float] = None,
     ) -> None:
         """
         Minimize the energy of the Ising model using the SB algorithm.
@@ -278,6 +279,9 @@ class IsingCore:
         convergence_threshold : int, default=50
             Number of consecutive identical spin samplings considered as a
             proof of convergence by the window.
+        timeout : float | None, default=None
+            Time in seconds after which the simulation is stopped.
+            None means no timeout.
 
         Returns
         -------
@@ -334,7 +338,7 @@ class IsingCore:
         models.Ising:
             Implementation of the Ising model which behaves like other
             models and polynomials.
-        IsingPolynomialInterface: Abstract multivariate polynomial class.
+        BaseMultivariateQuadraticPolynomial: Abstract multivariate polynomial class.
 
         Notes
         -----
@@ -381,6 +385,7 @@ class IsingCore:
         optimizer = SimulatedBifurcationOptimizer(
             agents,
             max_steps,
+            timeout,
             optimizer_mode,
             heated,
             verbose,

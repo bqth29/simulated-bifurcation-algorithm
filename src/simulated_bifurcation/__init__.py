@@ -23,7 +23,7 @@ Several common combinatorial optimization problems are reframed as Ising
 problems in the `models` module, e.g.: QUBO, knapsack, Markowitz model...
 Polynomials over vectors whose entries are in {0, 1} or whose entries are
 fixed bit-width integers are also implemented, as well as an abstract
-polynomial class `IsingPolynomialInterface` for further customization.
+polynomial class `BaseMultivariateQuadraticPolynomial` for further customization.
 
 The docstring examples assume that `torch` (PyTorch) has been imported and
 that simulated_bifurcation has been imported as `sb`:
@@ -35,6 +35,17 @@ Code snippets are indicated by three greater-than signs:
 
   >>> x = 42
   >>> x = x + 1
+
+.. deprecated:: 1.2.1
+    `BinaryPolynomial` will be modified in simulated-bifurcation 1.3.0, it
+    is replaced by `BinaryQuadraticPolynomial` in prevision of the addition
+    of multivariate polynomials of an arbitrary degree.
+    `IntegerPolynomial` will be modified in simulated-bifurcation 1.3.0, it
+    is replaced by `IntegerQuadraticPolynomial` in prevision of the
+    addition of multivariate polynomials of an arbitrary degree.
+    `SpinPolynomial` will be modified in simulated-bifurcation 1.3.0, it is
+    replaced by `SpinQuadraticPolynomial` in prevision of the addition of
+    multivariate polynomials of an arbitrary degree.
 
 Notes
 -----
@@ -143,8 +154,15 @@ tensor([0., 0.], device='cuda:0')
 
 
 from . import models
-from .optimizer import get_env, reset_env, set_env
-from .polynomial import BinaryPolynomial, IntegerPolynomial, SpinPolynomial
+from .optimizer import ConvergenceWarning, get_env, reset_env, set_env
+from .polynomial import (
+    BinaryPolynomial,
+    BinaryQuadraticPolynomial,
+    IntegerPolynomial,
+    IntegerQuadraticPolynomial,
+    SpinPolynomial,
+    SpinQuadraticPolynomial,
+)
 from .simulated_bifurcation import build_model, maximize, minimize, optimize
 
 reset_env()

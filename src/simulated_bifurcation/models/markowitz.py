@@ -3,10 +3,10 @@ from typing import Optional, Tuple, Union
 import numpy as np
 import torch
 
-from ..polynomial import IntegerPolynomial
+from ..polynomial import IntegerQuadraticPolynomial
 
 
-class SequentialMarkowitz(IntegerPolynomial):
+class SequentialMarkowitz(IntegerQuadraticPolynomial):
     def __init__(
         self,
         covariances: Union[torch.Tensor, np.ndarray],
