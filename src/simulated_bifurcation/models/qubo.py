@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import torch
@@ -18,8 +18,8 @@ class QUBO(BinaryQuadraticPolynomial):
     def __init__(
         self,
         Q: Union[torch.Tensor, np.ndarray],
-        dtype: torch.dtype = torch.float32,
-        device: str = "cpu",
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         super().__init__(Q, None, None, dtype, device)
         self.Q = self.matrix

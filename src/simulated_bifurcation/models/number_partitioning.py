@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import torch
 from numpy import sum
@@ -14,7 +14,10 @@ class NumberPartitioning(SpinQuadraticPolynomial):
     """
 
     def __init__(
-        self, numbers: list, dtype: torch.dtype = torch.float32, device: str = "cpu"
+        self,
+        numbers: list,
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         self.numbers = numbers
         tensor_numbers = torch.tensor(self.numbers, dtype=dtype, device=device).reshape(

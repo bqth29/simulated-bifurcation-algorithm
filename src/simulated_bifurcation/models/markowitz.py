@@ -15,8 +15,8 @@ class SequentialMarkowitz(IntegerQuadraticPolynomial):
         initial_stocks: Optional[Union[torch.Tensor, np.ndarray]] = None,
         risk_coefficient: float = 1,
         number_of_bits: int = 1,
-        dtype: torch.dtype = torch.float32,
-        device: str = "cpu",
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         """
         covariances : T x N x N
@@ -114,8 +114,8 @@ class Markowitz(SequentialMarkowitz):
         expected_return: Union[torch.Tensor, np.ndarray],
         risk_coefficient: float = 1,
         number_of_bits: int = 1,
-        dtype: torch.dtype = torch.float32,
-        device: str = "cpu",
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         covariance = torch.unsqueeze(covariance, 0)
         expected_return = torch.unsqueeze(expected_return, 0)

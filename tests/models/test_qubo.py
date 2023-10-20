@@ -5,7 +5,7 @@ from src.simulated_bifurcation.models import QUBO
 
 def test_qubo():
     torch.manual_seed(42)
-    Q = torch.tensor([[1, -2, 3], [0, -4, 1], [0, 0, 2]])
+    Q = torch.tensor([[1.0, -2.0, 3.0], [0.0, -4.0, 1.0], [0.0, 0.0, 2.0]])
     model = QUBO(Q)
     binary_vector, value = model.minimize(agents=10, verbose=False, best_only=True)
     assert torch.equal(torch.tensor([1.0, 1.0, 0.0]), binary_vector)
