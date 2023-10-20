@@ -38,7 +38,7 @@ def set_env(
 
     See Also
     --------
-    To set a default dtype and a default device for Tensors
+    To set a default dtype and a default device for tensors
     please use `torch.set_default_dtype` and
     `torch.set_default_device`.
     """
