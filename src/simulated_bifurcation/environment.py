@@ -1,19 +1,14 @@
-import os
-from typing import Dict, Optional, Union
-
-import torch
+from typing import Dict, Optional
 
 from .optimizer.optimization_variables import OptimizationVariable
 
 
-def get_env() -> Dict[str, Union[float, torch.dtype, torch.device]]:
-    return {
-        **{variable.name: variable.get() for variable in OptimizationVariable},
-        "DEFAULT_DTYPE": torch.__getattribute__(
-            os.environ["PYTHON_SB_DEFAULT_DTYPE"].split(".")[1]
-        ),
-        "DEFAULT_DEVICE": torch.device(os.environ["PYTHON_SB_DEFAULT_DEVICE"]),
-    }
+def get_env() -> Dict[str, float]:
+    """
+    Returns the values of the quantum physical constants behind the
+    Simulated Bifurcation algorithm.
+    """
+    return {variable.name: variable.get() for variable in OptimizationVariable}
 
 
 def set_env(
@@ -21,41 +16,32 @@ def set_env(
     time_step: Optional[float] = None,
     pressure_slope: Optional[float] = None,
     heat_coefficient: Optional[float] = None,
-    default_dtype: Optional[torch.dtype] = None,
-    default_device: Optional[str] = None
 ):
-    __set_optimization_variables(time_step, pressure_slope, heat_coefficient)
-    __set_default_dtype(default_dtype)
-    __set_default_device(default_device)
+    """
+    Override the values of the pre-set and fine-tuned quantum physical
+    constants behind the Simulated Bifurcation algorithm.
 
+    Parameters
+    ----------
+    time_step: float, optional
+        Temporal discretization step.
+    pressure_slope: float, optional
+        Adiabatic system evolution rate.
+    heat_coefficient: float, optional
+        Influence of heating for HbSB or HdSB.
 
-def __set_default_device(default_device: Optional[str]):
-    if default_device is not None:
-        if isinstance(default_device, str):
-            try:
-                device = torch.device(default_device)
-                torch.set_default_device(device)
-                os.environ["PYTHON_SB_DEFAULT_DEVICE"] = str(device)
-            except:
-                raise ValueError("Invalid device type.")
-        else:
-            raise TypeError("Default device must be a string.")
+    Notes
+    -----
+    All parameters are keyword-only and optional with a default
+    value to `None`. `None` means that the variable is not
+    changed in the environment.
 
-
-def __set_default_dtype(default_dtype: Optional[torch.dtype]):
-    if default_dtype is not None:
-        if isinstance(default_dtype, torch.dtype):
-            torch.set_default_dtype(default_dtype)
-            os.environ["PYTHON_SB_DEFAULT_DTYPE"] = str(default_dtype)
-        else:
-            raise TypeError("Default dtype must be a valid torch dtype.")
-
-
-def __set_optimization_variables(
-    time_step: Optional[float],
-    pressure_slope: Optional[float],
-    heat_coefficient: Optional[float],
-):
+    See Also
+    --------
+    To set a default dtype and a default device for Tensors
+    please use `torch.set_default_dtype` and
+    `torch.set_default_device`.
+    """
     if (
         (time_step is None or isinstance(time_step, float))
         and (pressure_slope is None or isinstance(pressure_slope, float))
@@ -69,7 +55,13 @@ def __set_optimization_variables(
 
 
 def reset_env() -> None:
+    """
+    Reset the Simulated Bifurcation algorithm quantum physical
+    constants to their original fine-tuned value:
+
+    - time step: 0.1
+    - pressure slope: 0.01
+    - heat coefficient: 0.06
+    """
     for variable in OptimizationVariable:
         variable.reset()
-    __set_default_dtype(torch.float32)
-    __set_default_device("cpu")
