@@ -4,27 +4,35 @@ on:
   push:
     branches:
     - main
-    - github-actions-test
   pull_request:
     branches:
       - main
     types:
       - opened
       - synchronize
+  workflow_run:
+    workflows: ["lint"]
+    types:
+      - completed
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    strategy:
+      matrix:
+        python: ["3.8", "3.9", "3.10"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
+    name: Install and test package on ${{ matrix.os }} for Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Python
+      - name: Setup Python ${{ matrix.python }}
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: ${{ matrix.python }}
 
       - name: Install package [pip]
         run: |
