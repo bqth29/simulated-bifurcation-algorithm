@@ -20,19 +20,19 @@ jobs:
   test:
     strategy:
       matrix:
-        python: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10"]
         os: [ubuntu-latest, windows-latest, macos-latest]
 
-    name: Install and test package on ${{ matrix.os }} for Python ${{ matrix.python }}
+    name: Install and test package on ${{ matrix.os }} for Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Python ${{ matrix.python }}
+      - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python }}
+          python-version: ${{ matrix.python-version }}
 
       - name: Install package [pip]
         run: |
@@ -53,6 +53,7 @@ jobs:
           python .github/scripts/metadata_checker
 
       - name: Upload coverage to Codecov
+        if: ${{ matrix.python-version == "3.8" && matrix.os == "ubuntu-latest" }}
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
