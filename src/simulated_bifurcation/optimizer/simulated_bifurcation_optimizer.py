@@ -127,7 +127,7 @@ class SimulatedBifurcationOptimizer:
 
     def __init_window(self, matrix: torch.Tensor, use_window: bool) -> None:
         self.window = StopWindow(
-            matrix.shape[0],
+            matrix,
             self.agents,
             self.convergence_threshold,
             matrix.dtype,
