@@ -270,15 +270,15 @@ class IsingCore:
             the algorithm.
         use_window : bool, default=True
             Whether to use the window as a stopping criterion: an agent is
-            said to have converged if its spins have not changed over the
-            last `convergence_threshold` spin samplings (done every
+            said to have converged if its energy has not changed over the
+            last `convergence_threshold` energy samplings (done every
             `sampling_period` steps).
         sampling_period : int, default=50
-            Number of iterations between two consecutive spin samplings by
-            the  window.
+            Number of iterations between two consecutive energy samplings
+            by the window.
         convergence_threshold : int, default=50
-            Number of consecutive identical spin samplings considered as a
-            proof of convergence by the window.
+            Number of consecutive identical energy samplings considered as
+            a proof of convergence by the window.
         timeout : float | None, default=None
             Time in seconds after which the simulation is stopped.
             None means no timeout.
