@@ -10,7 +10,7 @@ minimize:
     Minimize a multivariate degree 2 polynomial using the SB algorithm.
 maximize:
     Maximize a multivariate degree 2 polynomial using the SB algorithm.
-build_model:
+build_polynomial:
     Instantiate a multivariate degree 2 polynomial over a given domain.
 
 See Also
@@ -47,7 +47,8 @@ def optimize(
     timeout: Optional[float] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
-    Optimize a multivariate degree 2 polynomial using the SB algorithm.
+    Optimize a multivariate quadratic polynomial using the
+    Simulated Bifurcation algorithm.
 
     The simulated bifurcated (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
@@ -61,17 +62,24 @@ def optimize(
 
     Parameters
     ----------
-    matrix : (M, M) Tensor | ndarray
-        Matrix corresponding to the quadratic terms of the polynomial
-        (quadratic form). It should be a square matrix, but not necessarily
-        symmetric.
-    vector : (M,) Tensor | ndarray | None, optional
-        Vector corresponding to the linear terms of the polynomial (linear
-        form). The default is None which signifies there are no linear
-        terms, that is `vector` is the null vector.
-    constant : int | float | None, optional
-        Constant of the polynomial. The default is None which signifies
-        there is no constant term, that is `constant` = 0.
+    polynomial : PolynomialLike
+        Multivariate quadratic polynomial to maximize. It can be
+        a native BaseMultivariateQuadraticPolynomial, a SymPy polynomial
+        expression ortensors/arrays of coefficients. If tensors/arrays are
+        provided, the monomial degree associated to the coefficients is
+        the numberof dimensions of the tensor/array, and all dimensions
+        must be equal.
+
+    Returns
+    -------
+    result : ([`agents`], M) Tensor
+        Best vector found, or all the vectors found is `best_only` is
+        False.
+    evaluation : ([`agents`],) Tensor
+        Value of the polynomial at `result`.
+
+    Keyword-Only Parameters
+    -----------------------
     input_type : {"spin", "binary", "int..."}, default="spin"
         Domain over which the optimization is done.
         • "spin" : Optimize the polynomial over vectors whose entries are
@@ -114,17 +122,6 @@ def optimize(
     verbose : bool, default=True
         Whether to display a progress bar to monitor the progress of the
         algorithm.
-
-    Returns
-    -------
-    result : ([`agents`], M) Tensor
-        Best vector found, or all the vectors found is `best_only` is
-        False.
-    evaluation : ([`agents`],) Tensor
-        Value of the polynomial at `result`.
-
-    Other Parameters
-    ----------------
     use_window : bool, default=True
         Whether to use the window as a stopping criterion: an agent is said
         to have converged if its energy has not changed over the last
@@ -139,6 +136,9 @@ def optimize(
     timeout : float | None, default=None
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
+
+    Other Parameters
+    ----------------
     Hyperparameters corresponding to physical constants :
         These parameters have been fine-tuned (Goto et al.) to give the
         best results most of the time. Nevertheless, the relevance of
@@ -192,7 +192,10 @@ def optimize(
     --------
     minimize : Alias for optimize(*args, **kwargs, minimize=True).
     maximize : Alias for optimize(*args, **kwargs, minimize=False).
-    build_model : Create a polynomial object.
+    build_polynomial : Create a polynomial object.
+    BaseMultivariateQuadraticPolynomial :
+        Native class to define multivariate quadratic polynomials
+        to be used with the SB algorithm.
     models :
         Module containing the implementation of several common
         combinatorial optimization problems.
@@ -319,24 +322,31 @@ def minimize(
 
     Parameters
     ----------
-    matrix : (M, M) Tensor | ndarray
-        Matrix corresponding to the quadratic terms of the polynomial
-        (quadratic form). It should be a square matrix, but not necessarily
-        symmetric.
-    vector : (M,) Tensor | ndarray | None, optional
-        Vector corresponding to the linear terms of the polynomial (linear
-        form). The default is None which signifies there are no linear
-        terms, that is `vector` is the null vector.
-    constant : int | float | None, optional
-        Constant of the polynomial. The default is None which signifies
-        there is no constant term, that is `constant` = 0.
+    polynomial : PolynomialLike
+        Multivariate quadratic polynomial to maximize. It can be
+        a native BaseMultivariateQuadraticPolynomial, a SymPy polynomial
+        expression ortensors/arrays of coefficients. If tensors/arrays are
+        provided, the monomial degree associated to the coefficients is
+        the numberof dimensions of the tensor/array, and all dimensions
+        must be equal.
+
+    Returns
+    -------
+    result : ([`agents`], M) Tensor
+        Best vector found, or all the vectors found is `best_only` is
+        False.
+    evaluation : ([`agents`],) Tensor
+        Value of the polynomial at `result`.
+
+    Keyword-Only Parameters
+    -----------------------
     input_type : {"spin", "binary", "int..."}, default="spin"
-        Domain over which the minimization is done.
-        • "spin" : Minimize the polynomial over vectors whose entries are
+        Domain over which the optimization is done.
+        • "spin" : Optimize the polynomial over vectors whose entries are
         in {-1, 1}.
-        • "binary" : Minimize the polynomial over vectors whose entries are
+        • "binary" : Optimize the polynomial over vectors whose entries are
         in {0, 1}.
-        • "int..." : Minimize the polynomial over vectors whose entries
+        • "int..." : Optimize the polynomial over vectors whose entries
         are n-bits non-negative integers, that is integers between 0 and
         2^n - 1 inclusive. "int..." represents any string starting with
         "int" and followed by a positive integer n, e.g. "int3", "int42".
@@ -369,17 +379,6 @@ def minimize(
     verbose : bool, default=True
         Whether to display a progress bar to monitor the progress of the
         algorithm.
-
-    Returns
-    -------
-    result : ([`agents`], M) Tensor
-        Best vector found, or all the vectors found is `best_only` is
-        False.
-    evaluation : ([`agents`],) Tensor
-        Value of the polynomial at `result`.
-
-    Other Parameters
-    ----------------
     use_window : bool, default=True
         Whether to use the window as a stopping criterion: an agent is said
         to have converged if its energy has not changed over the last
@@ -394,6 +393,9 @@ def minimize(
     timeout : float | None, default=None
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
+
+    Other Parameters
+    ----------------
     Hyperparameters corresponding to physical constants :
         These parameters have been fine-tuned (Goto et al.) to give the
         best results most of the time. Nevertheless, the relevance of
@@ -446,7 +448,10 @@ def minimize(
     See Also
     --------
     maximize : Maximize a polynomial.
-    build_model : Create a polynomial object.
+    build_polynomial : Create a polynomial object.
+    BaseMultivariateQuadraticPolynomial :
+        Native class to define multivariate quadratic polynomials
+        to be used with the SB algorithm.
     models :
         Module containing the implementation of several common
         combinatorial optimization problems.
@@ -567,24 +572,31 @@ def maximize(
 
     Parameters
     ----------
-    matrix : (M, M) Tensor | ndarray
-        Matrix corresponding to the quadratic terms of the polynomial
-        (quadratic form). It should be a square matrix, but not necessarily
-        symmetric.
-    vector : (M,) Tensor | ndarray | None, optional
-        Vector corresponding to the linear terms of the polynomial (linear
-        form). The default is None which signifies there are no linear
-        terms, that is `vector` is the null vector.
-    constant : int | float | None, optional
-        Constant of the polynomial. The default is None which signifies
-        there is no constant term, that is `constant` = 0.
+    polynomial : PolynomialLike
+        Multivariate quadratic polynomial to maximize. It can be
+        a native BaseMultivariateQuadraticPolynomial, a SymPy polynomial
+        expression ortensors/arrays of coefficients. If tensors/arrays are
+        provided, the monomial degree associated to the coefficients is
+        the numberof dimensions of the tensor/array, and all dimensions
+        must be equal.
+
+    Returns
+    -------
+    result : ([`agents`], M) Tensor
+        Best vector found, or all the vectors found is `best_only` is
+        False.
+    evaluation : ([`agents`],) Tensor
+        Value of the polynomial at `result`.
+
+    Keyword-Only Parameters
+    -----------------------
     input_type : {"spin", "binary", "int..."}, default="spin"
-        Domain over which the maximization is done.
-        • "spin" : Maximize the polynomial over vectors whose entries are
+        Domain over which the optimization is done.
+        • "spin" : Optimize the polynomial over vectors whose entries are
         in {-1, 1}.
-        • "binary" : Maximize the polynomial over vectors whose entries are
+        • "binary" : Optimize the polynomial over vectors whose entries are
         in {0, 1}.
-        • "int..." : Maximize the polynomial over vectors whose entries
+        • "int..." : Optimize the polynomial over vectors whose entries
         are n-bits non-negative integers, that is integers between 0 and
         2^n - 1 inclusive. "int..." represents any string starting with
         "int" and followed by a positive integer n, e.g. "int3", "int42".
@@ -617,17 +629,6 @@ def maximize(
     verbose : bool, default=True
         Whether to display a progress bar to monitor the progress of the
         algorithm.
-
-    Returns
-    -------
-    result : ([`agents`], M) Tensor
-        Best vector found, or all the vectors found is `best_only` is
-        False.
-    evaluation : ([`agents`],) Tensor
-        Value of the polynomial at `result`.
-
-    Other Parameters
-    ----------------
     use_window : bool, default=True
         Whether to use the window as a stopping criterion: an agent is said
         to have converged if its energy has not changed over the last
@@ -642,6 +643,9 @@ def maximize(
     timeout : float | None, default=None
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
+
+    Other Parameters
+    ----------------
     Hyperparameters corresponding to physical constants :
         These parameters have been fine-tuned (Goto et al.) to give the
         best results most of the time. Nevertheless, the relevance of
@@ -694,7 +698,10 @@ def maximize(
     See Also
     --------
     minimize : Minimize a polynomial.
-    build_model : Create a polynomial object.
+    build_polynomial : Create a polynomial object.
+    BaseMultivariateQuadraticPolynomial :
+        Native class to define multivariate quadratic polynomials
+        to be used with the SB algorithm.
     models :
         Module containing the implementation of several common
         combinatorial optimization problems.

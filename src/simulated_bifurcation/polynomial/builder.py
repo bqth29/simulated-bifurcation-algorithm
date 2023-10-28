@@ -36,6 +36,62 @@ def build_polynomial(
     dtype: Optional[torch.dtype] = torch.float32,
     device: Optional[Union[str, torch.device]] = "cpu",
 ) -> BaseMultivariateQuadraticPolynomial:
+    """
+    Build a native `BaseMultivariateQuadraticPolynomial` from
+    various possible input definitions.
+
+    These different definitions are grouped under the alias type
+    `PolynomialLike` which encompasses:
+
+    - `BaseMultivariateQuadraticPolynomial`
+    - SymPy's `Poly` expression
+    - `Tensor` and `ndarray`
+
+    Parameters
+    ----------
+    _input : PolynomialLike
+        The polynomial to build.
+    input_type : str, optional
+        The input type of the polynomial variables.
+        It can be one of "spin", "binary" and "intX"
+        where "X" is a positive integer denoting the
+        number of bits to encode the integer values
+        (e.g. "int3" -> {0, 1, 2, 3, 4, 5, 6, 7}).
+        If not provided, default value is set to "spin".
+    dtype : torch.dtype
+        The `dtype` of the built polynomial's tensors.
+    device : torch.device
+        The `device` of the built polynomial's tensors.
+
+    Returns
+    -------
+    polynomial : BaseMultivariateQuadraticPolynomial
+
+    Notes
+    -----
+    The `BaseMultivariateQuadraticPolynomial` is an abstract
+    class. Depending on the provided input type, the class of
+    the built polynomial will differ:
+
+    - if "spin": `SpinQuadraticPolynomial`
+    - if "binary": `BinaryQuadraticPolynomial`
+    - if "intX": `IntegerQuadraticPolynomial`
+
+    Warnings
+    --------
+    If tensors/arrays are provided, each one must account for the
+    coefficients of monomials of the same degree:
+
+    - to define a constant monomial, a 0-dimensional tensor/array or
+      a float/integer must be provided;
+    - to define linear monomials, a 1-dimensional tensor/array must be
+      provided;
+    - to define quadratic monomials, a 2-dimensional square tensor/array
+      must be provided.
+
+    If two tensors/arrays with the same number of dimensions are provided,
+    this will be considered as ambiguous and a `ValueError` will be raised.
+    """
     polynomial_type, number_of_bits = __get_polynomial_type(
         "spin" if input_type is None else input_type
     )
