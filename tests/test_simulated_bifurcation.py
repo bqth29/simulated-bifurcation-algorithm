@@ -1,8 +1,7 @@
-import pytest
 import torch
 from sympy import poly, symbols
 
-from src.simulated_bifurcation import build_polynomial, maximize, minimize
+from src.simulated_bifurcation import maximize, minimize
 
 matrix = torch.tensor(
     [

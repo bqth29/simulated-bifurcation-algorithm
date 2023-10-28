@@ -116,7 +116,7 @@ class BaseMultivariateQuadraticPolynomial(ABC):
             try:
                 value = torch.tensor(value, dtype=self.dtype, device=self.device)
             except Exception as err:
-                raise TypeError(f"Input value cannot be cast to Tensor.") from err
+                raise TypeError("Input value cannot be cast to Tensor.") from err
 
         if (
             input_values_check

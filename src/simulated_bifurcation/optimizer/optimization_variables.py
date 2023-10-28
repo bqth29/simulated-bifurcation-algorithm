@@ -21,7 +21,7 @@ def set_env(
         OptimizationVariable.PRESSURE_SLOPE.set(pressure_slope)
         OptimizationVariable.HEAT_COEFFICIENT.set(heat_coefficient)
         return
-    raise TypeError(f"All optimization variables must be floats.")
+    raise TypeError("All optimization variables must be floats.")
 
 
 def reset_env() -> None:

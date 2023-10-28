@@ -22,11 +22,9 @@ models:
 """
 
 
-import re
 from typing import Optional, Tuple, Union
 
 import torch
-from numpy import ndarray
 
 from .polynomial import PolynomialLike, build_polynomial
 

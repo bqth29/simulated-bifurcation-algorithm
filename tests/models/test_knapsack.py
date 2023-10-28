@@ -1,6 +1,5 @@
 import torch
 
-from src.simulated_bifurcation import set_env
 from src.simulated_bifurcation.models import Knapsack
 
 
