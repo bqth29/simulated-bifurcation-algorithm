@@ -158,10 +158,10 @@ from .polynomial import (
     BinaryQuadraticPolynomial,
     IntegerPolynomial,
     IntegerQuadraticPolynomial,
+    PolynomialLike,
     SpinPolynomial,
     SpinQuadraticPolynomial,
     build_polynomial,
-    PolynomialLike,
 )
 from .simulated_bifurcation import maximize, minimize, optimize
 
