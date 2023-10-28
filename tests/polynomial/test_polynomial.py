@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from src.simulated_bifurcation import build_model
+from src.simulated_bifurcation import build_polynomial
 from src.simulated_bifurcation.ising_core import IsingCore
 from src.simulated_bifurcation.polynomial import (
     BaseMultivariateQuadraticPolynomial,
@@ -169,10 +169,10 @@ def test_ising_interface():
 
 
 def test_best_only():
-    model = build_model(
-        matrix=matrix,
-        vector=vector,
-        constant=constant,
+    model = build_polynomial(
+        matrix,
+        vector,
+        constant,
         input_type="spin",
         dtype=torch.float32,
         device="cpu",
@@ -192,10 +192,10 @@ def test_best_only():
 
 def test_minimize():
     torch.manual_seed(42)
-    model = build_model(
-        matrix=matrix,
-        vector=vector,
-        constant=constant,
+    model = build_polynomial(
+        matrix,
+        vector,
+        constant,
         input_type="spin",
         dtype=torch.float32,
         device="cpu",
@@ -210,10 +210,10 @@ def test_minimize():
 
 
 def test_maximize():
-    model = build_model(
-        matrix=matrix,
-        vector=vector,
-        constant=constant,
+    model = build_polynomial(
+        matrix,
+        vector,
+        constant,
         input_type="spin",
         dtype=torch.float32,
         device="cpu",

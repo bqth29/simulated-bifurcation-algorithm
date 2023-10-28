@@ -28,18 +28,11 @@ from typing import Optional, Tuple, Union
 import torch
 from numpy import ndarray
 
-from .polynomial import (
-    BaseMultivariateQuadraticPolynomial,
-    BinaryQuadraticPolynomial,
-    IntegerQuadraticPolynomial,
-    SpinQuadraticPolynomial,
-)
+from .polynomial import PolynomialLike, build_polynomial
 
 
 def optimize(
-    matrix: Union[torch.Tensor, ndarray],
-    vector: Union[torch.Tensor, ndarray, None] = None,
-    constant: Union[int, float, None] = None,
+    *polynomial: PolynomialLike,
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
     device: Union[str, torch.device] = "cpu",
@@ -50,7 +43,6 @@ def optimize(
     heated: bool = False,
     minimize: bool = True,
     verbose: bool = True,
-    *,
     use_window: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
@@ -276,10 +268,8 @@ def optimize(
     tensor(0., device='cuda:0')
 
     """
-    model = build_model(
-        matrix=matrix,
-        vector=vector,
-        constant=constant,
+    model = build_polynomial(
+        *polynomial,
         input_type=input_type,
         dtype=dtype,
         device=device,
@@ -301,9 +291,7 @@ def optimize(
 
 
 def minimize(
-    matrix: Union[torch.Tensor, ndarray],
-    vector: Union[torch.Tensor, ndarray, None] = None,
-    constant: Union[int, float, None] = None,
+    *polynomial: PolynomialLike,
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
     device: Union[str, torch.device] = "cpu",
@@ -313,7 +301,6 @@ def minimize(
     ballistic: bool = False,
     heated: bool = False,
     verbose: bool = True,
-    *,
     use_window: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
@@ -533,19 +520,17 @@ def minimize(
 
     """
     return optimize(
-        matrix,
-        vector,
-        constant,
-        input_type,
-        dtype,
-        device,
-        agents,
-        max_steps,
-        best_only,
-        ballistic,
-        heated,
-        True,
-        verbose,
+        *polynomial,
+        input_type=input_type,
+        dtype=dtype,
+        device=device,
+        agents=agents,
+        max_steps=max_steps,
+        best_only=best_only,
+        ballistic=ballistic,
+        heated=heated,
+        minimize=True,
+        verbose=verbose,
         use_window=use_window,
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
@@ -554,9 +539,7 @@ def minimize(
 
 
 def maximize(
-    matrix: Union[torch.Tensor, ndarray],
-    vector: Union[torch.Tensor, ndarray, None] = None,
-    constant: Union[int, float, None] = None,
+    *polynomial: PolynomialLike,
     input_type: str = "spin",
     dtype: torch.dtype = torch.float32,
     device: Union[str, torch.device] = "cpu",
@@ -566,7 +549,6 @@ def maximize(
     ballistic: bool = False,
     heated: bool = False,
     verbose: bool = True,
-    *,
     use_window: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
@@ -786,185 +768,19 @@ def maximize(
 
     """
     return optimize(
-        matrix,
-        vector,
-        constant,
-        input_type,
-        dtype,
-        device,
-        agents,
-        max_steps,
-        best_only,
-        ballistic,
-        heated,
-        False,
-        verbose,
+        *polynomial,
+        input_type=input_type,
+        dtype=dtype,
+        device=device,
+        agents=agents,
+        max_steps=max_steps,
+        best_only=best_only,
+        ballistic=ballistic,
+        heated=heated,
+        minimize=False,
+        verbose=verbose,
         use_window=use_window,
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
         timeout=timeout,
-    )
-
-
-def build_model(
-    matrix: Union[torch.Tensor, ndarray],
-    vector: Union[torch.Tensor, ndarray, None] = None,
-    constant: Union[int, float, None] = None,
-    input_type: str = "spin",
-    dtype: torch.dtype = torch.float32,
-    device: Union[str, torch.device] = "cpu",
-) -> BaseMultivariateQuadraticPolynomial:
-    """
-    Instantiate a multivariate degree 2 polynomial over a given domain.
-
-    The polynomial is the sum of a quadratic form and a linear form plus
-    a constant term:
-    `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
-    or `x.T Q x + l.T x + c` in matrix notation,
-    where `Q` is a square matrix, `l` a vector a `c` a constant.
-
-    Parameters
-    ----------
-    matrix : (M, M) Tensor | ndarray
-        Matrix corresponding to the quadratic terms of the polynomial
-        (quadratic form). It should be a square matrix, but not necessarily
-        symmetric.
-    vector : (M,) Tensor | ndarray | None, optional
-        Vector corresponding to the linear terms of the polynomial (linear
-        form). The default is None which signifies there are no linear
-        terms, that is `vector` is the null vector.
-    constant : int | float | None, optional
-        Constant of the polynomial. The default is None which signifies
-        there is no constant term, that is `constant` = 0.
-    input_type : {"spin", "binary", "int..."}, default="spin"
-        Domain over which the maximization is done.
-        - "spin" : Polynomial over vectors whose entries are in {-1, 1}.
-        - "binary" : Polynomial over vectors whose entries are in {0, 1}.
-        - "int..." : Polynomial over vectors whose entries are n-bits
-        non-negative integers, that is integers between 0 and 2^n - 1
-        inclusive. "int..." represents any string starting with "int" and
-        followed by a positive integer n, e.g. "int3", "int42", ...
-    dtype : torch.dtype, default=torch.float32
-        Data-type used for storing the coefficients of the polynomial.
-    device : str | torch.device, default="cpu"
-        Device on which the polynomial is located. If available, use "cuda"
-        to use the polynomial on a GPU.
-
-    Returns
-    -------
-    SpinQuadraticPolynomial | BinaryQuadraticPolynomial | IntegerQuadraticPolynomial
-        The polynomial described by `matrix`, `vector` and `constant` on
-        the domain specified by `input_type`.
-        - `input_type="spin"` : SpinQuadraticPolynomial.
-        - `input_type="binary"` : BinaryQuadraticPolynomial.
-        - `input_type="int..."` : IntegerQuadraticPolynomial.
-
-    Raises
-    ------
-    ValueError
-        If `input_type` is not one of {"spin", "binary", "int..."}, where
-        "int..." designates any string starting with "int" and followed by
-        a positive integer, or more formally, any string matching the
-        following regular expression: ^int[1-9][0-9]*$.
-
-    Warnings
-    --------
-    Calling a polynomial on a vector containing values which do not belong
-    to the domain of the polynomial raises a ValueError, unless it is
-    called while explicitly passing `input_values_check=False`.
-
-    See Also
-    --------
-    minimize, maximize, optimize :
-        Shorthands for polynomial creation and optimization.
-    polynomial :
-        Module providing some polynomial types as well as an abstract
-        polynomial class `BaseMultivariateQuadraticPolynomial`.
-    models :
-        Module containing the implementation of several common
-        combinatorial optimization problems.
-
-    Examples
-    --------
-    Instantiate a polynomial over {0, 1} x {0, 1}
-    >>> Q = torch.tensor([[1, -2],
-    ...                   [0, 3]])
-    >>> poly = sb.build_model(Q, input_type="binary")
-
-    Maximize the polynomial
-    >>> best_vector, best_value = poly.maximize()
-    >>> best_vector
-    tensor([0, 1])
-    >>> best_value
-    tensor(3)
-
-    Return all the solutions found using 42 agents
-    >>> best_vectors, best_values = poly.maximize(
-    ...      agents=42, best_only=False
-    ... )
-    >>> best_vectors.shape  # (agents, dimension of the instance)
-    (42, 2)
-    >>> best_values.shape  # (agents,)
-    (42,)
-
-    Evaluate the polynomial at a single point
-    >>> point = torch.tensor([1, 1], dtype=torch.float32)
-    >>> poly(point)
-    tensor(2)
-
-    Evaluate the polynomial at several points simultaneously
-    >>> points = torch.tensor(
-    ...     [[0, 0], [0, 1], [1, 0], [1, 1]],
-    ...     dtype=torch.float32,
-    ... )
-    >>> poly(points)
-    tensor([0, 3, 1, 2])
-
-    Instantiate a polynomial over {0, 1, ..., 14, 15} x {0, 1, ..., 14, 15}
-    and use it on the GPU
-    >>> Q = torch.tensor([[1, -2],
-    ...                   [0, 3]])
-    >>> poly = sb.build_model(Q, input_type="int4", device="cuda")
-
-    Maximize this polynomial (outputs are located on the GPU)
-    >>> best_vector, best_value = poly.maximize()
-    >>> best_vector
-    tensor([ 0., 15.], device='cuda:0')
-    >>> best_value
-    tensor(675., device='cuda:0')
-
-    Evaluate this polynomial at a given point
-    >>> point = torch.tensor([12, 7], dtype=torch.float32)
-    >>> point = point.to(device="cuda")  # send tensor to GPU
-    >>> poly(point)  # (output is located on GPU)
-    tensor(123., device='cuda:0')
-
-    """
-    int_type_regex = "^int[1-9][0-9]*$"
-    int_type_pattern = re.compile(int_type_regex)
-
-    if input_type == "spin":
-        return SpinQuadraticPolynomial(
-            matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device
-        )
-    if input_type == "binary":
-        return BinaryQuadraticPolynomial(
-            matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device
-        )
-    if int_type_pattern.match(input_type) is None:
-        raise ValueError(
-            f'Input type must be one of "spin" or "binary", or be a string starting'
-            f'with "int" and be followed by a positive integer.\n'
-            f"More formally, it should match the following regular expression.\n"
-            f"{int_type_regex}\n"
-            f'Examples: "int7", "int42", ...'
-        )
-    number_of_bits = int(input_type[3:])
-    return IntegerQuadraticPolynomial(
-        matrix=matrix,
-        vector=vector,
-        constant=constant,
-        dtype=dtype,
-        device=device,
-        number_of_bits=number_of_bits,
     )

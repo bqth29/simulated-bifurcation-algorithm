@@ -227,6 +227,153 @@ def test_build_polynomial_from_tensor_tuple():
     with pytest.raises(ValueError, match="Expected all dimensions to be the same."):
         build_polynomial(torch.zeros((3, 2)), input_type="spin")
 
+    # Binary polynomial
+
+    binary_polynomial = build_polynomial(quadratic, input_type="binary")
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(torch.zeros(3), binary_polynomial.vector)
+    assert torch.equal(torch.tensor(0), binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(quadratic, linear, input_type="binary")
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(torch.tensor(0), binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(linear, quadratic, input_type="binary")
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(torch.tensor(0), binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(quadratic, 2, input_type="binary")
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(torch.zeros(3), binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(2, quadratic, input_type="binary")
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(torch.zeros(3), binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(quadratic, constant, input_type="binary")
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(torch.zeros(3), binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(constant, quadratic, input_type="binary")
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(torch.zeros(3), binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(
+        quadratic, linear, constant, input_type="binary"
+    )
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(quadratic, linear, 2, input_type="binary")
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(
+        quadratic, constant, linear, input_type="binary"
+    )
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(quadratic, 2, linear, input_type="binary")
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(
+        linear, quadratic, constant, input_type="binary"
+    )
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(linear, quadratic, 2, input_type="binary")
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(
+        linear, constant, quadratic, input_type="binary"
+    )
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(linear, 2, quadratic, input_type="binary")
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(
+        constant, linear, quadratic, input_type="binary"
+    )
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(2, linear, quadratic, input_type="binary")
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(
+        constant, quadratic, linear, input_type="binary"
+    )
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    binary_polynomial = build_polynomial(2, quadratic, linear, input_type="binary")
+    assert isinstance(binary_polynomial, BinaryQuadraticPolynomial)
+    assert torch.equal(quadratic, binary_polynomial.matrix)
+    assert torch.equal(linear, binary_polynomial.vector)
+    assert torch.equal(constant, binary_polynomial.constant)
+
+    with pytest.raises(
+        ValueError,
+        match="Defining two tensors for the same degree is ambiguous. Please merge them before to call this function.",
+    ):
+        build_polynomial(quadratic, quadratic, input_type="binary")
+
+    with pytest.raises(
+        ValueError, match="The polynomial must contain quadratic coefficients."
+    ):
+        build_polynomial(linear, input_type="binary")
+
+    with pytest.raises(ValueError, match="Expected a tuple of size 1, 2 or 3; got 4."):
+        build_polynomial(
+            torch.zeros((3, 3, 3)), quadratic, linear, 2, input_type="binary"
+        )
+
+    with pytest.raises(ValueError, match="Expected all dimensions to be the same."):
+        build_polynomial(torch.zeros((3, 2)), input_type="binary")
+
     # Integer polynomial
 
     integer_polynomial = build_polynomial(quadratic, input_type="int2")

@@ -160,8 +160,9 @@ from .polynomial import (
     IntegerQuadraticPolynomial,
     SpinPolynomial,
     SpinQuadraticPolynomial,
+    build_polynomial,
 )
-from .simulated_bifurcation import build_model, maximize, minimize, optimize
+from .simulated_bifurcation import maximize, minimize, optimize
 
 reset_env()
 

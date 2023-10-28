@@ -57,5 +57,6 @@ from .base_multivariate_polynomial import (
     IsingPolynomialInterface,
 )
 from .binary_polynomial import BinaryPolynomial, BinaryQuadraticPolynomial
+from .builder import PolynomialLike, build_polynomial
 from .integer_polynomial import IntegerPolynomial, IntegerQuadraticPolynomial
 from .spin_polynomial import SpinPolynomial, SpinQuadraticPolynomial
