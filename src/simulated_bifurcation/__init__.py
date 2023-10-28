@@ -38,13 +38,13 @@ Code snippets are indicated by three greater-than signs:
   >>> x = x + 1
 
 .. deprecated:: 1.2.1
-    `BinaryPolynomial` will be modified in simulated-bifurcation 1.3.0, it
+    `BinaryPolynomial` will be modified in simulated-bifurcation 1.4.0, it
     is replaced by `BinaryQuadraticPolynomial` in prevision of the addition
     of multivariate polynomials of an arbitrary degree.
-    `IntegerPolynomial` will be modified in simulated-bifurcation 1.3.0, it
+    `IntegerPolynomial` will be modified in simulated-bifurcation 1.4.0, it
     is replaced by `IntegerQuadraticPolynomial` in prevision of the
     addition of multivariate polynomials of an arbitrary degree.
-    `SpinPolynomial` will be modified in simulated-bifurcation 1.3.0, it is
+    `SpinPolynomial` will be modified in simulated-bifurcation 1.4.0, it is
     replaced by `SpinQuadraticPolynomial` in prevision of the addition of
     multivariate polynomials of an arbitrary degree.
 

@@ -2,7 +2,7 @@
 Implementation of multivariate degree 2 polynomials over spin vectors.
 
 .. deprecated:: 1.2.1
-    `SpinPolynomial` will be modified in simulated-bifurcation 1.3.0, it is
+    `SpinPolynomial` will be modified in simulated-bifurcation 1.4.0, it is
     replaced by `SpinQuadraticPolynomial` in prevision of the addition of
     multivariate polynomials of an arbitrary degree.
 
@@ -158,7 +158,7 @@ class SpinPolynomial(SpinQuadraticPolynomial):
 
     """
     .. deprecated:: 1.2.1
-        `SpinPolynomial` will be modified in simulated-bifurcation 1.3.0,
+        `SpinPolynomial` will be modified in simulated-bifurcation 1.4.0,
         it is replaced by `SpinQuadraticPolynomial` in prevision of the
         addition of multivariate polynomials of an arbitrary degree.
 
@@ -168,7 +168,7 @@ class SpinPolynomial(SpinQuadraticPolynomial):
         # 2023-10-03, 1.2.1
         warnings.warn(
             "`SpinPolynomial` is deprecated as of simulated-bifurcation 1.2.1, and "
-            "its behaviour will change in simulated-bifurcation 1.3.0. Please use "
+            "its behaviour will change in simulated-bifurcation 1.4.0. Please use "
             "`SpinQuadraticPolynomial` instead.",
             DeprecationWarning,
             stacklevel=3,

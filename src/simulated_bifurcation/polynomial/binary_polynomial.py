@@ -2,7 +2,7 @@
 Implementation of multivariate degree 2 polynomials over binary vectors.
 
 .. deprecated:: 1.2.1
-    `BinaryPolynomial` will be modified in simulated-bifurcation 1.3.0, it
+    `BinaryPolynomial` will be modified in simulated-bifurcation 1.4.0, it
     is replaced by `BinaryQuadraticPolynomial` in prevision of the addition
     of multivariate polynomials of an arbitrary degree.
 
@@ -152,7 +152,7 @@ class BinaryPolynomial(BinaryQuadraticPolynomial):
 
     """
     .. deprecated:: 1.2.1
-        `BinaryPolynomial` will be modified in simulated-bifurcation 1.3.0,
+        `BinaryPolynomial` will be modified in simulated-bifurcation 1.4.0,
         it is replaced by `BinaryQuadraticPolynomial` in prevision of the
         addition of multivariate polynomials of an arbitrary degree.
 
@@ -162,7 +162,7 @@ class BinaryPolynomial(BinaryQuadraticPolynomial):
         # 2023-10-03, 1.2.1
         warnings.warn(
             "`BinaryPolynomial` is deprecated as of simulated-bifurcation 1.2.1, and "
-            "its behaviour will change in simulated-bifurcation 1.3.0. Please use "
+            "its behaviour will change in simulated-bifurcation 1.4.0. Please use "
             "`BinaryQuadraticPolynomial` instead.",
             DeprecationWarning,
             stacklevel=3,

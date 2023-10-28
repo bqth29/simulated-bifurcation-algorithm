@@ -2,7 +2,7 @@
 Implementation of multivariate degree 2 polynomials over integer vectors.
 
 .. deprecated:: 1.2.1
-    `IntegerPolynomial` will be modified in simulated-bifurcation 1.3.0, it
+    `IntegerPolynomial` will be modified in simulated-bifurcation 1.4.0, it
     is replaced by `IntegerQuadraticPolynomial` in prevision of the
     addition of multivariate polynomials of an arbitrary degree.
 
@@ -230,7 +230,7 @@ class IntegerPolynomial(IntegerQuadraticPolynomial):
     """
     .. deprecated:: 1.2.1
         `IntegerPolynomial` will be modified in simulated-bifurcation
-        1.3.0, it is replaced by `IntegerQuadraticPolynomial` in
+        1.4.0, it is replaced by `IntegerQuadraticPolynomial` in
         prevision of the addition of multivariate polynomials of an
         arbitrary degree.
 
@@ -240,7 +240,7 @@ class IntegerPolynomial(IntegerQuadraticPolynomial):
         # 2023-10-03, 1.2.1
         warnings.warn(
             "`IntegerPolynomial` is deprecated as of simulated-bifurcation 1.2.1, and "
-            "its behaviour will change in simulated-bifurcation 1.3.0. Please use "
+            "its behaviour will change in simulated-bifurcation 1.4.0. Please use "
             "`IntegerQuadraticPolynomial` instead.",
             DeprecationWarning,
             stacklevel=3,

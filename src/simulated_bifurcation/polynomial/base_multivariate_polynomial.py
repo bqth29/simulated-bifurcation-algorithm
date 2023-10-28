@@ -1,7 +1,7 @@
 """
 .. deprecated:: 1.2.1
     `IsingPolynomialInterface` will be removed in simulated-bifurcation
-    1.3.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
+    1.4.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
     prevision of the addition of multivariate polynomials of an arbitrary
     degree.
 
@@ -650,7 +650,7 @@ class IsingPolynomialInterface(BaseMultivariateQuadraticPolynomial, ABC):
     """
     .. deprecated:: 1.2.1
         `IsingPolynomialInterface` will be removed in simulated-bifurcation
-        1.3.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
+        1.4.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
         prevision of the addition of multivariate polynomials of an
         arbitrary degree.
 
@@ -660,7 +660,7 @@ class IsingPolynomialInterface(BaseMultivariateQuadraticPolynomial, ABC):
         # 2023-10-03, 1.2.1
         warnings.warn(
             "`IsingPolynomialInterface` is deprecated as of simulated-bifurcation "
-            "1.2.1, and will be removed in simulated-bifurcation 1.3.0. Please use "
+            "1.2.1, and will be removed in simulated-bifurcation 1.4.0. Please use "
             "`BaseQuadraticMultivariatePolynomial` instead.",
             DeprecationWarning,
             stacklevel=3,
