@@ -1,5 +1,6 @@
 import pytest
 import torch
+from sympy import poly, symbols
 
 from src.simulated_bifurcation import build_polynomial, maximize, minimize
 
@@ -14,9 +15,17 @@ matrix = torch.tensor(
 vector = torch.tensor([1, 2, -3], dtype=torch.float32)
 constant = 1
 
+x, y, z = symbols("x y z")
+expression = poly(
+    x * y - x * z + y * x + 2 * y * z - z * x + 2 * z * y + x + 2 * y - 3 * z + 1
+)
+
 
 def test_minimize_spin():
     best_combination, best_value = minimize(matrix, vector, constant, input_type="spin")
+    assert torch.equal(torch.tensor([1, -1, 1], dtype=torch.float32), best_combination)
+    assert -11 == best_value
+    best_combination, best_value = minimize(expression, input_type="spin")
     assert torch.equal(torch.tensor([1, -1, 1], dtype=torch.float32), best_combination)
     assert -11 == best_value
 
@@ -27,16 +36,27 @@ def test_minimize_binary():
     )
     assert torch.equal(torch.tensor([1, 0, 1], dtype=torch.float32), best_combination)
     assert -3 == best_value
+    best_combination, best_value = minimize(expression, input_type="binary")
+    assert torch.equal(torch.tensor([1, 0, 1], dtype=torch.float32), best_combination)
+    assert -3 == best_value
 
 
 def test_minimize_integer():
     best_combination, best_value = minimize(matrix, vector, constant, input_type="int3")
     assert torch.equal(torch.tensor([7, 0, 7], dtype=torch.float32), best_combination)
     assert -111 == best_value
+    best_combination, best_value = minimize(expression, input_type="int3")
+    assert torch.equal(torch.tensor([7, 0, 7], dtype=torch.float32), best_combination)
+    assert -111 == best_value
 
 
 def test_maximize_spin():
     best_combination, best_value = maximize(matrix, vector, constant, input_type="spin")
+    assert torch.equal(
+        best_combination, torch.tensor([1, -1, -1], dtype=torch.float32)
+    ) or torch.equal(best_combination, torch.tensor([1, 1, -1], dtype=torch.float32))
+    assert 7 == best_value
+    best_combination, best_value = maximize(expression, input_type="spin")
     assert torch.equal(
         best_combination, torch.tensor([1, -1, -1], dtype=torch.float32)
     ) or torch.equal(best_combination, torch.tensor([1, 1, -1], dtype=torch.float32))
@@ -49,38 +69,18 @@ def test_maximize_binary():
     )
     assert torch.equal(torch.tensor([1, 1, 0], dtype=torch.float32), best_combination)
     assert 6 == best_value
+    best_combination, best_value = maximize(expression, input_type="binary")
+    assert torch.equal(torch.tensor([1, 1, 0], dtype=torch.float32), best_combination)
+    assert 6 == best_value
 
 
 def test_maximize_integer():
     best_combination, best_value = maximize(matrix, vector, constant, input_type="int2")
     assert torch.equal(torch.tensor([3, 3, 3], dtype=torch.float32), best_combination)
     assert 37 == best_value
-
-
-def test_valid_input_type():
-    build_polynomial(matrix, input_type="spin")
-    build_polynomial(matrix, input_type="binary")
-    build_polynomial(matrix, input_type="int1")
-    build_polynomial(matrix, input_type="int3")
-    build_polynomial(matrix, input_type="int10")
-    build_polynomial(matrix, input_type="int22")
-
-
-def test_invalid_input_type():
-    with pytest.raises(ValueError):
-        build_polynomial(matrix, input_type="float")
-    with pytest.raises(ValueError):
-        build_polynomial(matrix, input_type="")
-    with pytest.raises(ValueError):
-        build_polynomial(matrix, input_type="int")
-    with pytest.raises(ValueError):
-        build_polynomial(matrix, input_type=" int3")
-    with pytest.raises(ValueError):
-        build_polynomial(matrix, input_type="int0")
-    with pytest.raises(ValueError):
-        build_polynomial(matrix, input_type="int07")
-    with pytest.raises(ValueError):
-        build_polynomial(matrix, input_type="int5.")
+    best_combination, best_value = maximize(expression, input_type="int2")
+    assert torch.equal(torch.tensor([3, 3, 3], dtype=torch.float32), best_combination)
+    assert 37 == best_value
 
 
 def test_best_only():

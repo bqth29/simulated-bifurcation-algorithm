@@ -547,3 +547,29 @@ def test_build_polynomial_with_wrong_input_type():
         match=r"Expected quadratic polynomial, a SymPy expression or a tuple of tensor\(s\)/array\(s\).",
     ):
         build_polynomial("Hello world!")
+
+
+def test_valid_input_type():
+    build_polynomial(quadratic, input_type="spin")
+    build_polynomial(quadratic, input_type="binary")
+    build_polynomial(quadratic, input_type="int1")
+    build_polynomial(quadratic, input_type="int3")
+    build_polynomial(quadratic, input_type="int10")
+    build_polynomial(quadratic, input_type="int22")
+
+
+def test_invalid_input_type():
+    with pytest.raises(ValueError):
+        build_polynomial(quadratic, input_type="float")
+    with pytest.raises(ValueError):
+        build_polynomial(quadratic, input_type="")
+    with pytest.raises(ValueError):
+        build_polynomial(quadratic, input_type="int")
+    with pytest.raises(ValueError):
+        build_polynomial(quadratic, input_type=" int3")
+    with pytest.raises(ValueError):
+        build_polynomial(quadratic, input_type="int0")
+    with pytest.raises(ValueError):
+        build_polynomial(quadratic, input_type="int07")
+    with pytest.raises(ValueError):
+        build_polynomial(quadratic, input_type="int5.")
