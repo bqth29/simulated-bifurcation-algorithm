@@ -36,9 +36,9 @@ class ExpressionCompiler:
         """
         ExpressionCompiler.__check_polynomial_degree(polynomial)
         self.polynomial = polynomial
-        self.variables = len(self.polynomial.gens)
-        self.__quadratic_coefficients = torch.zeros(self.variables, self.variables)
-        self.__linear_coefficients = torch.zeros(self.variables)
+        self.n_variables = len(self.polynomial.gens)
+        self.__quadratic_coefficients = torch.zeros(self.n_variables, self.n_variables)
+        self.__linear_coefficients = torch.zeros(self.n_variables)
         self.__constant_coefficient = torch.tensor([0.0])
 
     @staticmethod
@@ -48,12 +48,12 @@ class ExpressionCompiler:
             raise ValueError(f"Expected degree 2 polynomial, got {degree}.")
 
     def __add_quadratic_coefficient(self, coefficient: float, degrees: Tuple[int]):
-        indeces = np.nonzero(degrees)[0]
-        if len(indeces) == 1:
-            index = indeces[0]
+        indices = np.nonzero(degrees)[0]
+        if len(indices) == 1:
+            index = indices[0]
             self.__quadratic_coefficients[index, index] = coefficient
         else:
-            index_1, index_2 = indeces[0], indeces[1]
+            index_1, index_2 = indices[0], indices[1]
             self.__quadratic_coefficients[index_1, index_2] = coefficient
 
     def __add_linear_coefficient(self, coefficient: float, degrees: Tuple[int]):

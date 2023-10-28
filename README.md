@@ -68,8 +68,6 @@ for which the $x_{i}$'s can be spins, binary or non-negative integer.
 
 This can also be seen as the sum of a quadratic form, a linear form and a constant term and such a formulation is the basis of many optimization problems.
 
-The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated input vector.
-
 The input types must be passed to the `input_type` argument:
 
 - `spin` (default value) for a spin optimization: the optimal vector will only have ±1 values
@@ -83,10 +81,50 @@ import simulated_bifurcation as sb
 ```
 
 ```python
-matrix = torch.tensor([[0, 1, 2], [1, 0, -2], [2, -2, 0]])
+matrix = torch.tensor([[1, 1, 2], [0, -1, -2], [-2, 0, 2]])
 vector = torch.tensor([-1, 0, 2])
 constant = 2.0
 ```
+
+The package provides a `polynomial` API to build quadratic multivariate polynomials from such tensors. Three options are possible.
+
+> - the three following code snippets all create equivalent polynomials
+> - in the following examples, we consider a polynomial with spin input values which is based on the `SpinQuadraticPolynomial` class. An equivalent work could be pursued for binary or integer input values by calling the `BinaryQuadraticPolynomial` or `IntegerQuadraticPolynomial` classes instead.
+
+1. Using the `SpinQuadraticPolynomial` class
+
+```python
+from simulated_bifurcation.poynomial import SpinQuadraticPolynomial
+
+polynomial = SpinQuadraticPolynomial(matrix, vector, constant)
+```
+
+2. Using the `sb.build_model` function
+
+```python
+polynomial = sb.build_model(matrix, vector, constant)
+```
+
+3. Using SymPy expressions to define polynomials in a more natural way from mathematical equations
+
+```python
+from sympy import poly, symbols
+from simulated_bifurcation.poynomial import SpinQuadraticPolynomial
+
+x, y, z = symbols("x y z")
+expression = poly(
+    x**2 - y**2 + 2 * z**2
+    + x * y + 2 * x * z
+    - 2 * y * z
+    - 2 * z * x
+    - x + 2 * z
+    + 2
+)
+
+polynomial = SpinQuadraticPolynomial.from_expression(expression)
+```
+
+The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated input vector.
 
 #### Minimization
 
