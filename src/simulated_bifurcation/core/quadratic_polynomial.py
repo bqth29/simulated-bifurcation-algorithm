@@ -23,6 +23,7 @@ class QuadraticPolynomial(Polynomial):
         device: Union[str, torch.device] = "cpu",
     ) -> None:
         super().__init__(*polynomial_like, dtype=dtype, device=device)
+        self.sb_result = None
         if self.degree != 2:
             raise QuadraticPolynomialError(self.degree)
 
@@ -65,7 +66,7 @@ class QuadraticPolynomial(Polynomial):
             symmetrical_matrix = Ising.symmetrize(self[2])
             J = -0.5 * symmetrical_matrix
             h = 0.5 * self[1] + 0.5 * symmetrical_matrix @ torch.ones(
-                len(self), dtype=self.dtype, device=self.device
+                self.dimension, dtype=self.dtype, device=self.device
             )
             return Ising(J, h, self.dtype, self.device)
         if INTEGER_REGEX.match(input_type) is None:
@@ -115,7 +116,7 @@ class QuadraticPolynomial(Polynomial):
         -------
         Tensor
         """
-        if ising.computed_spins is not None:
+        if ising.computed_spins is None:
             return None
         if input_type == "spin":
             return ising.computed_spins

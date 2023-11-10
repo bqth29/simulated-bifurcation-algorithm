@@ -3,10 +3,10 @@ from typing import Optional, Tuple, Union
 import numpy as np
 import torch
 
-from ..polynomial import IntegerQuadraticPolynomial
+from .abc_model import ABCModel
 
 
-class SequentialMarkowitz(IntegerQuadraticPolynomial):
+class SequentialMarkowitz(ABCModel):
     def __init__(
         self,
         covariances: Union[torch.Tensor, np.ndarray],
@@ -23,23 +23,36 @@ class SequentialMarkowitz(IntegerQuadraticPolynomial):
         expected_returns : T x N
         rebalancing_costs : T x N x N
         """
-        self.covariances = self._cast_matrix_to_tensor(covariances, dtype, device)
-        self.expected_returns = self._cast_matrix_to_tensor(
-            expected_returns, dtype, device
+        self.covariances = self.__cast_to_tensor(
+            covariances, dtype=dtype, device=device
         )
-        self.rebalancing_costs = self._cast_matrix_to_tensor(
-            rebalancing_costs, dtype, device
+        self.expected_returns = self.__cast_to_tensor(
+            expected_returns, dtype=dtype, device=device
+        )
+        self.rebalancing_costs = self.__cast_to_tensor(
+            rebalancing_costs, dtype=dtype, device=device
         )
         self.risk_coefficient = risk_coefficient
-        self.timestamps = self.covariances.shape[0]
-        self.assets = self.covariances.shape[1]
+        self.timestamps = covariances.shape[0]
+        self.assets = covariances.shape[1]
 
         self.initial_stocks = (
             torch.zeros(self.assets) if initial_stocks is None else initial_stocks
         )
 
+        self.number_of_bits = number_of_bits
+        self.input_type = f"int{number_of_bits}"
+
         matrix, vector, constant = self.compile_model()
-        super().__init__(matrix, vector, constant, number_of_bits, dtype, device)
+        super().__init__(
+            matrix,
+            vector.reshape(
+                -1,
+            ),
+            constant,
+            dtype=dtype,
+            device=device,
+        )
 
     def compile_model(self) -> Tuple[torch.Tensor, torch.Tensor, float]:
         matrix = self.__compile_matrix()
@@ -84,6 +97,13 @@ class SequentialMarkowitz(IntegerQuadraticPolynomial):
             -initial_portfolio.t() @ self.rebalancing_costs[0] @ initial_portfolio
         )
         return constant.item()
+
+    # TODO: type hint
+    def __cast_to_tensor(self, tensor_like, dtype, device):
+        if isinstance(tensor_like, torch.Tensor):
+            return tensor_like.to(dtype=dtype, device=device)
+        else:
+            return torch.from_numpy(tensor_like).to(dtype=dtype, device=device)
 
     @property
     def portfolio(self) -> Optional[torch.Tensor]:
@@ -133,11 +153,11 @@ class Markowitz(SequentialMarkowitz):
 
     @property
     def covariance(self) -> torch.Tensor:
-        return -(2 / self.risk_coefficient) * self.matrix
+        return -(2 / self.risk_coefficient) * self[2]
 
     @property
     def expected_return(self) -> torch.Tensor:
-        return self.vector
+        return self[1]
 
     @property
     def portfolio(self) -> Optional[torch.Tensor]:

@@ -3,10 +3,10 @@ from typing import Union
 import numpy as np
 import torch
 
-from ..polynomial import SpinQuadraticPolynomial
+from .abc_model import ABCModel
 
 
-class Ising(SpinQuadraticPolynomial):
+class Ising(ABCModel):
 
     """
     Implementation of the Ising model.
@@ -17,6 +17,8 @@ class Ising(SpinQuadraticPolynomial):
     then called the ground state): `-0.5 * ΣΣ J(i,j)s(i)s(j) + Σ h(i)s(i)`
     """
 
+    input_type = "spin"
+
     def __init__(
         self,
         J: Union[torch.Tensor, np.ndarray],
@@ -24,6 +26,6 @@ class Ising(SpinQuadraticPolynomial):
         dtype: torch.dtype = torch.float32,
         device: str = "cpu",
     ) -> None:
-        super().__init__(-0.5 * J, h, None, dtype, device)
+        super().__init__(-0.5 * J, h, dtype=dtype, device=device)
         self.J = J
         self.h = h

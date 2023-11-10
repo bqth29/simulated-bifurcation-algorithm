@@ -21,12 +21,11 @@ models:
 
 """
 
-
 from typing import Optional, Tuple, Union
 
 import torch
 
-from .polynomial import PolynomialLike, build_polynomial
+from .core import PolynomialLike, QuadraticPolynomial
 
 
 def optimize(
@@ -269,13 +268,13 @@ def optimize(
     tensor(0., device='cuda:0')
 
     """
-    model = build_polynomial(
+    model = QuadraticPolynomial(
         *polynomial,
-        input_type=input_type,
         dtype=dtype,
         device=device,
     )
     result, evaluation = model.optimize(
+        input_type=input_type,
         agents=agents,
         max_steps=max_steps,
         best_only=best_only,

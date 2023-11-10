@@ -153,16 +153,6 @@ tensor([0., 0.], device='cuda:0')
 
 from . import models
 from .optimizer import ConvergenceWarning, get_env, reset_env, set_env
-from .polynomial import (
-    BinaryPolynomial,
-    BinaryQuadraticPolynomial,
-    IntegerPolynomial,
-    IntegerQuadraticPolynomial,
-    PolynomialLike,
-    SpinPolynomial,
-    SpinQuadraticPolynomial,
-    build_polynomial,
-)
 from .simulated_bifurcation import maximize, minimize, optimize
 
 reset_env()

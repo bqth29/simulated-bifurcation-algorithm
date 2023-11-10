@@ -81,7 +81,7 @@ def test_add_tensor_to_polynomial_map():
 def test_init_polynomial_map_from_empty_dict_raises_error():
     with pytest.raises(
         EmptyPolynomialMapError,
-        match="Cannot define a polynomiam map from an empty dictionnary.",
+        match="Cannot define a polynomial map from an empty dictionnary.",
     ):
         PolynomialMap({})
 

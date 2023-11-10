@@ -4,7 +4,7 @@ from typing import Dict, List, Union
 import numpy as np
 import torch
 
-from ..polynomial import BinaryQuadraticPolynomial
+from .abc_model import ABCModel
 
 
 class _Status(Enum):
@@ -13,7 +13,9 @@ class _Status(Enum):
     SUCCESS = "success"
 
 
-class Knapsack(BinaryQuadraticPolynomial):
+class Knapsack(ABCModel):
+    input_type = "binary"
+
     def __init__(
         self,
         weights: List[int],
@@ -28,7 +30,9 @@ class Knapsack(BinaryQuadraticPolynomial):
         self.max_weight = max_weight
         matrix = self.__make_matrix(dtype, device)
         vector = self.__make_vector(dtype, device)
-        super().__init__(matrix, vector, self.__make_penalty(), dtype, device)
+        super().__init__(
+            matrix, vector, float(self.__make_penalty()), dtype=dtype, device=device
+        )
 
     @property
     def summary(self) -> Dict[str, Union[int, float, List[int]]]:
@@ -91,4 +95,6 @@ class Knapsack(BinaryQuadraticPolynomial):
         unit_array[self.n_items :] = 1
         unit_array = unit_array.reshape(-1, 1)
         vector = -2 * self.__make_penalty() * unit_array - extended_cost_array
-        return torch.tensor(vector, dtype=dtype, device=device)
+        return torch.tensor(vector, dtype=dtype, device=device).reshape(
+            -1,
+        )

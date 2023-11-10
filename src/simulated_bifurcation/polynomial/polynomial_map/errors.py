@@ -16,7 +16,7 @@ __all__ = [
 
 class EmptyPolynomialMapError(ValueError):
     def __init__(self) -> None:
-        super().__init__("Cannot define a polynomiam map from an empty dictionnary.")
+        super().__init__("Cannot define a polynomial map from an empty dictionnary.")
 
 
 class PolynomialMapDataTypeError(ValueError):
