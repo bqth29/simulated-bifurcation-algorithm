@@ -4,7 +4,7 @@ from typing import Optional, Tuple, Union
 import numpy as np
 import torch
 
-from ..polynomial import Polynomial, PolynomialLike
+from ..polynomial.polynomial import Polynomial, PolynomialLike
 from .ising import Ising
 
 INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")

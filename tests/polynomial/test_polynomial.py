@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from src.simulated_bifurcation import build_polynomial
-from src.simulated_bifurcation.ising_core import IsingCore
+from src.simulated_bifurcation.core import Ising
 from src.simulated_bifurcation.polynomial import (
     BaseMultivariateQuadraticPolynomial,
     IsingPolynomialInterface,
@@ -24,7 +24,7 @@ class BaseMultivariateQuadraticPolynomialImpl(BaseMultivariateQuadraticPolynomia
     def to_ising(self):
         pass  # pragma: no cover
 
-    def convert_spins(self, ising: IsingCore):
+    def convert_spins(self, ising: Ising):
         pass  # pragma: no cover
 
 
@@ -32,7 +32,7 @@ class IsingPolynomialInterfaceImpl(IsingPolynomialInterface):
     def to_ising(self):
         pass  # pragma: no cover
 
-    def convert_spins(self, ising: IsingCore):
+    def convert_spins(self, ising: Ising):
         pass  # pragma: no cover
 
 

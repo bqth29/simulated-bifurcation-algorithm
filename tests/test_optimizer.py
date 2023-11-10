@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from src.simulated_bifurcation import ConvergenceWarning, reset_env, set_env
-from src.simulated_bifurcation.ising_core import IsingCore
+from src.simulated_bifurcation.core import Ising
 from src.simulated_bifurcation.optimizer import (
     OptimizerMode,
     SimulatedBifurcationOptimizer,
@@ -20,7 +20,7 @@ def test_optimizer():
         dtype=torch.float32,
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
-    ising = IsingCore(J, h)
+    ising = Ising(J, h)
     ising.minimize(
         20,
         10000,
@@ -45,7 +45,7 @@ def test_optimizer_without_bifurcation():
         dtype=torch.float32,
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
-    ising = IsingCore(J, h)
+    ising = Ising(J, h)
     with pytest.warns(ConvergenceWarning):
         ising.minimize(
             5,
@@ -81,7 +81,7 @@ def test_optimizer_with_window():
         dtype=torch.float32,
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
-    ising = IsingCore(J, h)
+    ising = Ising(J, h)
     ising.minimize(
         20,
         30000,
@@ -106,7 +106,7 @@ def test_optimizer_with_heating():
         dtype=torch.float32,
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
-    ising = IsingCore(J, h)
+    ising = Ising(J, h)
     ising.minimize(
         20,
         10000,
@@ -168,7 +168,7 @@ def test_timeout():
         dtype=torch.float32,
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
-    ising = IsingCore(J, h)
+    ising = Ising(J, h)
     optimizer = SimulatedBifurcationOptimizer(
         128, 100000, 3.0, OptimizerMode.BALLISTIC, True, True, 50, 50
     )
@@ -187,7 +187,7 @@ def test_window():
         dtype=torch.float32,
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
-    ising = IsingCore(J, h)
+    ising = Ising(J, h)
     optimizer = SimulatedBifurcationOptimizer(
         1, 100000, None, OptimizerMode.BALLISTIC, True, True, 1, 1
     )
@@ -205,7 +205,7 @@ def test_max_steps():
         dtype=torch.float32,
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
-    ising = IsingCore(J, h)
+    ising = Ising(J, h)
     optimizer = SimulatedBifurcationOptimizer(
         1, 10, None, OptimizerMode.BALLISTIC, True, True, 50, 50
     )
@@ -224,7 +224,7 @@ def test_no_stop_criterion():
         dtype=torch.float32,
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
-    ising = IsingCore(J, h)
+    ising = Ising(J, h)
     optimizer = SimulatedBifurcationOptimizer(
         1, None, None, OptimizerMode.BALLISTIC, True, True, 50, 50
     )

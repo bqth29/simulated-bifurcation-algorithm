@@ -36,7 +36,7 @@ Notes
 This class describes polynomials in the following form:
 `x.T @ matrix @ x + vectors @ x + constant`.
 Although equivalent, this is not the same form as the one used for the
-IsingCore class:
+Ising class:
 `-0.5 x.T @ matrix @ x + vector @ x`.
 
 """
@@ -47,7 +47,7 @@ from typing import Union
 import numpy as np
 import torch
 
-from ..ising_core import IsingCore
+from ..core import Ising
 from .base_multivariate_polynomial import BaseMultivariateQuadraticPolynomial
 
 
@@ -117,7 +117,7 @@ class SpinQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
     This class describes polynomials in the following form:
     `x.T @ matrix @ x + vectors @ x + constant`.
     Although equivalent, this is not the same form as the one used for the
-    IsingCore class:
+    Ising class:
     `-0.5 x.T @ matrix @ x + vector @ x`.
 
     """
@@ -132,16 +132,16 @@ class SpinQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
     ) -> None:
         super().__init__(matrix, vector, constant, [-1, 1], dtype, device)
 
-    def to_ising(self) -> IsingCore:
-        return IsingCore(-2 * self.matrix, self.vector, self.dtype, self.device)
+    def to_ising(self) -> Ising:
+        return Ising(-2 * self.matrix, self.vector, self.dtype, self.device)
 
-    def convert_spins(self, ising: IsingCore) -> torch.Tensor:
+    def convert_spins(self, ising: Ising) -> torch.Tensor:
         """
         Retrieve the spins from an Ising problem.
 
         Parameters
         ----------
-        ising : IsingCore
+        ising : Ising
             The Ising problem containing the spins.
 
         Returns

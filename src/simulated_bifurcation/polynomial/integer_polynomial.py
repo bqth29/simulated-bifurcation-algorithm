@@ -41,7 +41,7 @@ import numpy as np
 import torch
 from sympy import Poly
 
-from ..ising_core import IsingCore
+from ..core import Ising
 from .base_multivariate_polynomial import BaseMultivariateQuadraticPolynomial
 from .expression_compiler import ExpressionCompiler
 
@@ -145,7 +145,7 @@ class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
                 matrix[row * number_of_bits + col][row] = 2.0**col
         return matrix
 
-    def to_ising(self) -> IsingCore:
+    def to_ising(self) -> Ising:
         symmetrical_matrix = 0.5 * (self.matrix + self.matrix.t())
         J = (
             -0.5
@@ -165,15 +165,15 @@ class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
                 device=self.device,
             )
         )
-        return IsingCore(J, h, self.dtype, self.device)
+        return Ising(J, h, self.dtype, self.device)
 
-    def convert_spins(self, ising: IsingCore) -> Optional[torch.Tensor]:
+    def convert_spins(self, ising: Ising) -> Optional[torch.Tensor]:
         """
         Convert the spins of an Ising problem into integer variables.
 
         Parameters
         ----------
-        ising : IsingCore
+        ising : Ising
             The Ising problem whose spins are converted into integer
             variables.
 

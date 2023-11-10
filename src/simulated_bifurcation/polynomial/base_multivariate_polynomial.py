@@ -16,7 +16,7 @@ import numpy as np
 import torch
 from sympy import Poly
 
-from ..ising_core import IsingCore
+from ..core import Ising
 from .expression_compiler import ExpressionCompiler
 
 
@@ -263,7 +263,7 @@ class BaseMultivariateQuadraticPolynomial(ABC):
         self.__constant = self.__constant.to(**args)
 
     @abstractmethod
-    def to_ising(self) -> IsingCore:
+    def to_ising(self) -> Ising:
         """
         Generate an equivalent Ising model of the problem.
         The notion of equivalence means that finding the ground
@@ -272,12 +272,12 @@ class BaseMultivariateQuadraticPolynomial(ABC):
 
         Returns
         -------
-        IsingCore
+        Ising
         """
         raise NotImplementedError
 
     @abstractmethod
-    def convert_spins(self, ising: IsingCore) -> Optional[torch.Tensor]:
+    def convert_spins(self, ising: Ising) -> Optional[torch.Tensor]:
         """
         Retrieves information from the optimized equivalent Ising model.
         Returns the best found vector if `ising.ground_state` is not `None`.
@@ -285,7 +285,7 @@ class BaseMultivariateQuadraticPolynomial(ABC):
 
         Parameters
         ----------
-        ising : IsingCore
+        ising : Ising
             Equivalent Ising model of the problem.
 
         Returns

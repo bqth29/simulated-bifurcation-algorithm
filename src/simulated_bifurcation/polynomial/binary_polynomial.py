@@ -39,7 +39,7 @@ from typing import Optional, Union
 import numpy as np
 import torch
 
-from ..ising_core import IsingCore
+from ..core import Ising
 from .base_multivariate_polynomial import BaseMultivariateQuadraticPolynomial
 
 
@@ -116,21 +116,21 @@ class BinaryQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
     ) -> None:
         super().__init__(matrix, vector, constant, [0, 1], dtype, device)
 
-    def to_ising(self) -> IsingCore:
-        symmetrical_matrix = IsingCore.symmetrize(self.matrix)
+    def to_ising(self) -> Ising:
+        symmetrical_matrix = Ising.symmetrize(self.matrix)
         J = -0.5 * symmetrical_matrix
         h = 0.5 * self.vector + 0.5 * symmetrical_matrix @ torch.ones(
             len(self), dtype=self.dtype, device=self.device
         )
-        return IsingCore(J, h, self.dtype, self.device)
+        return Ising(J, h, self.dtype, self.device)
 
-    def convert_spins(self, ising: IsingCore) -> Optional[torch.Tensor]:
+    def convert_spins(self, ising: Ising) -> Optional[torch.Tensor]:
         """
         Convert the spins of an Ising problem into binary variables.
 
         Parameters
         ----------
-        ising : IsingCore
+        ising : Ising
             The Ising problem whose spins are converted into binary
             variables.
 
