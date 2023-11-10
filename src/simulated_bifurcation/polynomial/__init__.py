@@ -59,4 +59,5 @@ from .base_multivariate_polynomial import (
 from .binary_polynomial import BinaryPolynomial, BinaryQuadraticPolynomial
 from .builder import PolynomialLike, build_polynomial
 from .integer_polynomial import IntegerPolynomial, IntegerQuadraticPolynomial
+from .polynomial import Polynomial, PolynomialLike
 from .spin_polynomial import SpinPolynomial, SpinQuadraticPolynomial

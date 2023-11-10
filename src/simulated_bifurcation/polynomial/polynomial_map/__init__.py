@@ -1,3 +1,2 @@
 from .errors import *
-from .polynomial_map import PolynomialMap
-from .types import *
+from .polynomial_map import PolynomialMap, TensorLike

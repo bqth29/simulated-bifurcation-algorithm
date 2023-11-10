@@ -7,11 +7,9 @@ from src.simulated_bifurcation.polynomial.polynomial_map import PolynomialMap
 from src.simulated_bifurcation.polynomial.polynomial_map.errors import *
 
 _map = {
-    0: torch.tensor(2).to(device="cpu", dtype=torch.float32),
-    1: torch.Tensor([1, 2, 3]).to(device="cpu", dtype=torch.float32),
-    2: torch.Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).to(
-        device="cpu", dtype=torch.float32
-    ),
+    0: torch.tensor(2).to(dtype=torch.float32),
+    1: torch.Tensor([1, 2, 3]).to(dtype=torch.float32),
+    2: torch.Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).to(dtype=torch.float32),
 }
 
 
@@ -35,10 +33,9 @@ def test_init_polynomial_map_with_degree_0_only():
 
 def test_add_tensor_to_polynomial_map():
     polynomial_map = PolynomialMap(_map)
-    polynomial_map[3] = (
-        torch.arange(1, 28).reshape(3, 3, 3).to(device="cpu", dtype=torch.float32)
-    )
+    polynomial_map[3] = torch.arange(1, 28).reshape(3, 3, 3).to(dtype=torch.float32)
     assert torch.equal(torch.arange(1, 28).reshape(3, 3, 3), polynomial_map[3])
+    assert isinstance(polynomial_map, PolynomialMap)
     with pytest.raises(
         PolynomialMapKeyTypeError,
         match="Expected a positive integer key type but got 4 of type <class 'str'>.",
@@ -60,29 +57,25 @@ def test_add_tensor_to_polynomial_map():
         match="Wrong key usage. A 4 key was used to reference a 2-dimensional tensor.",
     ):
         polynomial_map[4] = torch.Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).to(
-            device="cpu", dtype=torch.float32
+            dtype=torch.float32
         )
     with pytest.raises(
         PolynomialMapDataTypeError,
         match="Inconsistent dtype among map's tensors. Expected the dtype to be torch.float32 but got torch.int64.",
     ):
         polynomial_map[2] = torch.Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).to(
-            device="cpu", dtype=torch.int64
+            dtype=torch.int64
         )
     with pytest.raises(
         PolynomialMapTensorDimensionError,
         match="All dimensions of the tensor must be equal.",
     ):
-        polynomial_map[2] = torch.Tensor([[1, 2, 3], [4, 5, 6]]).to(
-            device="cpu", dtype=torch.float32
-        )
+        polynomial_map[2] = torch.Tensor([[1, 2, 3], [4, 5, 6]]).to(dtype=torch.float32)
     with pytest.raises(
         PolynomialMapDimensionError,
         match="Inconsistent dimensions among map's tensors. Expected each dimension to be 3 but got 2.",
     ):
-        polynomial_map[2] = torch.Tensor([[1, 2], [3, 4]]).to(
-            device="cpu", dtype=torch.float32
-        )
+        polynomial_map[2] = torch.Tensor([[1, 2], [3, 4]]).to(dtype=torch.float32)
 
 
 def test_init_polynomial_map_from_empty_dict_raises_error():

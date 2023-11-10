@@ -5,7 +5,8 @@ import torch
 from sympy import Poly
 
 from .errors import *
-from .types import *
+
+TensorLike = Union[torch.Tensor, np.ndarray, float, int]
 
 
 class PolynomialMap(Dict[int, torch.Tensor]):
@@ -19,6 +20,11 @@ class PolynomialMap(Dict[int, torch.Tensor]):
             if tensor.ndim > 0:
                 return tensor.shape[0]
         return 0
+
+    @property
+    def device(self) -> torch.device:
+        for tensor in self.values():
+            return tensor.device
 
     @property
     def dtype(self) -> torch.dtype:
@@ -144,3 +150,5 @@ class PolynomialMap(Dict[int, torch.Tensor]):
                     degree -= 1
             polynomial_map[monomial_degree][tuple(indices)] = float(coefficient)
         return cls(polynomial_map)
+
+    # TODO: to(dtype, device) with inplace to avoid error message
