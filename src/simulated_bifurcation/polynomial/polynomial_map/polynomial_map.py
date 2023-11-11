@@ -150,5 +150,3 @@ class PolynomialMap(Dict[int, torch.Tensor]):
                     degree -= 1
             polynomial_map[monomial_degree][tuple(indices)] = float(coefficient)
         return cls(polynomial_map)
-
-    # TODO: to(dtype, device) with inplace to avoid error message

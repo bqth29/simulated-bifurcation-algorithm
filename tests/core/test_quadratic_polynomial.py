@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import torch
 from sympy import poly, symbols
@@ -258,6 +259,22 @@ def test_optimize_spin_polynomial():
     assert value == -11.0
 
 
+def test_minimize_spin_polynomial():
+    torch.manual_seed(42)
+    polynomial = QuadraticPolynomial(matrix, vector, constant_int)
+    spin_vars, value = polynomial.minimize(input_type="spin", verbose=False)
+    assert torch.equal(spin_vars, torch.tensor([1, -1, 1], dtype=torch.float32))
+    assert value == -11.0
+
+
+def test_maximize_spin_polynomial():
+    torch.manual_seed(42)
+    polynomial = QuadraticPolynomial(matrix, vector, constant_int)
+    spin_vars, value = polynomial.maximize(input_type="spin", verbose=False)
+    assert torch.equal(spin_vars, torch.tensor([1, 1, -1], dtype=torch.float32))
+    assert value == 7.0
+
+
 def test_init_binary_polynomial():
     binary_polynomial = QuadraticPolynomial(matrix, vector, constant_int)
     ising = binary_polynomial.to_ising(input_type="binary")
@@ -402,3 +419,28 @@ def test_wrong_input_type_cnvert_spin():
     ising.computed_spins = torch.ones(3, 3)
     with pytest.raises(ValueError):
         QuadraticPolynomial(quadratic).convert_spins(ising, input_type="Hello world!")
+
+
+def test_evaluate_polynomial():
+    polynomial = QuadraticPolynomial(quadratic, dtype=torch.float32)
+    data = [[0, 1, 0], [1, 0, 1]]
+    assert torch.equal(
+        torch.tensor([2, 3], dtype=torch.float32),
+        polynomial(torch.tensor(data, dtype=torch.float32)),
+    )
+    assert torch.equal(
+        torch.tensor([2, 3], dtype=torch.float32),
+        polynomial(np.array(data, dtype=np.float32)),
+    )
+    with pytest.raises(TypeError, match="Input value cannot be cast to Tensor."):
+        polynomial("Hello world!")
+    with pytest.raises(
+        ValueError, match="Size of the input along the last axis should be 3, it is 5."
+    ):
+        polynomial(torch.zeros(3, 3, 5))
+
+
+def test_get_wrong_tensor():
+    polynomial = QuadraticPolynomial(quadratic, linear, constant)
+    with pytest.raises(ValueError, match="Positive integer required."):
+        polynomial[-1]

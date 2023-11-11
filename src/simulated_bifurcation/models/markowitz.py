@@ -98,8 +98,12 @@ class SequentialMarkowitz(ABCModel):
         )
         return constant.item()
 
-    # TODO: type hint
-    def __cast_to_tensor(self, tensor_like, dtype, device):
+    def __cast_to_tensor(
+        self,
+        tensor_like: Union[torch.Tensor, np.ndarray],
+        dtype: torch.dtype,
+        device: Union[str, torch.device],
+    ) -> torch.Tensor:
         if isinstance(tensor_like, torch.Tensor):
             return tensor_like.to(dtype=dtype, device=device)
         else:
