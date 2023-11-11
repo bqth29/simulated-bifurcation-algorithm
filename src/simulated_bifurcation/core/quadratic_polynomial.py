@@ -1,3 +1,24 @@
+"""
+Implementation of the QuadraticPolynomial class.
+
+QuadraticPolynomial is a utility class to implement multivariate
+quadratic polynomials from SymPy polynomial expressions or tensors.
+They can automatically be casted to Ising model so they can be optimized
+using the Simulated Bifurcation algorithm on a given domain. The available
+domains are:
+
+- "spin" : {-1, +1}
+- "binary" : {0, 1}
+- "intX" : all integer values between 0 and 2^X - 1 for any non-negative integer X.
+
+See Also
+--------
+Ising:
+    Interface to the Simulated Bifurcation algorithm used for implementing
+    user-defined polynomial.
+
+"""
+
 import re
 from typing import Optional, Tuple, Union
 

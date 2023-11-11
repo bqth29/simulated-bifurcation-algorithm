@@ -5,13 +5,20 @@ simulated_bifurcation package.
 Available routines
 ------------------
 optimize:
-    Optimize a multivariate degree 2 polynomial using the SB algorithm.
+    Optimize a multivariate quadratic polynomial using the SB algorithm.
 minimize:
-    Minimize a multivariate degree 2 polynomial using the SB algorithm.
+    Minimize a multivariate quadratic polynomial using the SB algorithm.
 maximize:
-    Maximize a multivariate degree 2 polynomial using the SB algorithm.
-build_polynomial:
-    Instantiate a multivariate degree 2 polynomial over a given domain.
+    Maximize a multivariate quadratic polynomial using the SB algorithm.
+build_model:
+    Instantiate a multivariate quadratic polynomial over a given domain.
+
+Notes
+-----
+A multivariate quadratic polynomial is the sum of a quadratic form and a
+linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
+In matrix notation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
+square matrix, `l` a vector a `c` a constant.
 
 See Also
 --------
@@ -26,6 +33,116 @@ from typing import Optional, Tuple, Union
 import torch
 
 from .core import PolynomialLike, QuadraticPolynomial
+
+
+def build_model(
+    *polynomial: PolynomialLike,
+    dtype: torch.dtype = torch.float32,
+    device: Union[str, torch.device] = "cpu",
+) -> QuadraticPolynomial:
+    """
+    Instantiate a multivariate quadratic polynomial.
+
+    A multivariate quadratic polynomial is the sum of a quadratic form and a
+    linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
+    In matrixnotation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
+    square matrix, `l` a vector a `c` a constant.
+
+    Parameters
+    ----------
+    polynomial : PolynomialLike
+        Source data of the multivariate quadratic polynomial to build. It can
+        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        If tensors/arrays are provided, the monomial degree associated to
+        the coefficients is the number of dimensions of the tensor/array,
+        and all dimensions must be equal. The quadratic tensor must be square
+        and symmetric and is mandatory. The linear tensor must be 1-dimensional
+        and the constant term can either be a float/int or a 0-dimensional tensor.
+        Both are optional.
+
+    Keyword-Only Parameters
+    -----------------------
+    dtype : torch.dtype, default=torch.float32, keyword only
+        Data-type used for storing the coefficients of the polynomial.
+    device : str | torch.device, default="cpu", keyword only
+        Device on which the polynomial is located. If available, use "cuda"
+        to use the polynomial on a GPU.
+
+    Returns
+    -------
+    QuadraticPolynomial
+        A native Simulated Bifurcation's object to model multivariate
+        quadratic polynomials.
+
+    See Also
+    --------
+    minimize, maximize, optimize :
+        Shorthands for polynomial creation and optimization.
+    polynomial :
+        Module providing some polynomial types as well as an abstract
+        polynomial class `BaseMultivariateQuadraticPolynomial`.
+    models :
+        Module containing the implementation of several common
+        combinatorial optimization problems.
+
+    TODO: update below
+    Examples
+    --------
+    Instantiate a polynomial over {0, 1} x {0, 1}
+    >>> Q = torch.tensor([[1, -2],
+    ...                   [0, 3]])
+    >>> poly = sb.build_model(Q, input_type="binary")
+
+    Maximize the polynomial
+    >>> best_vector, best_value = poly.maximize()
+    >>> best_vector
+    tensor([0, 1])
+    >>> best_value
+    tensor(3)
+
+    Return all the solutions found using 42 agents
+    >>> best_vectors, best_values = poly.maximize(
+    ...      agents=42, best_only=False
+    ... )
+    >>> best_vectors.shape  # (agents, dimension of the instance)
+    (42, 2)
+    >>> best_values.shape  # (agents,)
+    (42,)
+
+    Evaluate the polynomial at a single point
+    >>> point = torch.tensor([1, 1], dtype=torch.float32)
+    >>> poly(point)
+    tensor(2)
+
+    Evaluate the polynomial at several points simultaneously
+    >>> points = torch.tensor(
+    ...     [[0, 0], [0, 1], [1, 0], [1, 1]],
+    ...     dtype=torch.float32,
+    ... )
+    >>> poly(points)
+    tensor([0, 3, 1, 2])
+
+    Instantiate a polynomial over {0, 1, ..., 14, 15} x {0, 1, ..., 14, 15}
+    and use it on the GPU
+    >>> Q = torch.tensor([[1, -2],
+    ...                   [0, 3]])
+    >>> poly = sb.build_model(Q, input_type="int4", device="cuda")
+
+    Maximize this polynomial (outputs are located on the GPU)
+    >>> best_vector, best_value = poly.maximize()
+    >>> best_vector
+    tensor([ 0., 15.], device='cuda:0')
+    >>> best_value
+    tensor(675., device='cuda:0')
+
+    Evaluate this polynomial at a given point
+    >>> point = torch.tensor([12, 7], dtype=torch.float32)
+    >>> point = point.to(device="cuda")  # send tensor to GPU
+    >>> poly(point)  # (output is located on GPU)
+    tensor(123., device='cuda:0')
+
+    """
+    return QuadraticPolynomial(*polynomial, dtype=dtype, device=device)
 
 
 def optimize(
@@ -53,21 +170,23 @@ def optimize(
     algorithm for combinatorial optimization problems.
     The optimization can either be a minimization or a maximization, and
     it is done over a discrete domain specified through `input_type`.
-    The polynomial is the sum of a quadratic form and a linear form plus
-    a constant term:
-    `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
-    or `x.T Q x + l.T x + c` in matrix notation,
-    where `Q` is a square matrix, `l` a vector a `c` a constant.
+
+    A multivariate quadratic polynomial is the sum of a quadratic form and a
+    linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
+    In matrixnotation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
+    square matrix, `l` a vector a `c` a constant.
 
     Parameters
     ----------
     polynomial : PolynomialLike
-        Multivariate quadratic polynomial to maximize. It can be
-        a native BaseMultivariateQuadraticPolynomial, a SymPy polynomial
-        expression ortensors/arrays of coefficients. If tensors/arrays are
-        provided, the monomial degree associated to the coefficients is
-        the numberof dimensions of the tensor/array, and all dimensions
-        must be equal.
+        Source data of the multivariate quadratic polynomial to optimize. It can
+        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        If tensors/arrays are provided, the monomial degree associated to
+        the coefficients is the number of dimensions of the tensor/array,
+        and all dimensions must be equal. The quadratic tensor must be square
+        and symmetric and is mandatory. The linear tensor must be 1-dimensional
+        and the constant term can either be a float/int or a 0-dimensional tensor.
+        Both are optional.
 
     Returns
     -------
@@ -191,7 +310,7 @@ def optimize(
     --------
     minimize : Alias for optimize(*args, **kwargs, minimize=True).
     maximize : Alias for optimize(*args, **kwargs, minimize=False).
-    build_polynomial : Create a polynomial object.
+    build_model : Create a polynomial object.
     BaseMultivariateQuadraticPolynomial :
         Native class to define multivariate quadratic polynomials
         to be used with the SB algorithm.
@@ -268,7 +387,7 @@ def optimize(
     tensor(0., device='cuda:0')
 
     """
-    model = QuadraticPolynomial(
+    model = build_model(
         *polynomial,
         dtype=dtype,
         device=device,
@@ -307,27 +426,30 @@ def minimize(
     timeout: Optional[float] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
-    Minimize a multivariate degree 2 polynomial using the SB algorithm.
+    Minimize a multivariate quadratic polynomial using the
+    Simulated Bifurcation algorithm.
 
     The simulated bifurcated (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
-    The minimization is done over a discrete domain specified through
-    `input_type`.
-    The polynomial is the sum of a quadratic form and a linear form plus
-    a constant term:
-    `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
-    or `x.T Q x + l.T x + c` in matrix notation,
-    where `Q` is a square matrix, `l` a vector a `c` a constant.
+    The optimization can either be a minimization or a maximization, and
+    it is done over a discrete domain specified through `input_type`.
+
+    A multivariate quadratic polynomial is the sum of a quadratic form and a
+    linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
+    In matrixnotation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
+    square matrix, `l` a vector a `c` a constant.
 
     Parameters
     ----------
     polynomial : PolynomialLike
-        Multivariate quadratic polynomial to maximize. It can be
-        a native BaseMultivariateQuadraticPolynomial, a SymPy polynomial
-        expression ortensors/arrays of coefficients. If tensors/arrays are
-        provided, the monomial degree associated to the coefficients is
-        the numberof dimensions of the tensor/array, and all dimensions
-        must be equal.
+        Source data of the multivariate quadratic polynomial to minimize. It can
+        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        If tensors/arrays are provided, the monomial degree associated to
+        the coefficients is the number of dimensions of the tensor/array,
+        and all dimensions must be equal. The quadratic tensor must be square
+        and symmetric and is mandatory. The linear tensor must be 1-dimensional
+        and the constant term can either be a float/int or a 0-dimensional tensor.
+        Both are optional.
 
     Returns
     -------
@@ -447,7 +569,7 @@ def minimize(
     See Also
     --------
     maximize : Maximize a polynomial.
-    build_polynomial : Create a polynomial object.
+    build_model : Create a polynomial object.
     BaseMultivariateQuadraticPolynomial :
         Native class to define multivariate quadratic polynomials
         to be used with the SB algorithm.
@@ -557,27 +679,30 @@ def maximize(
     timeout: Optional[float] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
-    Maximize a multivariate degree 2 polynomial using the SB algorithm.
+    Maximize a multivariate quadratic polynomial using the
+    Simulated Bifurcation algorithm.
 
     The simulated bifurcated (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
-    The maximization is done over a discrete domain specified through
-    `input_type`.
-    The polynomial is the sum of a quadratic form and a linear form plus
-    a constant term:
-    `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
-    or `x.T Q x + l.T x + c` in matrix notation,
-    where `Q` is a square matrix, `l` a vector a `c` a constant.
+    The optimization can either be a minimization or a maximization, and
+    it is done over a discrete domain specified through `input_type`.
+
+    A multivariate quadratic polynomial is the sum of a quadratic form and a
+    linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
+    In matrixnotation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
+    square matrix, `l` a vector a `c` a constant.
 
     Parameters
     ----------
     polynomial : PolynomialLike
-        Multivariate quadratic polynomial to maximize. It can be
-        a native BaseMultivariateQuadraticPolynomial, a SymPy polynomial
-        expression ortensors/arrays of coefficients. If tensors/arrays are
-        provided, the monomial degree associated to the coefficients is
-        the numberof dimensions of the tensor/array, and all dimensions
-        must be equal.
+        Source data of the multivariate quadratic polynomial to maximize. It can
+        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        If tensors/arrays are provided, the monomial degree associated to
+        the coefficients is the number of dimensions of the tensor/array,
+        and all dimensions must be equal. The quadratic tensor must be square
+        and symmetric and is mandatory. The linear tensor must be 1-dimensional
+        and the constant term can either be a float/int or a 0-dimensional tensor.
+        Both are optional.
 
     Returns
     -------
@@ -697,7 +822,7 @@ def maximize(
     See Also
     --------
     minimize : Minimize a polynomial.
-    build_polynomial : Create a polynomial object.
+    build_model : Create a polynomial object.
     BaseMultivariateQuadraticPolynomial :
         Native class to define multivariate quadratic polynomials
         to be used with the SB algorithm.

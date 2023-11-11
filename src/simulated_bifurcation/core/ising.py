@@ -1,16 +1,20 @@
 """
 Implementation of the Ising class.
 
-Ising is an interface to the SB algorithm and is used for implementing
-user-defined polynomial types. See models.Ising for an implementation of
-the Ising model which behaves like other models and polynomials.
+Ising is an interface to the Simulated Bifurcation algorithm and is
+used for implementing user-defined polynomial. See models.Ising for
+an implementation of the Ising model which behaves like other models
+and polynomials.
 
 See Also
 --------
 models.Ising:
     Implementation of the Ising model which behaves like other models and
     polynomials.
-BaseMultivariateQuadraticPolynomial: Abstract multivariate polynomial class.
+QuadraticPolynomial:
+    Class to implement multivariate quadratic polynomials from SymPy
+    polynomial expressions or tensors that can be casted to Ising model
+    for Simulated Bifurcation algorithm compatibility purposes.
 
 """
 

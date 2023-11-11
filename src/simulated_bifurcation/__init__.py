@@ -13,7 +13,7 @@ The simulated bifurcated (SB) algorithm is a randomized approximation
 algorithm for combinatorial optimization problems. More specifically, it
 solves the Ising problem, an NP-hard optimization problem which consists
 in finding the ground state of an Ising model. It corresponds to the
-minimization (or equivalently maximization) of a multivariate degree 2
+minimization (or equivalently maximization) of a multivariate quadratic
 polynomial over vectors whose entries are in {-1, 1}. Such polynomial is
 the sum of a quadratic form and a linear form plus a constant term :
 `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
@@ -153,7 +153,7 @@ tensor([0., 0.], device='cuda:0')
 
 from . import models
 from .optimizer import ConvergenceWarning, get_env, reset_env, set_env
-from .simulated_bifurcation import maximize, minimize, optimize
+from .simulated_bifurcation import build_model, maximize, minimize, optimize
 
 reset_env()
 

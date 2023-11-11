@@ -23,7 +23,7 @@ LOGGER.addHandler(CONSOLE_HANDLER)
 
 class ConvergenceWarning(Warning):
     def __str__(self) -> str:
-        return "No agent has converged. Returned final positions' signs instead."
+        return "No agent has converged. Returned signs of final positions instead."
 
 
 class SimulatedBifurcationOptimizer:
