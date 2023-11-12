@@ -3,8 +3,7 @@ import pytest
 import torch
 from sympy import poly, symbols
 
-from src.simulated_bifurcation.polynomial.polynomial_map import PolynomialMap
-from src.simulated_bifurcation.polynomial.polynomial_map.errors import *
+from src.simulated_bifurcation.polynomial.polynomial_map import *
 
 _map = {
     0: torch.tensor(2).to(dtype=torch.float32),
@@ -15,7 +14,7 @@ _map = {
 
 def test_init_polynomial_map():
     polynomial_map = PolynomialMap(_map)
-    assert polynomial_map.dimension == 3
+    assert polynomial_map.size == 3
     assert polynomial_map.dtype == torch.float32
     assert torch.equal(torch.tensor(2), polynomial_map[0])
     assert torch.equal(torch.Tensor([1, 2, 3]), polynomial_map[1])
@@ -28,7 +27,7 @@ def test_init_polynomial_map():
 
 def test_init_polynomial_map_with_degree_0_only():
     polynomial_map = PolynomialMap({0: torch.tensor(2)})
-    assert polynomial_map.dimension == 0
+    assert polynomial_map.size == 0
 
 
 def test_add_tensor_to_polynomial_map():
@@ -210,7 +209,7 @@ def test_init_polynomial_map_from_tensors():
 
 
 def assert_expected_polynomial_map(polynomial_map: PolynomialMap):
-    assert polynomial_map.dimension == 3
+    assert polynomial_map.size == 3
     assert polynomial_map.dtype == torch.float32
     assert torch.equal(torch.tensor(2), polynomial_map[0])
     assert torch.equal(torch.tensor([-1, -2, 1]), polynomial_map[1])

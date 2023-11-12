@@ -9,7 +9,7 @@ Provides
   2. Implementation of several common combinatorial optimization problems.
   3. A polynomial API for further customization.
 
-The simulated bifurcated (SB) algorithm is a randomized approximation
+The Simulated Bifurcation (SB) algorithm is a randomized approximation
 algorithm for combinatorial optimization problems. More specifically, it
 solves the Ising problem, an NP-hard optimization problem which consists
 in finding the ground state of an Ising model. It corresponds to the
@@ -37,17 +37,6 @@ Code snippets are indicated by three greater-than signs:
   >>> x = 42
   >>> x = x + 1
 
-.. deprecated:: 1.2.1
-    `BinaryPolynomial` will be modified in simulated-bifurcation 1.4.0, it
-    is replaced by `BinaryQuadraticPolynomial` in prevision of the addition
-    of multivariate polynomials of an arbitrary degree.
-    `IntegerPolynomial` will be modified in simulated-bifurcation 1.4.0, it
-    is replaced by `IntegerQuadraticPolynomial` in prevision of the
-    addition of multivariate polynomials of an arbitrary degree.
-    `SpinPolynomial` will be modified in simulated-bifurcation 1.4.0, it is
-    replaced by `SpinQuadraticPolynomial` in prevision of the addition of
-    multivariate polynomials of an arbitrary degree.
-
 Notes
 -----
 The SB algorithm is an approximation algorithm, which implies that the
@@ -66,16 +55,20 @@ For more comprehensive details on reproducibility, refer to the PyTorch
 documentation available at:
 https://pytorch.org/docs/stable/notes/randomness.html.
 
-The original version of the SB algorithm [2] is not implemented since it is
-less efficient than the more recent variants of the SB algorithm described
-in [3] :
-  ballistic SB : Uses the position of the particles for the position-based
-    update of the momentums ; usually faster but less accurate.
-  discrete SB : Uses the sign of the position of the particles for the
-    position-based update of the momentums ; usually slower but more
-    accurate.
+The original version of the SB algorithm [1] is not implemented since
+it is less efficient than the more recent variants of the SB algorithm
+described in [2]:
+
+- ballistic SB : Uses the position of the particles for the
+  position-based update of the momentums ; usually faster but
+  less accurate. Use this variant by setting `ballistic=True`.
+- discrete SB : Uses the sign of the position of the particles for
+  the position-based update of the momentums ; usually slower
+  but more accurate. Use this variant by setting
+  `ballistic=False`.
+
 On top of these two variants, an additional thermal fluctuation term
-can be added in order to help escape local optima [4]. Use this
+can be added in order to help escape local maxima [3]. Use this
 additional term by setting `heated=True`.
 
 The hyperparameters of the SB algorithm which correspond to physical
@@ -107,46 +100,52 @@ https://doi.org/10.1038/s42005-022-00929-9
 Examples
 --------
 Minimize a polynomial over {0, 1} x {0, 1}
->>> matrix = torch.tensor([[1, -2], [0, 3]], dtype=torch.float32)
->>> vector = torch.tensor([3.5, 2.2], dtype=torch.float32)
->>> constant = 3.14
->>> best_vector, best_value = sb.minimize(
-...     matrix, vector, constant, "binary"
-... )
->>> best_vector
-tensor([0., 0.])
->>> best_value
-tensor(3.14)
+
+  >>> matrix = torch.tensor([[1, -2], [0, 3]], dtype=torch.float32)
+  >>> vector = torch.tensor([3.5, 2.2], dtype=torch.float32)
+  >>> constant = 3.14
+  >>> best_vector, best_value = sb.minimize(
+  ...     matrix, vector, constant, "binary"
+  ... )
+  >>> best_vector
+  tensor([0., 0.])
+  >>> best_value
+  tensor(3.14)
 
 Instantiate a polynomial over vectors whose entries are 3-bits integers
 ({0, 1, 2, ..., 6, 7})
->>> poly = sb.build_model(matrix, vector, constant, "int3")
+
+  >>> poly = sb.build_model(matrix, vector, constant, "int3")
 
 Maximize the polynomial over vectors whose entries are 3-bits integers
->>> best_vector, best_value = poly.maximize()
->>> best_vector
-tensor([0., 7.])
->>> best_value
-tensor(165.54)
+
+  >>> best_vector, best_value = poly.maximize()
+  >>> best_vector
+  tensor([0., 7.])
+  >>> best_value
+  tensor(165.54)
 
 Evaluate the polynomial at a single point
->>> point = torch.tensor([6, 3], dtype=torch.float32)
->>> poly(point)
-tensor(57.74)
+
+  >>> point = torch.tensor([6, 3], dtype=torch.float32)
+  >>> poly(point)
+  tensor(57.74)
 
 Evaluate the polynomial at several points simultaneously
->>> points = torch.tensor(
-...     [[3, 5], [4, 4], [7, 1], [2, 6]],
-...     dtype=torch.float32,
-... )
->>> poly(points)
-tensor([78.64, 57.94, 67.84, 111.34])
+
+  >>> points = torch.tensor(
+  ...     [[3, 5], [4, 4], [7, 1], [2, 6]],
+  ...     dtype=torch.float32,
+  ... )
+  >>> poly(points)
+  tensor([78.64, 57.94, 67.84, 111.34])
 
 Create a QUBO instance and minimize it using a GPU to run the SB algorithm
->>> qubo = sb.models.QUBO(matrix, device="cuda")
->>> best_vector, best_value = qubo.minimize()  # Output is located on GPU
->>> best_vector
-tensor([0., 0.], device='cuda:0')
+
+  >>> qubo = sb.models.QUBO(matrix, device="cuda")
+  >>> best_vector, best_value = qubo.minimize()  # Output is located on GPU
+  >>> best_vector
+  tensor([0., 0.], device='cuda:0')
 
 """
 

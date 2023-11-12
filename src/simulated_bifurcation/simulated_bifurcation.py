@@ -45,7 +45,7 @@ def build_model(
 
     A multivariate quadratic polynomial is the sum of a quadratic form and a
     linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
-    In matrixnotation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
+    In matrix notation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
     square matrix, `l` a vector a `c` a constant.
 
     Parameters
@@ -85,61 +85,72 @@ def build_model(
         Module containing the implementation of several common
         combinatorial optimization problems.
 
-    TODO: update below
     Examples
     --------
-    Instantiate a polynomial over {0, 1} x {0, 1}
-    >>> Q = torch.tensor([[1, -2],
-    ...                   [0, 3]])
-    >>> poly = sb.build_model(Q, input_type="binary")
+    (Option 1) Instantiate a polynomial from tensors
 
-    Maximize the polynomial
-    >>> best_vector, best_value = poly.maximize()
-    >>> best_vector
-    tensor([0, 1])
-    >>> best_value
-    tensor(3)
+      >>> Q = torch.tensor([[1, -2],
+      ...                   [0, 3]])
+      >>> poly = sb.build_model(Q)
+
+    (Option 2) Instantiate a polynomial from a SymPy expression
+
+      >>> x, y = sympy.symbols("x y")
+      >>> expression = sympy.poly(x**2 - 2 * x * y + 3 * y**2)
+      >>> poly = sb.build_model(expression)
+
+    Maximize the polynomial over {0, 1} x {0, 1}
+
+      >>> best_vector, best_value = poly.maximize(input_type="binary")
+      >>> best_vector
+      tensor([0, 1])
+      >>> best_value
+      tensor(3)
 
     Return all the solutions found using 42 agents
-    >>> best_vectors, best_values = poly.maximize(
-    ...      agents=42, best_only=False
-    ... )
-    >>> best_vectors.shape  # (agents, dimension of the instance)
-    (42, 2)
-    >>> best_values.shape  # (agents,)
-    (42,)
+
+      >>> best_vectors, best_values = poly.maximize(
+      ...      agents=42, best_only=False
+      ... )
+      >>> best_vectors.shape  # (agents, dimension of the instance)
+      (42, 2)
+      >>> best_values.shape  # (agents,)
+      (42,)
 
     Evaluate the polynomial at a single point
-    >>> point = torch.tensor([1, 1], dtype=torch.float32)
-    >>> poly(point)
-    tensor(2)
+
+      >>> point = torch.tensor([1, 1], dtype=torch.float32)
+      >>> poly(point)
+      tensor(2)
 
     Evaluate the polynomial at several points simultaneously
-    >>> points = torch.tensor(
-    ...     [[0, 0], [0, 1], [1, 0], [1, 1]],
-    ...     dtype=torch.float32,
-    ... )
-    >>> poly(points)
-    tensor([0, 3, 1, 2])
 
-    Instantiate a polynomial over {0, 1, ..., 14, 15} x {0, 1, ..., 14, 15}
-    and use it on the GPU
-    >>> Q = torch.tensor([[1, -2],
-    ...                   [0, 3]])
-    >>> poly = sb.build_model(Q, input_type="int4", device="cuda")
+      >>> points = torch.tensor(
+      ...     [[0, 0], [0, 1], [1, 0], [1, 1]],
+      ...     dtype=torch.float32,
+      ... )
+      >>> poly(points)
+      tensor([0, 3, 1, 2])
 
-    Maximize this polynomial (outputs are located on the GPU)
-    >>> best_vector, best_value = poly.maximize()
-    >>> best_vector
-    tensor([ 0., 15.], device='cuda:0')
-    >>> best_value
-    tensor(675., device='cuda:0')
+    Migrate the polynomial to the GPU for faster computation
+
+      >>> poly.to(device="cuda")
+
+    Maximize this polynomial over {0, 1, ..., 14, 15} x {0, 1, ..., 14, 15}
+    (outputs are located on the GPU)
+
+      >>> best_vector, best_value = poly.maximize(input_type="int4)
+      >>> best_vector
+      tensor([ 0., 15.], device='cuda:0')
+      >>> best_value
+      tensor(675., device='cuda:0')
 
     Evaluate this polynomial at a given point
-    >>> point = torch.tensor([12, 7], dtype=torch.float32)
-    >>> point = point.to(device="cuda")  # send tensor to GPU
-    >>> poly(point)  # (output is located on GPU)
-    tensor(123., device='cuda:0')
+
+      >>> point = torch.tensor([12, 7], dtype=torch.float32)
+      >>> point = point.to(device="cuda")  # send tensor to GPU
+      >>> poly(point)  # (output is located on GPU)
+      tensor(123., device='cuda:0')
 
     """
     return QuadraticPolynomial(*polynomial, dtype=dtype, device=device)
@@ -166,14 +177,14 @@ def optimize(
     Optimize a multivariate quadratic polynomial using the
     Simulated Bifurcation algorithm.
 
-    The simulated bifurcated (SB) algorithm is a randomized approximation
+    The Simulated Bifurcation (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The optimization can either be a minimization or a maximization, and
     it is done over a discrete domain specified through `input_type`.
 
     A multivariate quadratic polynomial is the sum of a quadratic form and a
     linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
-    In matrixnotation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
+    In matrix notation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
     square matrix, `l` a vector a `c` a constant.
 
     Parameters
@@ -200,14 +211,16 @@ def optimize(
     -----------------------
     input_type : {"spin", "binary", "int..."}, default="spin"
         Domain over which the optimization is done.
-        • "spin" : Optimize the polynomial over vectors whose entries are
-        in {-1, 1}.
-        • "binary" : Optimize the polynomial over vectors whose entries are
-        in {0, 1}.
-        • "int..." : Optimize the polynomial over vectors whose entries
-        are n-bits non-negative integers, that is integers between 0 and
-        2^n - 1 inclusive. "int..." represents any string starting with
-        "int" and followed by a positive integer n, e.g. "int3", "int42".
+
+        - "spin" : Optimize the polynomial over vectors whose entries are
+          in {-1, 1}.
+        - "binary" : Optimize the polynomial over vectors whose entries are
+          in {0, 1}.
+        - "int..." : Optimize the polynomial over vectors whose entries
+          are n-bits non-negative integers, that is integers between 0 and
+          2^n - 1 inclusive. "int..." represents any string starting with
+          "int" and followed by a positive integer n, e.g. "int3", "int42".
+
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
     device : str | torch.device, default="cpu"
@@ -279,13 +292,14 @@ def optimize(
     within `max_steps` iterations, a warning is logged in the console.
     This is just an indication however; the returned vectors may still be
     of good quality. Solutions to this warning include:
-        - increasing the time step in the SB algorithm (may decrease
-            numerical stability), see the `set_env` function.
-        - increasing `max_steps` (at the expense of runtime).
-        - changing the values of `ballistic` and `heated` to use different
-            variants of the SB algorithm.
-        - changing the values of some hyperparameters corresponding to
-            physical constants (advanced usage, see Other Parameters).
+
+    - increasing the time step in the SB algorithm (may decrease
+      numerical stability), see the `set_env` function.
+    - increasing `max_steps` (at the expense of runtime).
+    - changing the values of `ballistic` and `heated` to use different
+      variants of the SB algorithm.
+    - changing the values of some hyperparameters corresponding to
+      physical constants (advanced usage, see Other Parameters).
 
     Warnings
     --------
@@ -323,15 +337,17 @@ def optimize(
     The original version of the SB algorithm [1] is not implemented since
     it is less efficient than the more recent variants of the SB algorithm
     described in [2]:
-        ballistic SB : Uses the position of the particles for the
-            position-based update of the momentums ; usually faster but
-            less accurate. Use this variant by setting `ballistic=True`.
-        discrete SB : Uses the sign of the position of the particles for
-            the position-based update of the momentums ; usually slower
-            but more accurate. Use this variant by setting
-            `ballistic=False`.
+
+    - ballistic SB : Uses the position of the particles for the
+      position-based update of the momentums ; usually faster but
+      less accurate. Use this variant by setting `ballistic=True`.
+    - discrete SB : Uses the sign of the position of the particles for
+      the position-based update of the momentums ; usually slower
+      but more accurate. Use this variant by setting
+      `ballistic=False`.
+
     On top of these two variants, an additional thermal fluctuation term
-    can be added in order to help escape local optima [3]. Use this
+    can be added in order to help escape local maxima [3]. Use this
     additional term by setting `heated=True`.
 
     The time complexity is O(`max_steps` * `agents` * M^2) where M is the
@@ -356,35 +372,48 @@ def optimize(
     Examples
     --------
     Maximize a polynomial over {0, 1} x {0, 1}
-    >>> Q = torch.tensor([[1, -2],
-    ...                   [0, 3]])
-    >>> best_vector, best_value = sb.optimize(
-    ...     Q, minimize=False, input_type="binary"
-    ... )
-    >>> best_vector
-    tensor([0., 1.])
-    >>> best_value
-    tensor(3.)
+
+      >>> # (Option 1) Using tensors
+      >>> Q = torch.tensor([[1, -2],
+      ...                   [0, 3]])
+      >>> best_vector, best_value = sb.optimize(
+      ...     Q, minimize=False, input_type="binary"
+      ... )
+
+      >>> # (Option 2) Using an expression
+      >>> x, y = sympy.symbols("x y")
+      >>> expression = sympy.poly(x**2 - 2 * x * y + 3 * y**2)
+      >>> best_vector, best_value = sb.optimize(
+      ...     expression, minimize=False, input_type="binary"
+      ... )
+
+      >>> # Results
+      >>> best_vector
+      tensor([0., 1.])
+      >>> best_value
+      tensor(3.)
 
     Minimize a polynomial over {-1, 1} x {-1, 1} and return all the
     solutions found using 42 agents
-    >>> best_vectors, best_values = sb.optimize(
-    ...     Q, input_type="spin", agents=42, best_only=False
-    ... )
-    >>> best_vectors.shape  # (agents, dimension of the instance)
-    (42, 2)
-    >>> best_values.shape  # (agents,)
-    (42,)
+
+      >>> best_vectors, best_values = sb.optimize(
+      ...     Q, input_type="spin", agents=42, best_only=False
+      ... )
+      >>> best_vectors.shape  # (agents, dimension of the instance)
+      (42, 2)
+      >>> best_values.shape  # (agents,)
+      (42,)
 
     Minimize a polynomial over {0, 1, 2, ..., 6, 7} x {0, 1, 2, ..., 6, 7}
     using the GPU to run the SB algorithm. Outputs are located on the GPU.
-    >>> best_vector, best_value = sb.optimize(
-    ...     Q, input_type="int3", device="cuda"
-    ... )
-    >>> best_vector
-    tensor([0., 0.], device='cuda:0')
-    >>> best_value
-    tensor(0., device='cuda:0')
+
+      >>> best_vector, best_value = sb.optimize(
+      ...     expression, input_type="int3", device="cuda"
+      ... )
+      >>> best_vector
+      tensor([0., 0.], device='cuda:0')
+      >>> best_value
+      tensor(0., device='cuda:0')
 
     """
     model = build_model(
@@ -429,14 +458,14 @@ def minimize(
     Minimize a multivariate quadratic polynomial using the
     Simulated Bifurcation algorithm.
 
-    The simulated bifurcated (SB) algorithm is a randomized approximation
+    The Simulated Bifurcation (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The optimization can either be a minimization or a maximization, and
     it is done over a discrete domain specified through `input_type`.
 
     A multivariate quadratic polynomial is the sum of a quadratic form and a
     linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
-    In matrixnotation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
+    In matrix notation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
     square matrix, `l` a vector a `c` a constant.
 
     Parameters
@@ -463,14 +492,16 @@ def minimize(
     -----------------------
     input_type : {"spin", "binary", "int..."}, default="spin"
         Domain over which the optimization is done.
-        • "spin" : Optimize the polynomial over vectors whose entries are
-        in {-1, 1}.
-        • "binary" : Optimize the polynomial over vectors whose entries are
-        in {0, 1}.
-        • "int..." : Optimize the polynomial over vectors whose entries
-        are n-bits non-negative integers, that is integers between 0 and
-        2^n - 1 inclusive. "int..." represents any string starting with
-        "int" and followed by a positive integer n, e.g. "int3", "int42".
+
+        - "spin" : Optimize the polynomial over vectors whose entries are
+          in {-1, 1}.
+        - "binary" : Optimize the polynomial over vectors whose entries are
+          in {0, 1}.
+        - "int..." : Optimize the polynomial over vectors whose entries
+          are n-bits non-negative integers, that is integers between 0 and
+          2^n - 1 inclusive. "int..." represents any string starting with
+          "int" and followed by a positive integer n, e.g. "int3", "int42".
+
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
     device : str | torch.device, default="cpu"
@@ -539,13 +570,14 @@ def minimize(
     within `max_steps` iterations, a warning is logged in the console.
     This is just an indication however; the returned vectors may still be
     of good quality. Solutions to this warning include:
-        - increasing the time step in the SB algorithm (may decrease
-            numerical stability), see the `set_env` function.
-        - increasing `max_steps` (at the expense of runtime).
-        - changing the values of `ballistic` and `heated` to use different
-            variants of the SB algorithm.
-        - changing the values of some hyperparameters corresponding to
-            physical constants (advanced usage, see Other Parameters).
+
+    - increasing the time step in the SB algorithm (may decrease
+      numerical stability), see the `set_env` function.
+    - increasing `max_steps` (at the expense of runtime).
+    - changing the values of `ballistic` and `heated` to use different
+      variants of the SB algorithm.
+    - changing the values of some hyperparameters corresponding to
+      physical constants (advanced usage, see Other Parameters).
 
     Warnings
     --------
@@ -582,15 +614,17 @@ def minimize(
     The original version of the SB algorithm [1] is not implemented since
     it is less efficient than the more recent variants of the SB algorithm
     described in [2]:
-        ballistic SB : Uses the position of the particles for the
-            position-based update of the momentums ; usually faster but
-            less accurate. Use this variant by setting `ballistic=True`.
-        discrete SB : Uses the sign of the position of the particles for
-            the position-based update of the momentums ; usually slower
-            but more accurate. Use this variant by setting
-            `ballistic=False`.
+
+    - ballistic SB : Uses the position of the particles for the
+      position-based update of the momentums ; usually faster but
+      less accurate. Use this variant by setting `ballistic=True`.
+    - discrete SB : Uses the sign of the position of the particles for
+      the position-based update of the momentums ; usually slower
+      but more accurate. Use this variant by setting
+      `ballistic=False`.
+
     On top of these two variants, an additional thermal fluctuation term
-    can be added in order to help escape local minima [3]. Use this
+    can be added in order to help escape local maxima [3]. Use this
     additional term by setting `heated=True`.
 
     The time complexity is O(`max_steps` * `agents` * M^2) where M is the
@@ -615,32 +649,43 @@ def minimize(
     Examples
     --------
     Minimize a polynomial over {0, 1} x {0, 1}
-    >>> Q = torch.tensor([[1, -2],
-    ...                   [0, 3]])
-    >>> best_vector, best_value = sb.minimize(Q, input_type="binary")
-    >>> best_vector
-    tensor([0., 0.])
-    >>> best_value
-    tensor(0.)
+
+      >>> # (Option 1) Using tensors
+      >>> Q = torch.tensor([[1, -2],
+      ...                   [0, 3]])
+      >>> best_vector, best_value = sb.minimize(Q, input_type="binary")
+
+      >>> # (Option 2) Using an expression
+      >>> x, y = sympy.symbols("x y")
+      >>> expression = sympy.poly(x**2 - 2 * x * y + 3 * y**2)
+      >>> best_vector, best_value = sb.minimize(expression, input_type="binary")
+
+      >>> # Results
+      >>> best_vector
+      tensor([0., 0.])
+      >>> best_value
+      tensor(0.)
 
     Return all the solutions found using 42 agents
-    >>> best_vectors, best_values = sb.minimize(
-    ...     Q, input_type="binary", agents=42, best_only=False
-    ... )
-    >>> best_vectors.shape  # (agents, dimension of the instance)
-    (42, 2)
-    >>> best_values.shape  # (agents,)
-    (42,)
+
+      >>> best_vectors, best_values = sb.minimize(
+      ...     Q, input_type="binary", agents=42, best_only=False
+      ... )
+      >>> best_vectors.shape  # (agents, dimension of the instance)
+      (42, 2)
+      >>> best_values.shape  # (agents,)
+      (42,)
 
     Minimize a polynomial over {0, 1, 2, ..., 6, 7} x {0, 1, 2, ..., 6, 7}
     using the GPU to run the SB algorithm. Outputs are located on the GPU.
-    >>> best_vector, best_value = sb.minimize(
-    ...     Q, input_type="int3", device="cuda"
-    ... )
-    >>> best_vector
-    tensor([0., 0.], device='cuda:0')
-    >>> best_value
-    tensor(0., device='cuda:0')
+
+      >>> best_vector, best_value = sb.minimize(
+      ...     expression, input_type="int3", device="cuda"
+      ... )
+      >>> best_vector
+      tensor([0., 0.], device='cuda:0')
+      >>> best_value
+      tensor(0., device='cuda:0')
 
     """
     return optimize(
@@ -682,14 +727,14 @@ def maximize(
     Maximize a multivariate quadratic polynomial using the
     Simulated Bifurcation algorithm.
 
-    The simulated bifurcated (SB) algorithm is a randomized approximation
+    The Simulated Bifurcation (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The optimization can either be a minimization or a maximization, and
     it is done over a discrete domain specified through `input_type`.
 
     A multivariate quadratic polynomial is the sum of a quadratic form and a
     linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
-    In matrixnotation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
+    In matrix notation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
     square matrix, `l` a vector a `c` a constant.
 
     Parameters
@@ -716,14 +761,16 @@ def maximize(
     -----------------------
     input_type : {"spin", "binary", "int..."}, default="spin"
         Domain over which the optimization is done.
-        • "spin" : Optimize the polynomial over vectors whose entries are
-        in {-1, 1}.
-        • "binary" : Optimize the polynomial over vectors whose entries are
-        in {0, 1}.
-        • "int..." : Optimize the polynomial over vectors whose entries
-        are n-bits non-negative integers, that is integers between 0 and
-        2^n - 1 inclusive. "int..." represents any string starting with
-        "int" and followed by a positive integer n, e.g. "int3", "int42".
+
+        - "spin" : Optimize the polynomial over vectors whose entries are
+          in {-1, 1}.
+        - "binary" : Optimize the polynomial over vectors whose entries are
+          in {0, 1}.
+        - "int..." : Optimize the polynomial over vectors whose entries
+          are n-bits non-negative integers, that is integers between 0 and
+          2^n - 1 inclusive. "int..." represents any string starting with
+          "int" and followed by a positive integer n, e.g. "int3", "int42".
+
     dtype : torch.dtype, default=torch.float32
         Data-type used for running the computations in the SB algorithm.
     device : str | torch.device, default="cpu"
@@ -792,13 +839,14 @@ def maximize(
     within `max_steps` iterations, a warning is logged in the console.
     This is just an indication however; the returned vectors may still be
     of good quality. Solutions to this warning include:
-        - increasing the time step in the SB algorithm (may decrease
-            numerical stability), see the `set_env` function.
-        - increasing `max_steps` (at the expense of runtime).
-        - changing the values of `ballistic` and `heated` to use different
-            variants of the SB algorithm.
-        - changing the values of some hyperparameters corresponding to
-            physical constants (advanced usage, see Other Parameters).
+
+    - increasing the time step in the SB algorithm (may decrease
+      numerical stability), see the `set_env` function.
+    - increasing `max_steps` (at the expense of runtime).
+    - changing the values of `ballistic` and `heated` to use different
+      variants of the SB algorithm.
+    - changing the values of some hyperparameters corresponding to
+      physical constants (advanced usage, see Other Parameters).
 
     Warnings
     --------
@@ -835,13 +883,15 @@ def maximize(
     The original version of the SB algorithm [1] is not implemented since
     it is less efficient than the more recent variants of the SB algorithm
     described in [2]:
-        ballistic SB : Uses the position of the particles for the
-            position-based update of the momentums ; usually faster but
-            less accurate. Use this variant by setting `ballistic=True`.
-        discrete SB : Uses the sign of the position of the particles for
-            the position-based update of the momentums ; usually slower
-            but more accurate. Use this variant by setting
-            `ballistic=False`.
+
+    - ballistic SB : Uses the position of the particles for the
+      position-based update of the momentums ; usually faster but
+      less accurate. Use this variant by setting `ballistic=True`.
+    - discrete SB : Uses the sign of the position of the particles for
+      the position-based update of the momentums ; usually slower
+      but more accurate. Use this variant by setting
+      `ballistic=False`.
+
     On top of these two variants, an additional thermal fluctuation term
     can be added in order to help escape local maxima [3]. Use this
     additional term by setting `heated=True`.
@@ -868,32 +918,43 @@ def maximize(
     Examples
     --------
     Maximize a polynomial over {0, 1} x {0, 1}
-    >>> Q = torch.tensor([[1, -2],
-    ...                   [0, 3]])
-    >>> best_vector, best_value = sb.maximize(Q, input_type="binary")
-    >>> best_vector
-    tensor([0., 1.])
-    >>> best_value
-    tensor(3.)
+
+      >>> # (Option 1) Using tensors
+      >>> Q = torch.tensor([[1, -2],
+      ...                   [0, 3]])
+      >>> best_vector, best_value = sb.maximize(Q, input_type="binary")
+
+      >>> # (Option 2) Using an expression
+      >>> x, y = sympy.symbols("x y")
+      >>> expression = sympy.poly(x**2 - 2 * x * y + 3 * y**2)
+      >>> best_vector, best_value = sb.maximize(expression, input_type="binary")
+
+      >>> # Results
+      >>> best_vector
+      tensor([0., 1.])
+      >>> best_value
+      tensor(3.)
 
     Return all the solutions found using 42 agents
-    >>> best_vectors, best_values = sb.maximize(
-    ...     Q, input_type="binary", agents=42, best_only=False
-    ... )
-    >>> best_vectors.shape  # (agents, dimension of the instance)
-    (42, 2)
-    >>> best_values.shape  # (agents,)
-    (42,)
+
+      >>> best_vectors, best_values = sb.maximize(
+      ...     Q, input_type="binary", agents=42, best_only=False
+      ... )
+      >>> best_vectors.shape  # (agents, dimension of the instance)
+      (42, 2)
+      >>> best_values.shape  # (agents,)
+      (42,)
 
     Maximize a polynomial over {0, 1, 2, ..., 6, 7} x {0, 1, 2, ..., 6, 7}
     using the GPU to run the SB algorithm. Outputs are located on the GPU.
-    >>> best_vector, best_value = sb.maximize(
-    ...     Q, input_type="int3", device="cuda"
-    ... )
-    >>> best_vector
-    tensor([0., 7.], device='cuda:0')
-    >>> best_value
-    tensor(147., device='cuda:0')
+
+      >>> best_vector, best_value = sb.maximize(
+      ...     expression, input_type="int3", device="cuda"
+      ... )
+      >>> best_vector
+      tensor([0., 7.], device='cuda:0')
+      >>> best_value
+      tensor(147., device='cuda:0')
 
     """
     return optimize(

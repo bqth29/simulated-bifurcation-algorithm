@@ -1,21 +1,96 @@
-from typing import Any, Dict, Sequence, Union
+from typing import Any, Dict, Sequence, Type, Union
 
 import numpy as np
 import torch
 from sympy import Poly
 
-from .errors import *
-
 TensorLike = Union[torch.Tensor, np.ndarray, float, int]
 
 
+class EmptyPolynomialMapError(ValueError):
+    def __init__(self) -> None:
+        super().__init__("Cannot define a polynomial map from an empty dictionnary.")
+
+
+class PolynomialMapDataTypeError(ValueError):
+    def __init__(self, expected_dtype: torch.dtype, actual_dtype: torch.dtype) -> None:
+        super().__init__(
+            "Inconsistent dtype among map's tensors. "
+            f"Expected the dtype to be {expected_dtype} but got {actual_dtype}."
+        )
+
+
+class PolynomialMapDegreeError(ValueError):
+    def __init__(self, key: int, ndim: int) -> None:
+        super().__init__(
+            "Wrong key usage. "
+            f"A {key} key was used to reference a {ndim}-dimensional tensor."
+        )
+
+
+class PolynomialMapDimensionError(ValueError):
+    def __init__(self, expected_dimension: int, actual_dimension: int) -> None:
+        super().__init__(
+            "Inconsistent dimensions among map's tensors. "
+            "Expected each dimension to be "
+            f"{expected_dimension} but got {actual_dimension}."
+        )
+
+
+class PolynomialMapTensorDimensionError(ValueError):
+    def __init__(self) -> None:
+        super().__init__("All dimensions of the tensor must be equal.")
+
+
+class PolynomialMapKeyTypeError(ValueError):
+    def __init__(self, key: Any) -> None:
+        super().__init__(
+            f"Expected a positive integer key type but got {key} of type {type(key)}."
+        )
+
+
+class PolynomialMapTypeError(TypeError):
+    def __init__(self) -> None:
+        super().__init__("A polynomial map must be a int -> tensor dictionnary.")
+
+
+class PolynomialMapValueTypeError(ValueError):
+    def __init__(self, value_type: Type) -> None:
+        super().__init__(f"Expected a tensor value type but got {value_type}.")
+
+
 class PolynomialMap(Dict[int, torch.Tensor]):
+    """
+    Utility class to provide a data structure that properly defined multivariate
+    polynomials of any dimension.
+
+    A multivariate polynomial is a sum of homogeneous polynomial (hyperlinear forms),
+    i.e. a sequence of multi-dimensional tensors with the same size. The degree of each
+    homogeneous polynomial is the number of dimensions of its coeffcients tensor.
+
+    A polynomial map is a dictionnary that maps a degree (positive integer) to a
+    coefficient tensors with as many dimensions as degree, all with the same size.
+
+    Parameters
+    ----------
+    _map : Dict[int, Tensor]
+        The degree to tensor map that defines a multivariate polynomial.
+    """
+
     def __init__(self, degree_to_tensor_map: Dict[int, torch.Tensor]) -> None:
         PolynomialMap.check_map(degree_to_tensor_map)
         super().__init__(degree_to_tensor_map)
 
     @property
-    def dimension(self) -> int:
+    def size(self) -> int:
+        """
+        Common size of all the tensors in the map.
+
+        Returns
+        -------
+        int
+
+        """
         for tensor in self.values():
             if tensor.ndim > 0:
                 return tensor.shape[0]
@@ -23,11 +98,27 @@ class PolynomialMap(Dict[int, torch.Tensor]):
 
     @property
     def device(self) -> torch.device:
+        """
+        Device on which of all the tensors in the map are defined.
+
+        Returns
+        -------
+        torch.device
+
+        """
         for tensor in self.values():
             return tensor.device
 
     @property
     def dtype(self) -> torch.dtype:
+        """
+        Common data type of all the tensors in the map.
+
+        Returns
+        -------
+        torch.dtype
+
+        """
         for tensor in self.values():
             return tensor.dtype
 
@@ -37,11 +128,19 @@ class PolynomialMap(Dict[int, torch.Tensor]):
         PolynomialMap.__check_degree(__key, __value)
         PolynomialMap.__check_tensor_dtype(self.dtype, __value)
         PolynomialMap.__check_all_tensor_dimensions_equal(__value)
-        PolynomialMap.__check_dimension_consistency(self.dimension, __value)
+        PolynomialMap.__check_dimension_consistency(self.size, __value)
         return super().__setitem__(__key, __value)
 
     @staticmethod
     def check_map(_map: Dict[int, torch.Tensor]):
+        """
+        Checks that the polynomial map is correctly defined.
+
+        Parameters
+        ----------
+        _map : Dict[int, torch.Tensor]
+            The polynomial map to assess.
+        """
         dimension = None
         dtype = None
         PolynomialMap.__check_is_not_empty_dict(_map)

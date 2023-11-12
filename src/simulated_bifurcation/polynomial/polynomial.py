@@ -31,7 +31,7 @@ class Polynomial:
 
     @property
     def dimension(self) -> int:
-        return self.__polynomial_map.dimension
+        return self.__polynomial_map.size
 
     @property
     def device(self) -> torch.device:

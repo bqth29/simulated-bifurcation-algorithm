@@ -49,7 +49,7 @@ class QuadraticPolynomial(Polynomial):
 
     A multivariate quadratic polynomial is the sum of a quadratic form and a
     linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
-    In matrixnotation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
+    In matrix notation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
     square matrix, `l` a vector a `c` a constant.
 
     Multivariate quadratic polynomials are a common interface to express several
@@ -78,6 +78,73 @@ class QuadraticPolynomial(Polynomial):
         and symmetric and is mandatory. The linear tensor must be 1-dimensional
         and the constant term can either be a float/int or a 0-dimensional tensor.
         Both are optional. Tensors can be passed in an arbitrary order.
+
+    Examples
+    --------
+    (Option 1) Instantiate a polynomial from tensors
+
+      >>> Q = torch.tensor([[1, -2],
+      ...                   [0, 3]])
+      >>> poly = QuadraticPolynomial(Q)
+
+    (Option 2) Instantiate a polynomial from a SymPy expression
+
+      >>> x, y = sympy.symbols("x y")
+      >>> expression = sympy.poly(x**2 - 2 * x * y + 3 * y**2)
+      >>> poly = QuadraticPolynomial(expression)
+
+    Maximize the polynomial over {0, 1} x {0, 1}
+
+      >>> best_vector, best_value = poly.maximize(input_type="binary")
+      >>> best_vector
+      tensor([0, 1])
+      >>> best_value
+      tensor(3)
+
+    Return all the solutions found using 42 agents
+
+      >>> best_vectors, best_values = poly.maximize(
+      ...      agents=42, best_only=False
+      ... )
+      >>> best_vectors.shape  # (agents, dimension of the instance)
+      (42, 2)
+      >>> best_values.shape  # (agents,)
+      (42,)
+
+    Evaluate the polynomial at a single point
+
+      >>> point = torch.tensor([1, 1], dtype=torch.float32)
+      >>> poly(point)
+      tensor(2)
+
+    Evaluate the polynomial at several points simultaneously
+
+      >>> points = torch.tensor(
+      ...     [[0, 0], [0, 1], [1, 0], [1, 1]],
+      ...     dtype=torch.float32,
+      ... )
+      >>> poly(points)
+      tensor([0, 3, 1, 2])
+
+    Migrate the polynomial to the GPU for faster computation
+
+      >>> poly.to(device="cuda")
+
+    Maximize this polynomial over {0, 1, ..., 14, 15} x {0, 1, ..., 14, 15}
+    (outputs are located on the GPU)
+
+      >>> best_vector, best_value = poly.maximize(input_type="int4)
+      >>> best_vector
+      tensor([ 0., 15.], device='cuda:0')
+      >>> best_value
+      tensor(675., device='cuda:0')
+
+    Evaluate this polynomial at a given point
+
+      >>> point = torch.tensor([12, 7], dtype=torch.float32)
+      >>> point = point.to(device="cuda")  # send tensor to GPU
+      >>> poly(point)  # (output is located on GPU)
+      tensor(123., device='cuda:0')
 
     """
 

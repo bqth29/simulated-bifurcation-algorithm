@@ -7,6 +7,18 @@ from ..core import QuadraticPolynomial
 
 
 class ABCModel(ABC, QuadraticPolynomial):
+    """
+    Abstract class that serves as a base component to define quadratic
+    optimization models that can be solved using the Simulated
+    Bifurcation algorithm.
+
+    Attributes
+    ----------
+    input_type : str
+        The optimization domain of the problem.
+
+    """
+
     input_type: str
 
     def optimize(
