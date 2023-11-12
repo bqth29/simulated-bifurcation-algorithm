@@ -40,7 +40,7 @@ class NumberPartitioning(ABCModel):
 
         left_subset = []
         right_subset = []
-        for elt in range(self.dimension):
+        for elt in range(self.n_variables):
             if best_vector[elt].item() > 0:
                 left_subset.append(self.numbers[elt])
             else:

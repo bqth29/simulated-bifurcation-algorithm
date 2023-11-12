@@ -112,7 +112,7 @@ class PolynomialMap(Dict[int, torch.Tensor]):
     @property
     def dtype(self) -> torch.dtype:
         """
-        Common data type of all the tensors in the map.
+        Common data-type of all the tensors in the map.
 
         Returns
         -------

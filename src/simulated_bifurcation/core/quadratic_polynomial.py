@@ -7,9 +7,10 @@ They can automatically be casted to Ising model so they can be optimized
 using the Simulated Bifurcation algorithm on a given domain. The available
 domains are:
 
-- "spin" : {-1, +1}
-- "binary" : {0, 1}
-- "intX" : all integer values between 0 and 2^X - 1 for any non-negative integer X.
+- spin optimization: variables are either -1 or +1
+- binary optimization: variables are either 0 or 1
+- n-bits integer optimization : variables are all integer values in the range
+    0 to 2^n - 1 (inclusive)
 
 See Also
 --------
@@ -25,7 +26,7 @@ from typing import Optional, Tuple, Union
 import numpy as np
 import torch
 
-from ..polynomial.polynomial import Polynomial, PolynomialLike
+from ..polynomial import Polynomial, PolynomialLike
 from .ising import Ising
 
 INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
@@ -78,6 +79,13 @@ class QuadraticPolynomial(Polynomial):
         and symmetric and is mandatory. The linear tensor must be 1-dimensional
         and the constant term can either be a float/int or a 0-dimensional tensor.
         Both are optional. Tensors can be passed in an arbitrary order.
+
+    Keyword-Only Parameters
+    -----------------------
+    dtype : torch.dtype, default=torch.float32
+        Data-type used for the polynomial data.
+    device : str | torch.device, default="cpu"
+        Device on which the polynomial data is defined.
 
     Examples
     --------
@@ -166,10 +174,10 @@ class QuadraticPolynomial(Polynomial):
             except Exception as err:
                 raise TypeError("Input value cannot be cast to Tensor.") from err
 
-        if value.shape[-1] != self.dimension:
+        if value.shape[-1] != self.n_variables:
             raise ValueError(
                 f"Size of the input along the last axis should be "
-                f"{self.dimension}, it is {value.shape[-1]}."
+                f"{self.n_variables}, it is {value.shape[-1]}."
             )
 
         quadratic_term = torch.nn.functional.bilinear(
@@ -223,7 +231,7 @@ class QuadraticPolynomial(Polynomial):
             symmetrical_matrix = Ising.symmetrize(self[2])
             J = -0.5 * symmetrical_matrix
             h = 0.5 * self[1] + 0.5 * symmetrical_matrix @ torch.ones(
-                self.dimension, dtype=self.dtype, device=self.device
+                self.n_variables, dtype=self.dtype, device=self.device
             )
             return Ising(J, h, self.dtype, self.device)
         if INTEGER_REGEX.match(input_type) is None:
@@ -231,7 +239,7 @@ class QuadraticPolynomial(Polynomial):
         number_of_bits = int(input_type[3:])
         symmetrical_matrix = Ising.symmetrize(self[2])
         integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
-            self.dimension, number_of_bits, device=self.device
+            self.n_variables, number_of_bits, device=self.device
         )
         J = (
             -0.5
@@ -244,7 +252,7 @@ class QuadraticPolynomial(Polynomial):
         ] + 0.5 * integer_to_binary_matrix @ self[
             2
         ] @ integer_to_binary_matrix.t() @ torch.ones(
-            (self.dimension * number_of_bits),
+            (self.n_variables * number_of_bits),
             dtype=self.dtype,
             device=self.device,
         )
@@ -295,7 +303,7 @@ class QuadraticPolynomial(Polynomial):
             raise INPUT_TYPE_ERROR
         number_of_bits = int(input_type[3:])
         integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
-            self.dimension, number_of_bits, device=self.device
+            self.n_variables, number_of_bits, device=self.device
         )
         return 0.5 * integer_to_binary_matrix.t() @ (ising.computed_spins + 1)
 
