@@ -38,6 +38,23 @@ Code snippets are indicated by three greater-than signs:
   >>> x = 42
   >>> x = x + 1
 
+Modules
+-------
+simulated_bifurcation:
+    Module defining high-level routines for a basic usage.
+core:
+    Module of utility models to help define and solve optimization
+    problems with the Simulated Bifurcation algorithm.
+models:
+    Package containing the implementation of several common combinatorial
+    optimization problems.
+optimizer:
+    Provides an implementation of the Simulated Bifurcation algorithm.
+    Serves as a back-end of the `core` module.
+polynomial:
+    Utility classes to define and utilize high-order multivariate
+    polynomials.
+
 Notes
 -----
 The SB algorithm is an approximation algorithm, which implies that the
