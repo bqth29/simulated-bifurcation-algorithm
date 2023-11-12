@@ -191,7 +191,7 @@ def test_build_polynomial_from_tensor():
         QuadraticPolynomial(torch.zeros((3, 2)))
 
 
-def test_build_polynomial_with_wrong_input_type():
+def test_build_polynomial_with_wrong_domain():
     with pytest.raises(
         TypeError,
         match="Expected tensors or arrays, got <class 'str'>.",
@@ -213,7 +213,7 @@ constant_int = 1
 
 def test_init_spin_polynomial():
     polynomial = QuadraticPolynomial(matrix, vector, constant_int)
-    ising = polynomial.to_ising(input_type="spin")
+    ising = polynomial.to_ising(domain="spin")
     ising.computed_spins = torch.tensor(
         [
             [1, -1],
@@ -235,7 +235,7 @@ def test_init_spin_polynomial():
     )
     assert torch.equal(ising.h, torch.tensor([1, 2, -3], dtype=torch.float32))
     assert torch.equal(
-        polynomial.convert_spins(ising, input_type="spin"),
+        polynomial.convert_spins(ising, domain="spin"),
         torch.tensor(
             [
                 [1, -1],
@@ -254,7 +254,7 @@ def test_call_spin_polynomial():
 
 def test_optimize_spin_polynomial():
     polynomial = QuadraticPolynomial(matrix, vector, constant_int)
-    spin_vars, value = polynomial.optimize(input_type="spin", verbose=False)
+    spin_vars, value = polynomial.optimize(domain="spin", verbose=False)
     assert torch.equal(spin_vars, torch.tensor([1, -1, 1], dtype=torch.float32))
     assert value == -11.0
 
@@ -262,7 +262,7 @@ def test_optimize_spin_polynomial():
 def test_minimize_spin_polynomial():
     torch.manual_seed(42)
     polynomial = QuadraticPolynomial(matrix, vector, constant_int)
-    spin_vars, value = polynomial.minimize(input_type="spin", verbose=False)
+    spin_vars, value = polynomial.minimize(domain="spin", verbose=False)
     assert torch.equal(spin_vars, torch.tensor([1, -1, 1], dtype=torch.float32))
     assert value == -11.0
 
@@ -270,15 +270,15 @@ def test_minimize_spin_polynomial():
 def test_maximize_spin_polynomial():
     torch.manual_seed(42)
     polynomial = QuadraticPolynomial(matrix, vector, constant_int)
-    spin_vars, value = polynomial.maximize(input_type="spin", verbose=False)
+    spin_vars, value = polynomial.maximize(domain="spin", verbose=False)
     assert torch.equal(spin_vars, torch.tensor([1, 1, -1], dtype=torch.float32))
     assert value == 7.0
 
 
 def test_init_binary_polynomial():
     binary_polynomial = QuadraticPolynomial(matrix, vector, constant_int)
-    ising = binary_polynomial.to_ising(input_type="binary")
-    assert binary_polynomial.convert_spins(ising, input_type="binary") is None
+    ising = binary_polynomial.to_ising(domain="binary")
+    assert binary_polynomial.convert_spins(ising, domain="binary") is None
     ising.computed_spins = torch.tensor(
         [
             [1, -1],
@@ -300,7 +300,7 @@ def test_init_binary_polynomial():
     )
     assert torch.equal(ising.h, torch.tensor([0.5, 2.5, -1], dtype=torch.float32))
     assert torch.equal(
-        binary_polynomial.convert_spins(ising, input_type="binary"),
+        binary_polynomial.convert_spins(ising, domain="binary"),
         torch.tensor(
             [
                 [1, 0],
@@ -319,15 +319,15 @@ def test_call_binary_polynomial():
 
 def test_optimize_binary_polynomial():
     binary_polynomial = QuadraticPolynomial(matrix, vector, constant_int)
-    binary_vars, value = binary_polynomial.optimize(input_type="binary", verbose=False)
+    binary_vars, value = binary_polynomial.optimize(domain="binary", verbose=False)
     assert torch.equal(binary_vars, torch.tensor([1, 0, 1], dtype=torch.float32))
     assert value == -3.0
 
 
 def test_init_integer_polynomial():
     integer_polynomial = QuadraticPolynomial(matrix, vector, constant_int)
-    ising = integer_polynomial.to_ising(input_type="int2")
-    assert integer_polynomial.convert_spins(ising, input_type="int2") is None
+    ising = integer_polynomial.to_ising(domain="int2")
+    assert integer_polynomial.convert_spins(ising, domain="int2") is None
     ising.computed_spins = torch.tensor(
         [
             [1, -1],
@@ -357,7 +357,7 @@ def test_init_integer_polynomial():
         ising.h, torch.tensor([0.5, 1, 5.5, 11, 0, 0], dtype=torch.float32)
     )
     assert torch.equal(
-        integer_polynomial.convert_spins(ising, input_type="int2"),
+        integer_polynomial.convert_spins(ising, domain="int2"),
         torch.tensor(
             [
                 [1, 2],
@@ -376,7 +376,7 @@ def test_call_integer_polynomial():
 
 def test_optimize_integer_polynomial():
     integer_polynomial = QuadraticPolynomial(matrix, vector, constant_int)
-    int_vars, value = integer_polynomial.optimize(input_type="int2", verbose=False)
+    int_vars, value = integer_polynomial.optimize(domain="int2", verbose=False)
     assert torch.equal(int_vars, torch.tensor([3, 0, 3], dtype=torch.float32))
     assert value == -23.0
 
@@ -409,16 +409,16 @@ def test_to():
     check_device_and_dtype(torch.float64)
 
 
-def test_wrong_input_type_to_ising():
+def test_wrong_domain_to_ising():
     with pytest.raises(ValueError):
-        QuadraticPolynomial(quadratic).to_ising(input_type="int2.5")
+        QuadraticPolynomial(quadratic).to_ising(domain="int2.5")
 
 
-def test_wrong_input_type_cnvert_spin():
+def test_wrong_domain_cnvert_spin():
     ising = Ising(quadratic)
     ising.computed_spins = torch.ones(3, 3)
     with pytest.raises(ValueError):
-        QuadraticPolynomial(quadratic).convert_spins(ising, input_type="Hello world!")
+        QuadraticPolynomial(quadratic).convert_spins(ising, domain="Hello world!")
 
 
 def test_evaluate_polynomial():

@@ -13,7 +13,7 @@ class NumberPartitioning(ABCModel):
     respective sums of which are as close as possible.
     """
 
-    input_type = "spin"
+    domain = "spin"
 
     def __init__(
         self, numbers: list, dtype: torch.dtype = torch.float32, device: str = "cpu"

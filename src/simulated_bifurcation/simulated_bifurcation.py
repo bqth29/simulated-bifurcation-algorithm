@@ -101,7 +101,7 @@ def build_model(
 
     Maximize the polynomial over {0, 1} x {0, 1}
 
-      >>> best_vector, best_value = poly.maximize(input_type="binary")
+      >>> best_vector, best_value = poly.maximize(domain="binary")
       >>> best_vector
       tensor([0, 1])
       >>> best_value
@@ -139,7 +139,7 @@ def build_model(
     Maximize this polynomial over {0, 1, ..., 14, 15} x {0, 1, ..., 14, 15}
     (outputs are located on the GPU)
 
-      >>> best_vector, best_value = poly.maximize(input_type="int4)
+      >>> best_vector, best_value = poly.maximize(domain="int4)
       >>> best_vector
       tensor([ 0., 15.], device='cuda:0')
       >>> best_value
@@ -158,7 +158,7 @@ def build_model(
 
 def optimize(
     *polynomial: PolynomialLike,
-    input_type: str = "spin",
+    domain: str = "spin",
     dtype: torch.dtype = torch.float32,
     device: Union[str, torch.device] = "cpu",
     agents: int = 128,
@@ -180,7 +180,7 @@ def optimize(
     The Simulated Bifurcation (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The optimization can either be a minimization or a maximization, and
-    it is done over a discrete domain specified through `input_type`.
+    it is done over a discrete domain specified through `domain`.
 
     A multivariate quadratic polynomial is the sum of a quadratic form and a
     linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
@@ -209,7 +209,7 @@ def optimize(
 
     Keyword-Only Parameters
     -----------------------
-    input_type : {"spin", "binary", "int..."}, default="spin"
+    domain : {"spin", "binary", "int..."}, default="spin"
         Domain over which the optimization is done.
 
         - "spin" : Optimize the polynomial over vectors whose entries are
@@ -280,7 +280,7 @@ def optimize(
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        If `domain` is not one of {"spin", "binary", "int..."}, where
         "int..." designates any string starting with "int" and followed by
         a positive integer, or more formally, any string matching the
         following regular expression: ^int[1-9][0-9]*$.
@@ -377,14 +377,14 @@ def optimize(
       >>> Q = torch.tensor([[1, -2],
       ...                   [0, 3]])
       >>> best_vector, best_value = sb.optimize(
-      ...     Q, minimize=False, input_type="binary"
+      ...     Q, minimize=False, domain="binary"
       ... )
 
       >>> # (Option 2) Using an expression
       >>> x, y = sympy.symbols("x y")
       >>> expression = sympy.poly(x**2 - 2 * x * y + 3 * y**2)
       >>> best_vector, best_value = sb.optimize(
-      ...     expression, minimize=False, input_type="binary"
+      ...     expression, minimize=False, domain="binary"
       ... )
 
       >>> # Results
@@ -397,7 +397,7 @@ def optimize(
     solutions found using 42 agents
 
       >>> best_vectors, best_values = sb.optimize(
-      ...     Q, input_type="spin", agents=42, best_only=False
+      ...     Q, domain="spin", agents=42, best_only=False
       ... )
       >>> best_vectors.shape  # (agents, dimension of the instance)
       (42, 2)
@@ -408,7 +408,7 @@ def optimize(
     using the GPU to run the SB algorithm. Outputs are located on the GPU.
 
       >>> best_vector, best_value = sb.optimize(
-      ...     expression, input_type="int3", device="cuda"
+      ...     expression, domain="int3", device="cuda"
       ... )
       >>> best_vector
       tensor([0., 0.], device='cuda:0')
@@ -422,7 +422,7 @@ def optimize(
         device=device,
     )
     result, evaluation = model.optimize(
-        input_type=input_type,
+        domain=domain,
         agents=agents,
         max_steps=max_steps,
         best_only=best_only,
@@ -440,7 +440,7 @@ def optimize(
 
 def minimize(
     *polynomial: PolynomialLike,
-    input_type: str = "spin",
+    domain: str = "spin",
     dtype: torch.dtype = torch.float32,
     device: Union[str, torch.device] = "cpu",
     agents: int = 128,
@@ -461,7 +461,7 @@ def minimize(
     The Simulated Bifurcation (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The optimization can either be a minimization or a maximization, and
-    it is done over a discrete domain specified through `input_type`.
+    it is done over a discrete domain specified through `domain`.
 
     A multivariate quadratic polynomial is the sum of a quadratic form and a
     linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
@@ -490,7 +490,7 @@ def minimize(
 
     Keyword-Only Parameters
     -----------------------
-    input_type : {"spin", "binary", "int..."}, default="spin"
+    domain : {"spin", "binary", "int..."}, default="spin"
         Domain over which the optimization is done.
 
         - "spin" : Optimize the polynomial over vectors whose entries are
@@ -558,7 +558,7 @@ def minimize(
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        If `domain` is not one of {"spin", "binary", "int..."}, where
         "int..." designates any string starting with "int" and followed by
         a positive integer, or more formally, any string matching the
         following regular expression: ^int[1-9][0-9]*$.
@@ -653,12 +653,12 @@ def minimize(
       >>> # (Option 1) Using tensors
       >>> Q = torch.tensor([[1, -2],
       ...                   [0, 3]])
-      >>> best_vector, best_value = sb.minimize(Q, input_type="binary")
+      >>> best_vector, best_value = sb.minimize(Q, domain="binary")
 
       >>> # (Option 2) Using an expression
       >>> x, y = sympy.symbols("x y")
       >>> expression = sympy.poly(x**2 - 2 * x * y + 3 * y**2)
-      >>> best_vector, best_value = sb.minimize(expression, input_type="binary")
+      >>> best_vector, best_value = sb.minimize(expression, domain="binary")
 
       >>> # Results
       >>> best_vector
@@ -669,7 +669,7 @@ def minimize(
     Return all the solutions found using 42 agents
 
       >>> best_vectors, best_values = sb.minimize(
-      ...     Q, input_type="binary", agents=42, best_only=False
+      ...     Q, domain="binary", agents=42, best_only=False
       ... )
       >>> best_vectors.shape  # (agents, dimension of the instance)
       (42, 2)
@@ -680,7 +680,7 @@ def minimize(
     using the GPU to run the SB algorithm. Outputs are located on the GPU.
 
       >>> best_vector, best_value = sb.minimize(
-      ...     expression, input_type="int3", device="cuda"
+      ...     expression, domain="int3", device="cuda"
       ... )
       >>> best_vector
       tensor([0., 0.], device='cuda:0')
@@ -690,7 +690,7 @@ def minimize(
     """
     return optimize(
         *polynomial,
-        input_type=input_type,
+        domain=domain,
         dtype=dtype,
         device=device,
         agents=agents,
@@ -709,7 +709,7 @@ def minimize(
 
 def maximize(
     *polynomial: PolynomialLike,
-    input_type: str = "spin",
+    domain: str = "spin",
     dtype: torch.dtype = torch.float32,
     device: Union[str, torch.device] = "cpu",
     agents: int = 128,
@@ -730,7 +730,7 @@ def maximize(
     The Simulated Bifurcation (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The optimization can either be a minimization or a maximization, and
-    it is done over a discrete domain specified through `input_type`.
+    it is done over a discrete domain specified through `domain`.
 
     A multivariate quadratic polynomial is the sum of a quadratic form and a
     linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
@@ -759,7 +759,7 @@ def maximize(
 
     Keyword-Only Parameters
     -----------------------
-    input_type : {"spin", "binary", "int..."}, default="spin"
+    domain : {"spin", "binary", "int..."}, default="spin"
         Domain over which the optimization is done.
 
         - "spin" : Optimize the polynomial over vectors whose entries are
@@ -827,7 +827,7 @@ def maximize(
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        If `domain` is not one of {"spin", "binary", "int..."}, where
         "int..." designates any string starting with "int" and followed by
         a positive integer, or more formally, any string matching the
         following regular expression: ^int[1-9][0-9]*$.
@@ -922,12 +922,12 @@ def maximize(
       >>> # (Option 1) Using tensors
       >>> Q = torch.tensor([[1, -2],
       ...                   [0, 3]])
-      >>> best_vector, best_value = sb.maximize(Q, input_type="binary")
+      >>> best_vector, best_value = sb.maximize(Q, domain="binary")
 
       >>> # (Option 2) Using an expression
       >>> x, y = sympy.symbols("x y")
       >>> expression = sympy.poly(x**2 - 2 * x * y + 3 * y**2)
-      >>> best_vector, best_value = sb.maximize(expression, input_type="binary")
+      >>> best_vector, best_value = sb.maximize(expression, domain="binary")
 
       >>> # Results
       >>> best_vector
@@ -938,7 +938,7 @@ def maximize(
     Return all the solutions found using 42 agents
 
       >>> best_vectors, best_values = sb.maximize(
-      ...     Q, input_type="binary", agents=42, best_only=False
+      ...     Q, domain="binary", agents=42, best_only=False
       ... )
       >>> best_vectors.shape  # (agents, dimension of the instance)
       (42, 2)
@@ -949,7 +949,7 @@ def maximize(
     using the GPU to run the SB algorithm. Outputs are located on the GPU.
 
       >>> best_vector, best_value = sb.maximize(
-      ...     expression, input_type="int3", device="cuda"
+      ...     expression, domain="int3", device="cuda"
       ... )
       >>> best_vector
       tensor([0., 7.], device='cuda:0')
@@ -959,7 +959,7 @@ def maximize(
     """
     return optimize(
         *polynomial,
-        input_type=input_type,
+        domain=domain,
         dtype=dtype,
         device=device,
         agents=agents,

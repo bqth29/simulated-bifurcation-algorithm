@@ -68,7 +68,7 @@ for which the $x_{i}$'s can be spins, binary or non-negative integer.
 
 This can also be seen as the sum of a quadratic form, a linear form and a constant term and such a formulation is the basis of many optimization problems.
 
-The input types must be passed to the `input_type` argument:
+The input types must be passed to the `domain` argument:
 
 - `spin` (default value) for a spin optimization: the optimal vector will only have ±1 values
 - `binary` for a binary optimization: the optimal vector will only have 0 or 1 values
@@ -130,26 +130,26 @@ The `minimize` and `maximize` functions allow to respectively minimize and maxim
 
 ```python
 # Spin minimization
-spin_value, spin_vector = sb.minimize(matrix, vector, constant, input_type='spin')
+spin_value, spin_vector = sb.minimize(matrix, vector, constant, domain='spin')
 
 # Binary minimization
-binary_value, binary_vector = sb.minimize(matrix, vector, constant, input_type='binary')
+binary_value, binary_vector = sb.minimize(matrix, vector, constant, domain='binary')
 
 # 3-bits integer minimization
-int_value, int_vector = sb.minimize(matrix, vector, constant, input_type='int3')
+int_value, int_vector = sb.minimize(matrix, vector, constant, domain='int3')
 ```
 
 #### Maximization
 
 ```python
 # Spin maximization
-spin_value, spin_vector = sb.maximize(matrix, vector, constant, input_type='spin')
+spin_value, spin_vector = sb.maximize(matrix, vector, constant, domain='spin')
 
 # Binary maximization
-binary_value, binary_vector = sb.maximize(matrix, vector, constant, input_type='binary')
+binary_value, binary_vector = sb.maximize(matrix, vector, constant, domain='binary')
 
 # 10-bits integer maximization
-int_value, int_vector = sb.maximize(matrix, vector, constant, input_type='int10')
+int_value, int_vector = sb.maximize(matrix, vector, constant, domain='int10')
 ```
 
 > For both functions, only the matrix is required, the vector and constant terms are optional.

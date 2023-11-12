@@ -123,7 +123,7 @@ Minimize a polynomial over {0, 1} x {0, 1}
   >>> vector = torch.tensor([3.5, 2.2], dtype=torch.float32)
   >>> constant = 3.14
   >>> best_vector, best_value = sb.minimize(
-  ...     matrix, vector, constant, input_type="binary"
+  ...     matrix, vector, constant, domain="binary"
   ... )
   >>> best_vector
   tensor([0., 0.])
@@ -143,7 +143,7 @@ for more readability
 
 Maximize the polynomial over vectors whose entries are 3-bits integers
 
-  >>> best_vector, best_value = poly.maximize(input_type="int3")
+  >>> best_vector, best_value = poly.maximize(domain="int3")
   >>> best_vector
   tensor([0., 7.])
   >>> best_value

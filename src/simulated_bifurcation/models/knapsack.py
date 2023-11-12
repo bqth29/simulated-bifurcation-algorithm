@@ -14,7 +14,7 @@ class _Status(Enum):
 
 
 class Knapsack(ABCModel):
-    input_type = "binary"
+    domain = "binary"
 
     def __init__(
         self,

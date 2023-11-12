@@ -15,7 +15,7 @@ class QUBO(ABCModel):
     `ΣΣ Q(i,j)b(i)b(j)` where the `b(i)`'s values are either `0` or `1`.
     """
 
-    input_type = "binary"
+    domain = "binary"
 
     def __init__(
         self,

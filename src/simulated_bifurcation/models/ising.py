@@ -17,7 +17,7 @@ class Ising(ABCModel):
     then called the ground state): `-0.5 * ΣΣ J(i,j)s(i)s(j) + Σ h(i)s(i)`
     """
 
-    input_type = "spin"
+    domain = "spin"
 
     def __init__(
         self,

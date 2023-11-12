@@ -30,7 +30,7 @@ from ..polynomial import Polynomial, PolynomialLike
 from .ising import Ising
 
 INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
-INPUT_TYPE_ERROR = ValueError(
+domain_ERROR = ValueError(
     f'Input type must be one of "spin" or "binary", or be a string starting'
     f'with "int" and be followed by a positive integer.\n'
     f"More formally, it should match the following regular expression.\n"
@@ -103,7 +103,7 @@ class QuadraticPolynomial(Polynomial):
 
     Maximize the polynomial over {0, 1} x {0, 1}
 
-      >>> best_vector, best_value = poly.maximize(input_type="binary")
+      >>> best_vector, best_value = poly.maximize(domain="binary")
       >>> best_vector
       tensor([0, 1])
       >>> best_value
@@ -141,7 +141,7 @@ class QuadraticPolynomial(Polynomial):
     Maximize this polynomial over {0, 1, ..., 14, 15} x {0, 1, ..., 14, 15}
     (outputs are located on the GPU)
 
-      >>> best_vector, best_value = poly.maximize(input_type="int4)
+      >>> best_vector, best_value = poly.maximize(domain="int4)
       >>> best_vector
       tensor([ 0., 15.], device='cuda:0')
       >>> best_value
@@ -189,7 +189,7 @@ class QuadraticPolynomial(Polynomial):
         evaluation = torch.squeeze(quadratic_term, -1) + affine_term
         return evaluation
 
-    def to_ising(self, input_type: str) -> Ising:
+    def to_ising(self, domain: str) -> Ising:
         """
         Generate an equivalent Ising model of the problem.
         The notion of equivalence means that finding the ground
@@ -198,7 +198,7 @@ class QuadraticPolynomial(Polynomial):
 
         Parameters
         ----------
-        input_type : str
+        domain : str
             Domain over which the optimization is done.
 
             - "spin" : Optimize the polynomial over vectors whose entries are
@@ -219,24 +219,24 @@ class QuadraticPolynomial(Polynomial):
         Raises
         ------
         ValueError
-            If `input_type` is not one of {"spin", "binary", "int..."}, where
+            If `domain` is not one of {"spin", "binary", "int..."}, where
             "int..." designates any string starting with "int" and followed by
             a positive integer, or more formally, any string matching the
             following regular expression: ^int[1-9][0-9]*$.
 
         """
-        if input_type == "spin":
+        if domain == "spin":
             return Ising(-2 * self[2], self[1], self.dtype, self.device)
-        if input_type == "binary":
+        if domain == "binary":
             symmetrical_matrix = Ising.symmetrize(self[2])
             J = -0.5 * symmetrical_matrix
             h = 0.5 * self[1] + 0.5 * symmetrical_matrix @ torch.ones(
                 self.n_variables, dtype=self.dtype, device=self.device
             )
             return Ising(J, h, self.dtype, self.device)
-        if INTEGER_REGEX.match(input_type) is None:
-            raise INPUT_TYPE_ERROR
-        number_of_bits = int(input_type[3:])
+        if INTEGER_REGEX.match(domain) is None:
+            raise domain_ERROR
+        number_of_bits = int(domain[3:])
         symmetrical_matrix = Ising.symmetrize(self[2])
         integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
             self.n_variables, number_of_bits, device=self.device
@@ -258,7 +258,7 @@ class QuadraticPolynomial(Polynomial):
         )
         return Ising(J, h, self.dtype, self.device)
 
-    def convert_spins(self, ising: Ising, input_type: str) -> Optional[torch.Tensor]:
+    def convert_spins(self, ising: Ising, domain: str) -> Optional[torch.Tensor]:
         """
         Retrieves information from the optimized equivalent Ising model.
         Returns the best found vector if `ising.ground_state` is not `None`.
@@ -269,7 +269,7 @@ class QuadraticPolynomial(Polynomial):
         ising : IsingCore
             Equivalent Ising model to optimized with the Simulated
             Bifurcation algorithm.
-        input_type : str
+        domain : str
             Domain over which the optimization is done.
 
             - "spin" : Optimize the polynomial over vectors whose entries are
@@ -288,20 +288,20 @@ class QuadraticPolynomial(Polynomial):
         Raises
         ------
         ValueError
-            If `input_type` is not one of {"spin", "binary", "int..."}, where
+            If `domain` is not one of {"spin", "binary", "int..."}, where
             "int..." designates any string starting with "int" and followed by
             a positive integer, or more formally, any string matching the
             following regular expression: ^int[1-9][0-9]*$.
         """
         if ising.computed_spins is None:
             return None
-        if input_type == "spin":
+        if domain == "spin":
             return ising.computed_spins
-        if input_type == "binary":
+        if domain == "binary":
             return (ising.computed_spins + 1) / 2
-        if INTEGER_REGEX.match(input_type) is None:
-            raise INPUT_TYPE_ERROR
-        number_of_bits = int(input_type[3:])
+        if INTEGER_REGEX.match(domain) is None:
+            raise domain_ERROR
+        number_of_bits = int(domain[3:])
         integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
             self.n_variables, number_of_bits, device=self.device
         )
@@ -309,7 +309,7 @@ class QuadraticPolynomial(Polynomial):
 
     def optimize(
         self,
-        input_type: str,
+        domain: str,
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
@@ -401,9 +401,9 @@ class QuadraticPolynomial(Polynomial):
         Tensor
         """
         if minimize:
-            ising_equivalent = self.to_ising(input_type)
+            ising_equivalent = self.to_ising(domain)
         else:
-            ising_equivalent = -self.to_ising(input_type)
+            ising_equivalent = -self.to_ising(domain)
         ising_equivalent.minimize(
             agents,
             max_steps,
@@ -415,7 +415,7 @@ class QuadraticPolynomial(Polynomial):
             convergence_threshold=convergence_threshold,
             timeout=timeout,
         )
-        self.sb_result = self.convert_spins(ising_equivalent, input_type)
+        self.sb_result = self.convert_spins(ising_equivalent, domain)
         result = self.sb_result.t()
         evaluation = self(result)
         if best_only:
@@ -426,7 +426,7 @@ class QuadraticPolynomial(Polynomial):
 
     def minimize(
         self,
-        input_type: str,
+        domain: str,
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
@@ -514,7 +514,7 @@ class QuadraticPolynomial(Polynomial):
         Tensor
         """
         return self.optimize(
-            input_type,
+            domain,
             agents,
             max_steps,
             best_only,
@@ -530,7 +530,7 @@ class QuadraticPolynomial(Polynomial):
 
     def maximize(
         self,
-        input_type: str,
+        domain: str,
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
@@ -617,7 +617,7 @@ class QuadraticPolynomial(Polynomial):
         Tensor
         """
         return self.optimize(
-            input_type,
+            domain,
             agents,
             max_steps,
             best_only,

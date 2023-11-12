@@ -41,7 +41,7 @@ class SequentialMarkowitz(ABCModel):
         )
 
         self.number_of_bits = number_of_bits
-        self.input_type = f"int{number_of_bits}"
+        self.domain = f"int{number_of_bits}"
 
         matrix, vector, constant = self.compile_model()
         super().__init__(

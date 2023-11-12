@@ -14,12 +14,12 @@ class ABCModel(ABC, QuadraticPolynomial):
 
     Attributes
     ----------
-    input_type : str
+    domain : str
         The optimization domain of the problem.
 
     """
 
-    input_type: str
+    domain: str
 
     def optimize(
         self,
@@ -37,7 +37,7 @@ class ABCModel(ABC, QuadraticPolynomial):
         timeout: Optional[float] = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return super().optimize(
-            self.input_type,
+            self.domain,
             agents,
             max_steps,
             best_only,
