@@ -2,32 +2,33 @@
 Simulated Bifurcation
 =====================
 
-Provides
-  1. GPU compatible implementation of the simulated bifurcation (SB)
+This package provides:
+
+1. A GPU compatible implementation of the Simulated Bifurcation (SB)
   algorithm, a quantum physics inspired combinatorial optimization
   approximation algorithm.
-  2. Implementation of several common combinatorial optimization problems.
-  3. A polynomial API for further customization.
+2. An implementation of several common combinatorial optimization problems.
+3. A polynomial API for further customization.
 
 The Simulated Bifurcation (SB) algorithm is a randomized approximation
 algorithm for combinatorial optimization problems. More specifically, it
 solves the Ising problem, an NP-hard optimization problem which consists
 in finding the ground state of an Ising model. It corresponds to the
 minimization (or equivalently maximization) of a multivariate quadratic
-polynomial over vectors whose entries are in {-1, 1}. Such polynomial is
-the sum of a quadratic form and a linear form plus a constant term :
-`ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
-or `x.T Q x + l.T x + c` in matrix notation,
-where `Q` is a square matrix, `l` a vector a `c` a constant.
+polynomial over vectors whose entries are in {-1, 1}. Such polynomial
+is the sum of a quadratic form and a linear form plus a constant term:
+`ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`. In matrix notation, this gives:
+`x.T Q x + l.T x + c`, where `Q` is a square matrix, `l` a vector and
+`c` a constant.
 
 Several common combinatorial optimization problems are reframed as Ising
 problems in the `models` module, e.g.: QUBO, knapsack, Markowitz model...
 Polynomials over vectors whose entries are in {0, 1} or whose entries are
-fixed bit-width integers are also implemented, as well as an abstract
-polynomial class `BaseMultivariateQuadraticPolynomial` for further customization.
+fixed bit-width integers are also implemented, as well as a utility
+polynomial class `QuadraticPolynomial` for further customization.
 
-The docstring examples assume that `torch` (PyTorch) has been imported and
-that simulated_bifurcation has been imported as `sb`:
+The docstring examples assume that `torch` (PyTorch) and `sympy` (SymPy)
+have been imported and that simulated_bifurcation has been imported as `sb`:
 
   >>> import torch
   >>> import simulated_bifurcation as sb
@@ -105,21 +106,27 @@ Minimize a polynomial over {0, 1} x {0, 1}
   >>> vector = torch.tensor([3.5, 2.2], dtype=torch.float32)
   >>> constant = 3.14
   >>> best_vector, best_value = sb.minimize(
-  ...     matrix, vector, constant, "binary"
+  ...     matrix, vector, constant, input_type="binary"
   ... )
   >>> best_vector
   tensor([0., 0.])
   >>> best_value
   tensor(3.14)
 
-Instantiate a polynomial over vectors whose entries are 3-bits integers
-({0, 1, 2, ..., 6, 7})
+Define an equivalent polynomial with a SymPy polynomial expression
+for more readability
 
-  >>> poly = sb.build_model(matrix, vector, constant, "int3")
+  >>> x, y = sympy.symbols("x y")
+  >>> expression = sympy.poly(
+  ...     x**2 - 2 * x * y + 3 * y**2
+  ...     + 3.5 * x + 2.2 * y
+  ...     + 3.14
+  ... )
+  >>> poly = sb.build_model(expression)
 
 Maximize the polynomial over vectors whose entries are 3-bits integers
 
-  >>> best_vector, best_value = poly.maximize()
+  >>> best_vector, best_value = poly.maximize(input_type="int3")
   >>> best_vector
   tensor([0., 7.])
   >>> best_value

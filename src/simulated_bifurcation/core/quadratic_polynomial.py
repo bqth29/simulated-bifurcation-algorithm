@@ -51,7 +51,7 @@ class QuadraticPolynomial(Polynomial):
     A multivariate quadratic polynomial is the sum of a quadratic form and a
     linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
     In matrix notation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
-    square matrix, `l` a vector a `c` a constant.
+    square matrix, `l` a vector and `c` a constant.
 
     Multivariate quadratic polynomials are a common interface to express several
     optimization problems defined of different domains including:
