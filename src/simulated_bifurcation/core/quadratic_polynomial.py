@@ -14,7 +14,7 @@ domains are:
 See Also
 --------
 Ising:
-    Interface to the Simulated Bifurcation algorithm used for implementing
+    Interface to the Simulated Bifurcation algorithm used for optimizing
     user-defined polynomial.
 
 """
@@ -29,6 +29,13 @@ from ..polynomial.polynomial import Polynomial, PolynomialLike
 from .ising import Ising
 
 INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
+INPUT_TYPE_ERROR = ValueError(
+    f'Input type must be one of "spin" or "binary", or be a string starting'
+    f'with "int" and be followed by a positive integer.\n'
+    f"More formally, it should match the following regular expression.\n"
+    f"{INTEGER_REGEX}\n"
+    f'Examples: "int7", "int42", ...'
+)
 
 
 class QuadraticPolynomialError(ValueError):
@@ -37,6 +44,43 @@ class QuadraticPolynomialError(ValueError):
 
 
 class QuadraticPolynomial(Polynomial):
+    """
+    Internal implementation of a multivariate quadratic polynomial.
+
+    A multivariate quadratic polynomial is the sum of a quadratic form and a
+    linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
+    In matrixnotation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
+    square matrix, `l` a vector a `c` a constant.
+
+    Multivariate quadratic polynomials are a common interface to express several
+    optimization problems defined of different domains including:
+
+    - spin optimization: variables are either -1 or +1
+    - binary optimization: variables are either 0 or 1
+    - n-bits integer optimization : variables are all integer values in the range
+      0 to 2^n - 1 (inclusive)
+
+    A multivariate quadratic polynomial defined on a given domain can be casted to
+    an equivalent Ising model and thus optimized using the Simulated Bifurcation
+    algorithm. The notion of equivalence means that finding the ground state of this
+    Ising model is strictly equivalent to finding the vector solution that
+    minimizes/maximizes the original polynomial when converted back to the original
+    domain (for Ising optimization is in spins).
+
+    Parameters
+    ----------
+    polynomial : PolynomialLike
+        Source data of the multivariate quadratic polynomial to optimize. It can
+        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        If tensors/arrays are provided, the monomial degree associated to
+        the coefficients is the number of dimensions of the tensor/array,
+        and all dimensions must be equal. The quadratic tensor must be square
+        and symmetric and is mandatory. The linear tensor must be 1-dimensional
+        and the constant term can either be a float/int or a 0-dimensional tensor.
+        Both are optional. Tensors can be passed in an arbitrary order.
+
+    """
+
     def __init__(
         self,
         *polynomial_like: PolynomialLike,
@@ -77,9 +121,34 @@ class QuadraticPolynomial(Polynomial):
         state of this new model is strictly equivalent to find
         the ground state of the original problem.
 
+        Parameters
+        ----------
+        input_type : str
+            Domain over which the optimization is done.
+
+            - "spin" : Optimize the polynomial over vectors whose entries are
+              in {-1, 1}.
+            - "binary" : Optimize the polynomial over vectors whose entries are
+              in {0, 1}.
+            - "int..." : Optimize the polynomial over vectors whose entries
+              are n-bits non-negative integers, that is integers between 0 and
+              2^n - 1 inclusive. "int..." represents any string starting with
+              "int" and followed by a positive integer n, e.g. "int3", "int42".
+
         Returns
         -------
-        IsingCore
+        Ising
+            The equivalent Ising model to optimize with the Simulated
+            Bifurcation algorithm.
+
+        Raises
+        ------
+        ValueError
+            If `input_type` is not one of {"spin", "binary", "int..."}, where
+            "int..." designates any string starting with "int" and followed by
+            a positive integer, or more formally, any string matching the
+            following regular expression: ^int[1-9][0-9]*$.
+
         """
         if input_type == "spin":
             return Ising(-2 * self[2], self[1], self.dtype, self.device)
@@ -91,16 +160,10 @@ class QuadraticPolynomial(Polynomial):
             )
             return Ising(J, h, self.dtype, self.device)
         if INTEGER_REGEX.match(input_type) is None:
-            raise ValueError(
-                f'Input type must be one of "spin" or "binary", or be a string starting'
-                f'with "int" and be followed by a positive integer.\n'
-                f"More formally, it should match the following regular expression.\n"
-                f"{INTEGER_REGEX}\n"
-                f'Examples: "int7", "int42", ...'
-            )
+            raise INPUT_TYPE_ERROR
         number_of_bits = int(input_type[3:])
         symmetrical_matrix = Ising.symmetrize(self[2])
-        integer_to_binary_matrix = QuadraticPolynomial.integer_to_binary_matrix(
+        integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
             self.dimension, number_of_bits, device=self.device
         )
         J = (
@@ -120,8 +183,6 @@ class QuadraticPolynomial(Polynomial):
         )
         return Ising(J, h, self.dtype, self.device)
 
-    # TODO: add decorator @type_parser(if_spin, if_bin, if_int, bits)
-
     def convert_spins(self, ising: Ising, input_type: str) -> Optional[torch.Tensor]:
         """
         Retrieves information from the optimized equivalent Ising model.
@@ -131,11 +192,31 @@ class QuadraticPolynomial(Polynomial):
         Parameters
         ----------
         ising : IsingCore
-            Equivalent Ising model of the problem.
+            Equivalent Ising model to optimized with the Simulated
+            Bifurcation algorithm.
+        input_type : str
+            Domain over which the optimization is done.
+
+            - "spin" : Optimize the polynomial over vectors whose entries are
+              in {-1, 1}.
+            - "binary" : Optimize the polynomial over vectors whose entries are
+              in {0, 1}.
+            - "int..." : Optimize the polynomial over vectors whose entries
+              are n-bits non-negative integers, that is integers between 0 and
+              2^n - 1 inclusive. "int..." represents any string starting with
+              "int" and followed by a positive integer n, e.g. "int3", "int42".
 
         Returns
         -------
         Tensor
+
+        Raises
+        ------
+        ValueError
+            If `input_type` is not one of {"spin", "binary", "int..."}, where
+            "int..." designates any string starting with "int" and followed by
+            a positive integer, or more formally, any string matching the
+            following regular expression: ^int[1-9][0-9]*$.
         """
         if ising.computed_spins is None:
             return None
@@ -144,15 +225,9 @@ class QuadraticPolynomial(Polynomial):
         if input_type == "binary":
             return (ising.computed_spins + 1) / 2
         if INTEGER_REGEX.match(input_type) is None:
-            raise ValueError(
-                f'Input type must be one of "spin" or "binary", or be a string starting'
-                f'with "int" and be followed by a positive integer.\n'
-                f"More formally, it should match the following regular expression.\n"
-                f"{INTEGER_REGEX}\n"
-                f'Examples: "int7", "int42", ...'
-            )
+            raise INPUT_TYPE_ERROR
         number_of_bits = int(input_type[3:])
-        integer_to_binary_matrix = QuadraticPolynomial.integer_to_binary_matrix(
+        integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
             self.dimension, number_of_bits, device=self.device
         )
         return 0.5 * integer_to_binary_matrix.t() @ (ising.computed_spins + 1)
@@ -482,9 +557,26 @@ class QuadraticPolynomial(Polynomial):
         )
 
     @staticmethod
-    def integer_to_binary_matrix(
+    def __integer_to_binary_matrix(
         dimension: int, number_of_bits: int, device: Union[str, torch.device]
     ) -> torch.Tensor:
+        """
+        Generates a matrix to convert a binary quadratic multivariate polynomial
+        to an n-bits integer polynomial.
+
+        Parameters
+        ----------
+        dimension : int
+            Dimension of the polynomial.
+        number_of_bits : int
+            Number of bits to encode the integer values.
+        device : str | torch.device
+            Device on which to perform the computations.
+
+        Returns
+        -------
+        Tensor
+        """
         matrix = torch.zeros((dimension * number_of_bits, dimension), device=device)
         for row in range(dimension):
             for col in range(number_of_bits):

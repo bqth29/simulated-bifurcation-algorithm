@@ -58,7 +58,7 @@ def build_model(
         and all dimensions must be equal. The quadratic tensor must be square
         and symmetric and is mandatory. The linear tensor must be 1-dimensional
         and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional.
+        Both are optional. Tensors can be passed in an arbitrary order.
 
     Keyword-Only Parameters
     -----------------------
@@ -186,7 +186,7 @@ def optimize(
         and all dimensions must be equal. The quadratic tensor must be square
         and symmetric and is mandatory. The linear tensor must be 1-dimensional
         and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional.
+        Both are optional. Tensors can be passed in an arbitrary order.
 
     Returns
     -------
@@ -449,7 +449,7 @@ def minimize(
         and all dimensions must be equal. The quadratic tensor must be square
         and symmetric and is mandatory. The linear tensor must be 1-dimensional
         and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional.
+        Both are optional. Tensors can be passed in an arbitrary order.
 
     Returns
     -------
@@ -702,7 +702,7 @@ def maximize(
         and all dimensions must be equal. The quadratic tensor must be square
         and symmetric and is mandatory. The linear tensor must be 1-dimensional
         and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional.
+        Both are optional. Tensors can be passed in an arbitrary order.
 
     Returns
     -------
