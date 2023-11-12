@@ -34,7 +34,8 @@ class SimulatedBifurcationOptimizer:
     Ising problems. The spins dynamics is simulated using
     a first order symplectic integrator.
 
-    There are different version of the SB algorithm:
+    There are 4 different version of the SB algorithm:
+
     - the ballistic Simulated Bifurcation (bSB) which uses the particles'
     position for the matrix computations (usually faster but less accurate)
     - the discrete Simulated Bifurcation (dSB) which uses the particles'
@@ -60,6 +61,7 @@ class SimulatedBifurcationOptimizer:
     also slightly increases the computation time. In the end, only the best
     spin vector (energy-wise) is kept and used as the new Ising model's
     ground state.
+
     """
 
     def __init__(
@@ -232,7 +234,28 @@ class SimulatedBifurcationOptimizer:
 
     def run_integrator(self, matrix: torch.Tensor, use_window: bool) -> torch.Tensor:
         """
-        Runs the Simulated Bifurcation (SB) algorithm.
+        Runs the Simulated Bifurcation (SB) algorithm. Given an input matrix,
+        the SB algorithm aims at finding the groud state of the Ising model
+        defined from this matrix, i.e. the {-1, +1}-vector that minimizes the
+        Ising energy defined as `-0.5 * ΣΣ J(i,j)x(i)x(j)`, where `J`
+        designates the matrix.
+
+        Parameters
+        ----------
+        matrix : torch.Tensor
+            The matrix that defines the Ising model to optimize.
+        use_window : bool
+            Whether to use a stop window or not to perform early-stopping.
+
+        Returns
+        -------
+        torch.Tensor
+            The optimized spins. The shape is (dimension of the matrix, agents).
+
+        Raises
+        ------
+        ValueError
+            If no stopping criterion was provided, the algorithm will not start.
         """
         if (
             self.max_steps == float("inf")
@@ -254,6 +277,17 @@ class SimulatedBifurcationOptimizer:
         otherwise the actual final spins are returned.
 
         If the stop window was not used, the final spins are returned.
+
+        Parameters
+        ----------
+        spins : torch.Tensor
+            The spins returned by the Simulated Bifurcation algorithm.
+        use_window : bool
+            Whether the stop window was used or not.
+
+        Returns
+        -------
+        torch.Tensor
         """
         if use_window:
             if not self.window.has_bifurcated_spins():
