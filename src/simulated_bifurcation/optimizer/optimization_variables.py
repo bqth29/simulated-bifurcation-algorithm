@@ -2,6 +2,8 @@ import os
 from enum import Enum
 from typing import Dict, Optional
 
+import torch
+
 
 def get_env() -> Dict[str, float]:
     return {variable.name: variable.get() for variable in OptimizationVariable}

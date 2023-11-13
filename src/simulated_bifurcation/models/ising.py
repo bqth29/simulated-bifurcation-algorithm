@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import torch
@@ -23,7 +23,7 @@ class Ising(ABCModel):
         self,
         J: Union[torch.Tensor, np.ndarray],
         h: Union[torch.Tensor, np.ndarray, None] = None,
-        dtype: torch.dtype = torch.float32,
+        dtype: Optional[torch.dtype] = None,
         device: str = "cpu",
     ) -> None:
         super().__init__(-0.5 * J, h, dtype=dtype, device=device)

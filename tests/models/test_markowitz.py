@@ -7,7 +7,13 @@ def test_markowitz():
     torch.manual_seed(42)
     covariance = torch.tensor([[1.0, 1.2, 0.7], [1.2, 1.0, -1.9], [0.7, -1.9, 1.0]])
     expected_return = torch.tensor([0.2, 0.05, 0.17])
-    model = Markowitz(covariance, expected_return, risk_coefficient=1, number_of_bits=3)
+    model = Markowitz(
+        covariance,
+        expected_return,
+        risk_coefficient=1,
+        number_of_bits=3,
+        dtype=torch.float32,
+    )
 
     assert torch.all(torch.isclose(covariance, model.covariance))
     assert torch.equal(expected_return, model.expected_return)

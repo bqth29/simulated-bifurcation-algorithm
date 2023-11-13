@@ -15,7 +15,7 @@ class SequentialMarkowitz(ABCModel):
         initial_stocks: Optional[Union[torch.Tensor, np.ndarray]] = None,
         risk_coefficient: float = 1,
         number_of_bits: int = 1,
-        dtype: torch.dtype = torch.float32,
+        dtype: Optional[torch.dtype] = None,
         device: str = "cpu",
     ) -> None:
         """
@@ -138,7 +138,7 @@ class Markowitz(SequentialMarkowitz):
         expected_return: Union[torch.Tensor, np.ndarray],
         risk_coefficient: float = 1,
         number_of_bits: int = 1,
-        dtype: torch.dtype = torch.float32,
+        dtype: Optional[torch.dtype] = None,
         device: str = "cpu",
     ) -> None:
         covariance = torch.unsqueeze(covariance, 0)

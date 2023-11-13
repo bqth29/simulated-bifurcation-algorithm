@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import torch
@@ -21,7 +21,7 @@ class Knapsack(ABCModel):
         weights: List[int],
         costs: List[Union[int, float]],
         max_weight: int,
-        dtype: torch.dtype = torch.float32,
+        dtype: Optional[torch.dtype] = None,
         device: str = "cpu",
     ) -> None:
         self.weights = weights[:]

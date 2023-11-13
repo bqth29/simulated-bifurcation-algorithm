@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import torch
@@ -20,7 +20,7 @@ class QUBO(ABCModel):
     def __init__(
         self,
         Q: Union[torch.Tensor, np.ndarray],
-        dtype: torch.dtype = torch.float32,
+        dtype: Optional[torch.dtype] = None,
         device: str = "cpu",
     ) -> None:
         super().__init__(Q, dtype=dtype, device=device)

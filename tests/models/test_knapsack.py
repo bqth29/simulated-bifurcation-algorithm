@@ -7,7 +7,7 @@ def test_knapsack():
     torch.manual_seed(42)
     weights = [12, 1, 1, 4, 2]
     prices = [4, 2, 1, 10, 2]
-    model = Knapsack(weights, prices, max_weight=15)
+    model = Knapsack(weights, prices, max_weight=15, dtype=torch.float32)
 
     assert model.summary == {
         "items": [],

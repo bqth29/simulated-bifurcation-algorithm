@@ -6,9 +6,9 @@ from sympy import poly, symbols
 from src.simulated_bifurcation.polynomial.polynomial_map import *
 
 _map = {
-    0: torch.tensor(2).to(dtype=torch.float32),
-    1: torch.Tensor([1, 2, 3]).to(dtype=torch.float32),
-    2: torch.Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).to(dtype=torch.float32),
+    0: torch.tensor(2, dtype=torch.float32),
+    1: torch.tensor([1, 2, 3], dtype=torch.float32),
+    2: torch.tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=torch.float32),
 }
 
 
@@ -16,10 +16,11 @@ def test_init_polynomial_map():
     polynomial_map = PolynomialMap(_map)
     assert polynomial_map.size == 3
     assert polynomial_map.dtype == torch.float32
-    assert torch.equal(torch.tensor(2), polynomial_map[0])
-    assert torch.equal(torch.Tensor([1, 2, 3]), polynomial_map[1])
+    assert torch.equal(torch.tensor(2, dtype=torch.float32), polynomial_map[0])
+    assert torch.equal(torch.tensor([1, 2, 3], dtype=torch.float32), polynomial_map[1])
     assert torch.equal(
-        torch.Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), polynomial_map[2]
+        torch.tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=torch.float32),
+        polynomial_map[2],
     )
     with pytest.raises(KeyError, match="3"):
         polynomial_map[3]
@@ -32,8 +33,10 @@ def test_init_polynomial_map_with_degree_0_only():
 
 def test_add_tensor_to_polynomial_map():
     polynomial_map = PolynomialMap(_map)
-    polynomial_map[3] = torch.arange(1, 28).reshape(3, 3, 3).to(dtype=torch.float32)
-    assert torch.equal(torch.arange(1, 28).reshape(3, 3, 3), polynomial_map[3])
+    polynomial_map[3] = torch.arange(1, 28, dtype=torch.float32).reshape(3, 3, 3)
+    assert torch.equal(
+        torch.arange(1, 28, dtype=torch.float32).reshape(3, 3, 3), polynomial_map[3]
+    )
     assert isinstance(polynomial_map, PolynomialMap)
     with pytest.raises(
         PolynomialMapKeyTypeError,
@@ -181,17 +184,24 @@ def test_init_polynomial_map_from_expression():
 
 def test_init_polynomial_map_from_tensors():
     polynomial_map = PolynomialMap.from_tensors(
-        2, torch.tensor([-1, -2, 1]), torch.tensor([[1, -2, -1], [0, 2, -3], [0, 0, 3]])
+        2,
+        torch.tensor([-1, -2, 1]),
+        torch.tensor([[1, -2, -1], [0, 2, -3], [0, 0, 3]]),
+        dtype=torch.float32,
     )
     assert_expected_polynomial_map(polynomial_map)
     polynomial_map = PolynomialMap.from_tensors(
         torch.tensor(2),
         torch.tensor([-1, -2, 1]),
         torch.tensor([[1, -2, -1], [0, 2, -3], [0, 0, 3]]),
+        dtype=torch.float32,
     )
     assert_expected_polynomial_map(polynomial_map)
     polynomial_map = PolynomialMap.from_tensors(
-        torch.tensor([[1, -2, -1], [0, 2, -3], [0, 0, 3]]), 2, np.array([-1, -2, 1])
+        torch.tensor([[1, -2, -1], [0, 2, -3], [0, 0, 3]]),
+        2,
+        np.array([-1, -2, 1]),
+        dtype=torch.float32,
     )
     assert_expected_polynomial_map(polynomial_map)
     with pytest.raises(

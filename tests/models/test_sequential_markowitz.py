@@ -47,6 +47,7 @@ def test_sequential_markowitz():
         initial_stocks,
         risk_coefficient=1,
         number_of_bits=1,
+        dtype=torch.float32,
     )
 
     assert torch.equal(covariances, model.covariances)

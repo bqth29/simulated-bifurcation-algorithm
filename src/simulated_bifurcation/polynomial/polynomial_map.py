@@ -1,4 +1,4 @@
-from typing import Any, Dict, Sequence, Type, Union
+from typing import Any, Dict, Optional, Sequence, Type, Union
 
 import numpy as np
 import torch
@@ -204,8 +204,8 @@ class PolynomialMap(Dict[int, torch.Tensor]):
     def from_tensors(
         cls,
         *tensors: Union[TensorLike, Sequence[TensorLike]],
-        dtype: torch.dtype = torch.float32,
-        device: Union[str, torch.device] = "cpu",
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> Dict[int, torch.Tensor]:
         polynomial_map = {}
         for tensor in tensors:
@@ -230,8 +230,8 @@ class PolynomialMap(Dict[int, torch.Tensor]):
     def from_expression(
         cls,
         expression: Poly,
-        dtype: torch.dtype = torch.float32,
-        device: Union[str, torch.device] = "cpu",
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> Dict[int, torch.Tensor]:
         polynomial_map = {}
         dimension = len(expression.gens)

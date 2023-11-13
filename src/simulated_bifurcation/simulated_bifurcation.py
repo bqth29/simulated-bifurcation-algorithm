@@ -37,8 +37,8 @@ from .core import PolynomialLike, QuadraticPolynomial
 
 def build_model(
     *polynomial: PolynomialLike,
-    dtype: torch.dtype = torch.float32,
-    device: Union[str, torch.device] = "cpu",
+    dtype: Optional[torch.dtype] = None,
+    device: Optional[Union[str, torch.device]] = None,
 ) -> QuadraticPolynomial:
     """
     Instantiate a multivariate quadratic polynomial.
@@ -159,8 +159,8 @@ def build_model(
 def optimize(
     *polynomial: PolynomialLike,
     domain: str = "spin",
-    dtype: torch.dtype = torch.float32,
-    device: Union[str, torch.device] = "cpu",
+    dtype: Optional[torch.dtype] = None,
+    device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
@@ -441,8 +441,8 @@ def optimize(
 def minimize(
     *polynomial: PolynomialLike,
     domain: str = "spin",
-    dtype: torch.dtype = torch.float32,
-    device: Union[str, torch.device] = "cpu",
+    dtype: Optional[torch.dtype] = None,
+    device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
@@ -710,8 +710,8 @@ def minimize(
 def maximize(
     *polynomial: PolynomialLike,
     domain: str = "spin",
-    dtype: torch.dtype = torch.float32,
-    device: Union[str, torch.device] = "cpu",
+    dtype: Optional[torch.dtype] = None,
+    device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
