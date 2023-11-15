@@ -416,7 +416,7 @@ class QuadraticPolynomial(Polynomial):
             timeout=timeout,
         )
         self.sb_result = self.convert_spins(ising_equivalent, domain)
-        result = self.sb_result.t()
+        result = self.sb_result.t().to(dtype=self.dtype)
         evaluation = self(result)
         if best_only:
             i_best = torch.argmin(evaluation) if minimize else torch.argmax(evaluation)
