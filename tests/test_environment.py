@@ -30,6 +30,16 @@ def test_set_env():
     reset_env()
 
 
+def test_set_env_none():
+    set_env(pressure_slope=0.2)
+    set_env(heat_coefficient=0.04)
+    assert {
+        "TIME_STEP": 0.1,
+        "PRESSURE_SLOPE": 0.2,
+        "HEAT_COEFFICIENT": 0.04,
+    } == get_env()
+    
+
 def test_set_env_with_wrong_parameters():
     with pytest.raises(TypeError, match="All optimization variables must be floats."):
         # noinspection PyTypeChecker
