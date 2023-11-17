@@ -39,8 +39,8 @@ class BaseMultivariateQuadraticPolynomial(ABC):
         vector: Union[torch.Tensor, np.ndarray, None] = None,
         constant: Union[int, float, None] = None,
         accepted_values: Union[torch.Tensor, np.ndarray, List[int], None] = None,
-        dtype: torch.dtype = torch.float32,
-        device: Union[str, torch.device] = "cpu",
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         """
         Parameters
@@ -156,6 +156,8 @@ class BaseMultivariateQuadraticPolynomial(ABC):
 
     @staticmethod
     def __check_device(device: Union[str, torch.device]):
+        if device is None:
+            return
         if isinstance(device, torch.device):
             device = device.type
         elif not isinstance(device, str):

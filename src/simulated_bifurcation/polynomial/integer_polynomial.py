@@ -120,8 +120,8 @@ class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
         vector: Union[torch.Tensor, np.ndarray, None] = None,
         constant: Union[float, int, None] = None,
         number_of_bits: int = 1,
-        dtype: torch.dtype = torch.float32,
-        device: Union[str, torch.device] = "cpu",
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         if not isinstance(number_of_bits, int) or number_of_bits < 1:
             raise ValueError("The number of bits must be a non-negative integer.")

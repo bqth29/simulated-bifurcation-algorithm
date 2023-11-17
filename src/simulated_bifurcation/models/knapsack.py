@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import torch
@@ -19,8 +19,8 @@ class Knapsack(BinaryQuadraticPolynomial):
         weights: List[int],
         costs: List[Union[int, float]],
         max_weight: int,
-        dtype: torch.dtype = torch.float32,
-        device: str = "cpu",
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         self.weights = weights[:]
         self.costs = costs[:]
