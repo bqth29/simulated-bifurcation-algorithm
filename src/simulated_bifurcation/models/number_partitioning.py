@@ -16,7 +16,10 @@ class NumberPartitioning(ABCModel):
     domain = "spin"
 
     def __init__(
-        self, numbers: list, dtype: Optional[torch.dtype] = None, device: str = "cpu"
+        self,
+        numbers: list,
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         self.numbers = numbers
         tensor_numbers = torch.tensor(self.numbers, dtype=dtype, device=device).reshape(

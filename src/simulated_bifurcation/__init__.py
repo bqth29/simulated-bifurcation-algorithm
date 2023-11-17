@@ -175,7 +175,8 @@ Create a QUBO instance and minimize it using a GPU to run the SB algorithm
 
 
 from . import models
-from .optimizer import ConvergenceWarning, get_env, reset_env, set_env
+from .environment import get_env, reset_env, set_env
+from .optimizer import ConvergenceWarning
 from .simulated_bifurcation import build_model, maximize, minimize, optimize
 
 reset_env()

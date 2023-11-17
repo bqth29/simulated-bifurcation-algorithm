@@ -21,7 +21,7 @@ class QUBO(ABCModel):
         self,
         Q: Union[torch.Tensor, np.ndarray],
         dtype: Optional[torch.dtype] = None,
-        device: str = "cpu",
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         super().__init__(Q, dtype=dtype, device=device)
         self.Q = self[2]

@@ -22,7 +22,7 @@ class Knapsack(ABCModel):
         costs: List[Union[int, float]],
         max_weight: int,
         dtype: Optional[torch.dtype] = None,
-        device: str = "cpu",
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         self.weights = weights[:]
         self.costs = costs[:]

@@ -24,7 +24,7 @@ class Ising(ABCModel):
         J: Union[torch.Tensor, np.ndarray],
         h: Union[torch.Tensor, np.ndarray, None] = None,
         dtype: Optional[torch.dtype] = None,
-        device: str = "cpu",
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         super().__init__(-0.5 * J, h, dtype=dtype, device=device)
         self.J = J
