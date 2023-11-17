@@ -38,6 +38,7 @@ def test_set_env_none():
         "PRESSURE_SLOPE": 0.2,
         "HEAT_COEFFICIENT": 0.04,
     } == get_env()
+    reset_env()
 
 
 def test_set_env_with_wrong_parameters():
