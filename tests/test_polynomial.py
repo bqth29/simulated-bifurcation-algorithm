@@ -173,7 +173,7 @@ def test_best_only():
         matrix=matrix,
         vector=vector,
         constant=constant,
-        input_type="spin",
+        domain="spin",
         dtype=torch.float32,
         device="cpu",
     )
@@ -196,7 +196,7 @@ def test_minimize():
         matrix=matrix,
         vector=vector,
         constant=constant,
-        input_type="spin",
+        domain="spin",
         dtype=torch.float32,
         device="cpu",
     )
@@ -214,7 +214,7 @@ def test_maximize():
         matrix=matrix,
         vector=vector,
         constant=constant,
-        input_type="spin",
+        domain="spin",
         dtype=torch.float32,
         device="cpu",
     )

@@ -53,30 +53,30 @@ def test_maximize_integer():
     assert 37 == best_value
 
 
-def test_valid_input_type():
-    build_model(matrix, input_type="spin")
-    build_model(matrix, input_type="binary")
-    build_model(matrix, input_type="int1")
-    build_model(matrix, input_type="int3")
-    build_model(matrix, input_type="int10")
-    build_model(matrix, input_type="int22")
+def test_valid_domain():
+    build_model(matrix, domain="spin")
+    build_model(matrix, domain="binary")
+    build_model(matrix, domain="int1")
+    build_model(matrix, domain="int3")
+    build_model(matrix, domain="int10")
+    build_model(matrix, domain="int22")
 
 
-def test_invalid_input_type():
+def test_invalid_domain():
     with pytest.raises(ValueError):
-        build_model(matrix, input_type="float")
+        build_model(matrix, domain="float")
     with pytest.raises(ValueError):
-        build_model(matrix, input_type="")
+        build_model(matrix, domain="")
     with pytest.raises(ValueError):
-        build_model(matrix, input_type="int")
+        build_model(matrix, domain="int")
     with pytest.raises(ValueError):
-        build_model(matrix, input_type=" int3")
+        build_model(matrix, domain=" int3")
     with pytest.raises(ValueError):
-        build_model(matrix, input_type="int0")
+        build_model(matrix, domain="int0")
     with pytest.raises(ValueError):
-        build_model(matrix, input_type="int07")
+        build_model(matrix, domain="int07")
     with pytest.raises(ValueError):
-        build_model(matrix, input_type="int5.")
+        build_model(matrix, domain="int5.")
 
 
 def test_best_only():
