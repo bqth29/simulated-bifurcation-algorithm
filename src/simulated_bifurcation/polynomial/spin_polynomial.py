@@ -2,9 +2,9 @@
 Implementation of multivariate degree 2 polynomials over spin vectors.
 
 .. deprecated:: 1.2.1
-    `SpinPolynomial` will be modified in simulated-bifurcation 1.3.0, it is
-    replaced by `SpinQuadraticPolynomial` in prevision of the addition of
-    multivariate polynomials of an arbitrary degree.
+  `SpinPolynomial` and `SpinQuadraticPolynomial`. Achieving a similar
+  behaviour will be done by setting `domain="spin"` when creating a
+  polynomial.
 
 Multivariate degree 2 polynomials are the sum of a quadratic form and a
 linear form plus a constant term:
@@ -55,6 +55,11 @@ class SpinQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
 
     """
     Multivariate degree 2 polynomials over spin vectors.
+
+    .. deprecated:: 1.2.1
+        `SpinQuadraticPolynomial` will be removed in simulated-bifurcation
+        1.3.0. Achieving a similar behaviour will be done by setting
+        `domain="spin"` when creating a polynomial.
 
     Multivariate degree 2 polynomials are the sum of a quadratic form and a
     linear form plus a constant term:
@@ -129,7 +134,20 @@ class SpinQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
         constant: Union[float, int, None] = None,
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
+        *,
+        silence_deprecation_warning=False,
     ) -> None:
+        if not silence_deprecation_warning:
+            # 2023-11-21, 1.2.1
+            warnings.warn(
+                "`SpinQuadraticPolynomial` is deprecated as of simulated-bifurcation "
+                "1.2.1, and it will be removed in simulated-bifurcation 1.3.0. "
+                "Achieving a similar behaviour will be done by setting "
+                '`domain="spin"` when creating a polynomial.',
+                DeprecationWarning,
+                stacklevel=3,
+            )
+
         super().__init__(matrix, vector, constant, [-1, 1], dtype, device)
 
     def to_ising(self) -> IsingCore:
@@ -158,9 +176,9 @@ class SpinPolynomial(SpinQuadraticPolynomial):
 
     """
     .. deprecated:: 1.2.1
-        `SpinPolynomial` will be modified in simulated-bifurcation 1.3.0,
-        it is replaced by `SpinQuadraticPolynomial` in prevision of the
-        addition of multivariate polynomials of an arbitrary degree.
+        `SpinPolynomial` will be removed in simulated-bifurcation 1.3.0.
+        Achieving a similar behaviour will be done by setting
+        `domain="spin"` when creating a polynomial.
 
     """
 
@@ -168,9 +186,10 @@ class SpinPolynomial(SpinQuadraticPolynomial):
         # 2023-10-03, 1.2.1
         warnings.warn(
             "`SpinPolynomial` is deprecated as of simulated-bifurcation 1.2.1, and "
-            "its behaviour will change in simulated-bifurcation 1.3.0. Please use "
-            "`SpinQuadraticPolynomial` instead.",
+            "it will be removed in simulated-bifurcation 1.3.0. Achieving a similar "
+            'behaviour will be done by setting `domain="spin"` when creating a '
+            "polynomial.",
             DeprecationWarning,
             stacklevel=3,
         )
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, silence_deprecation_warning=True)

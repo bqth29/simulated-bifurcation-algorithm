@@ -1043,7 +1043,12 @@ def build_model(
 
     if domain == "spin":
         return SpinQuadraticPolynomial(
-            matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device
+            matrix=matrix,
+            vector=vector,
+            constant=constant,
+            dtype=dtype,
+            device=device,
+            silence_deprecation_warning=True,
         )
     if domain == "binary":
         return BinaryQuadraticPolynomial(

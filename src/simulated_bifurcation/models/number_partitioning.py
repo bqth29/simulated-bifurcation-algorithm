@@ -23,7 +23,14 @@ class NumberPartitioning(SpinQuadraticPolynomial):
         tensor_numbers = torch.tensor(self.numbers, dtype=dtype, device=device).reshape(
             -1, 1
         )
-        super().__init__(tensor_numbers @ tensor_numbers.t(), None, None, dtype, device)
+        super().__init__(
+            tensor_numbers @ tensor_numbers.t(),
+            None,
+            None,
+            dtype,
+            device,
+            silence_deprecation_warning=True,
+        )
 
     @property
     def partition(self) -> Dict[str, Dict[str, Union[List[int], int, None]]]:

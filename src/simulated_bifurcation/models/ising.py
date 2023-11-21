@@ -24,6 +24,8 @@ class Ising(SpinQuadraticPolynomial):
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
     ) -> None:
-        super().__init__(-0.5 * J, h, None, dtype, device)
+        super().__init__(
+            -0.5 * J, h, None, dtype, device, silence_deprecation_warning=True
+        )
         self.J = J
         self.h = h

@@ -16,7 +16,9 @@ constant = 1
 
 
 def test_init_spin_polynomial():
-    spin_polynomial = SpinQuadraticPolynomial(matrix, vector, constant)
+    spin_polynomial = SpinQuadraticPolynomial(
+        matrix, vector, constant, silence_deprecation_warning=True
+    )
     ising = spin_polynomial.to_ising()
     ising.computed_spins = torch.tensor(
         [
@@ -52,21 +54,27 @@ def test_init_spin_polynomial():
 
 
 def test_call_spin_polynomial():
-    spin_polynomial = SpinQuadraticPolynomial(matrix, vector, constant)
+    spin_polynomial = SpinQuadraticPolynomial(
+        matrix, vector, constant, silence_deprecation_warning=True
+    )
     assert spin_polynomial(torch.tensor([1, -1, 1], dtype=torch.float32)) == -11
     with pytest.raises(ValueError):
         spin_polynomial(torch.tensor([1, 2, 3], dtype=torch.float32))
 
 
 def test_optimize_spin_polynomial():
-    spin_polynomial = SpinQuadraticPolynomial(matrix, vector, constant)
+    spin_polynomial = SpinQuadraticPolynomial(
+        matrix, vector, constant, silence_deprecation_warning=True
+    )
     spin_vars, value = spin_polynomial.optimize(verbose=False)
     assert torch.equal(spin_vars, torch.tensor([1, -1, 1], dtype=torch.float32))
     assert value == -11.0
 
 
 def test_to():
-    spin_polynomial = SpinQuadraticPolynomial(matrix, vector, constant)
+    spin_polynomial = SpinQuadraticPolynomial(
+        matrix, vector, constant, silence_deprecation_warning=True
+    )
 
     def check_device_and_dtype(dtype: torch.dtype):
         assert spin_polynomial.dtype == dtype
