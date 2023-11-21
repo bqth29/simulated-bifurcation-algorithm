@@ -13,6 +13,15 @@ maximize:
 build_model:
     Instantiate a multivariate degree 2 polynomial over a given domain.
 
+.. deprecated:: 1.2.1
+    The functions `sb.optimize`, `sb.minimize`, and `sb.maximize` will be
+    modified in simulated-bifurcation 1.3.0. The `matrix`, `vector`, and
+    `constant` parameters will become positional-only parameters; the other
+    parameters will become keyword-only parameters.
+
+    In simulated-bifurcation 1.3.0, parameters `input_type` will be
+    removed. Use `domain` instead.
+
 See Also
 --------
 models:
@@ -34,6 +43,14 @@ from .polynomial import (
     BinaryQuadraticPolynomial,
     IntegerQuadraticPolynomial,
     SpinQuadraticPolynomial,
+)
+
+warnings.warn(
+    "The functions `sb.optimize`, `sb.minimize`, and `sb.maximize` will be "
+    "modified in simulated-bifurcation 1.3.0. The `matrix`, `vector`, and"
+    "`constant` parameters will become positional-only parameters; the other"
+    "parameters will become keyword-only parameters.",
+    DeprecationWarning,
 )
 
 
@@ -60,6 +77,14 @@ def optimize(
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Optimize a multivariate degree 2 polynomial using the SB algorithm.
+
+    .. deprecated:: 1.2.1
+      In simulated-bifurcation 1.3.0, `input_type` will be removed.
+      Use `domain` instead.
+
+      In simulated-bifurcation 1.3.0, the `matrix`, `vector`, and
+      `constant` will become positional-only parameters; the other
+      parameters will become keyword-only parameters.
 
     The simulated bifurcated (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
@@ -336,6 +361,14 @@ def minimize(
     """
     Minimize a multivariate degree 2 polynomial using the SB algorithm.
 
+    .. deprecated:: 1.2.1
+      In simulated-bifurcation 1.3.0, `input_type` will be removed.
+      Use `domain` instead.
+
+      In simulated-bifurcation 1.3.0, the `matrix`, `vector`, and
+      `constant` will become positional-only parameters; the other
+      parameters will become keyword-only parameters.
+
     The simulated bifurcated (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The minimization is done over a discrete domain specified through
@@ -601,6 +634,14 @@ def maximize(
     """
     Maximize a multivariate degree 2 polynomial using the SB algorithm.
 
+    .. deprecated:: 1.2.1
+      In simulated-bifurcation 1.3.0, `input_type` will be removed.
+      Use `domain` instead.
+
+      In simulated-bifurcation 1.3.0, the `matrix`, `vector`, and
+      `constant` will become positional-only parameters; the other
+      parameters will become keyword-only parameters.
+
     The simulated bifurcated (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The maximization is done over a discrete domain specified through
@@ -854,6 +895,14 @@ def build_model(
 ) -> BaseMultivariateQuadraticPolynomial:
     """
     Instantiate a multivariate degree 2 polynomial over a given domain.
+
+    .. deprecated:: 1.2.1
+      In simulated-bifurcation 1.3.0, `input_type` will be removed.
+      Use `domain` instead.
+
+      In simulated-bifurcation 1.3.0, the `matrix`, `vector`, and
+      `constant` will become positional-only parameters; the other
+      parameters will become keyword-only parameters.
 
     The polynomial is the sum of a quadratic form and a linear form plus
     a constant term:

@@ -35,18 +35,26 @@ that simulated_bifurcation has been imported as `sb`:
 Code snippets are indicated by three greater-than signs:
 
   >>> x = 42
-  >>> x = x + 1
+  >>> x += 1
 
 .. deprecated:: 1.2.1
-    `BinaryPolynomial` will be modified in simulated-bifurcation 1.3.0, it
-    is replaced by `BinaryQuadraticPolynomial` in prevision of the addition
-    of multivariate polynomials of an arbitrary degree.
-    `IntegerPolynomial` will be modified in simulated-bifurcation 1.3.0, it
-    is replaced by `IntegerQuadraticPolynomial` in prevision of the
-    addition of multivariate polynomials of an arbitrary degree.
-    `SpinPolynomial` will be modified in simulated-bifurcation 1.3.0, it is
-    replaced by `SpinQuadraticPolynomial` in prevision of the addition of
-    multivariate polynomials of an arbitrary degree.
+    The functions `sb.optimize`, `sb.minimize`, and `sb.maximize` will be
+    modified in simulated-bifurcation 1.3.0. The `matrix`, `vector`, and
+    `constant` parameters will become positional-only parameters; the other
+    parameters will become keyword-only parameters.
+
+    In simulated-bifurcation 1.3.0, parameters `input_type` will be
+    removed. Use `domain` instead.
+
+    `BinaryPolynomial`, `BinaryQuadraticPolynomial`, `IntegerPolynomial`,
+    `IntegerQuadraticPolynomial`, `SpinPolynomial`, and
+    `SpinQuadraticPolynomial` will be removed in simulated-bifurcation
+    1.3.0. Achieving a similar behaviour will be done by using the
+    `domain` parameter when creating a polynomial.
+
+    `BaseMultivariateQuadraticPolynomial` and `IsingPolynomialInterface`
+    will be removed in simulated-bifurcation 1.3.0. They are replaced by
+    `QuadraticPolynomial`.
 
 Notes
 -----
