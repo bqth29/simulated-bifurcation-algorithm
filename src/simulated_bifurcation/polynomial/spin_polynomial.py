@@ -148,7 +148,15 @@ class SpinQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
                 stacklevel=3,
             )
 
-        super().__init__(matrix, vector, constant, [-1, 1], dtype, device)
+        super().__init__(
+            matrix,
+            vector,
+            constant,
+            [-1, 1],
+            dtype,
+            device,
+            silence_deprecation_warning=True,
+        )
 
     def to_ising(self) -> IsingCore:
         return IsingCore(-2 * self.matrix, self.vector, self.dtype, self.device)

@@ -21,6 +21,9 @@ constant = 1
 
 
 class BaseMultivariateQuadraticPolynomialImpl(BaseMultivariateQuadraticPolynomial):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs, silence_deprecation_warning=True)
+
     def to_ising(self):
         pass  # pragma: no cover
 

@@ -131,7 +131,15 @@ class BinaryQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
                 DeprecationWarning,
                 stacklevel=3,
             )
-        super().__init__(matrix, vector, constant, [0, 1], dtype, device)
+        super().__init__(
+            matrix,
+            vector,
+            constant,
+            [0, 1],
+            dtype,
+            device,
+            silence_deprecation_warning=True,
+        )
 
     def to_ising(self) -> IsingCore:
         symmetrical_matrix = IsingCore.symmetrize(self.matrix)

@@ -148,7 +148,13 @@ class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
         if not isinstance(number_of_bits, int) or number_of_bits < 1:
             raise ValueError("The number of bits must be a non-negative integer.")
         super().__init__(
-            matrix, vector, constant, [*range(2**number_of_bits)], dtype, device
+            matrix,
+            vector,
+            constant,
+            [*range(2**number_of_bits)],
+            dtype,
+            device,
+            silence_deprecation_warning=True,
         )
         self.number_of_bits = number_of_bits
         self.__int_to_bin_matrix = self.integer_to_binary_matrix(

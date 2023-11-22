@@ -1,9 +1,8 @@
 """
 .. deprecated:: 1.2.1
-    `IsingPolynomialInterface` will be removed in simulated-bifurcation
-    1.3.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
-    prevision of the addition of multivariate polynomials of an arbitrary
-    degree.
+    `BaseMultivariateQuadraticPolynomial` and `IsingPolynomialInterface`
+    will be removed in simulated-bifurcation 1.3.0. They are replaced by
+    `QuadraticPolynomial`.
 
 """
 
@@ -25,6 +24,10 @@ class BaseMultivariateQuadraticPolynomial(ABC):
     be translated as an equivalent Ising problem to be solved with the
     Simulated Bifurcation algorithm.
 
+    .. deprecated:: 1.2.1
+      `BaseMultivariateQuadraticPolynomial` will be removed in
+      simulated-bifurcation 1.3.0. It is replaced by `QuadraticPolynomial`.
+
     The polynomial is the combination of a quadratic and a linear form plus a
     constant term:
 
@@ -41,6 +44,8 @@ class BaseMultivariateQuadraticPolynomial(ABC):
         accepted_values: Union[torch.Tensor, np.ndarray, List[int], None] = None,
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
+        *,
+        silence_deprecation_warning=False,
     ) -> None:
         """
         Parameters
@@ -66,6 +71,14 @@ class BaseMultivariateQuadraticPolynomial(ABC):
             the device on which to perform the computations of the Simulated
             Bifurcation algorithm (default `"cpu"`)
         """
+        if not silence_deprecation_warning:
+            # 2023-11-21, 1.2.1
+            warnings.warn(
+                "`BaseMultivariateQuadraticPolynomial` will be removed in "
+                "simulated-bifurcation 1.3.0. It is replaced by `QuadraticPolynomial`.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
         self.__check_device(device)
         self.__init_matrix(matrix, dtype, device)
         self.__init_vector(vector, dtype, device)
@@ -622,9 +635,7 @@ class IsingPolynomialInterface(BaseMultivariateQuadraticPolynomial, ABC):
     """
     .. deprecated:: 1.2.1
         `IsingPolynomialInterface` will be removed in simulated-bifurcation
-        1.3.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
-        prevision of the addition of multivariate polynomials of an
-        arbitrary degree.
+        1.3.0, it is replaced by `QuadraticPolynomial`.
 
     """
 
@@ -633,8 +644,8 @@ class IsingPolynomialInterface(BaseMultivariateQuadraticPolynomial, ABC):
         warnings.warn(
             "`IsingPolynomialInterface` is deprecated as of simulated-bifurcation "
             "1.2.1, and will be removed in simulated-bifurcation 1.3.0. Please use "
-            "`BaseQuadraticMultivariatePolynomial` instead.",
+            "`QuadraticPolynomial` instead.",
             DeprecationWarning,
             stacklevel=3,
         )
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, silence_deprecation_warning=True)
