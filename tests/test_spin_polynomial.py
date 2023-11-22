@@ -103,4 +103,6 @@ def test_to():
 
 def test_deprecation_warning():
     with pytest.warns(DeprecationWarning):
+        SpinQuadraticPolynomial(matrix, vector, constant)
+    with pytest.warns(DeprecationWarning):
         SpinPolynomial(matrix, vector, constant)

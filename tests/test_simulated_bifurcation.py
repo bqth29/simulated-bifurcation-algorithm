@@ -1,7 +1,8 @@
 import pytest
 import torch
 
-from src.simulated_bifurcation import build_model, maximize, minimize
+import src.simulated_bifurcation
+from src.simulated_bifurcation import build_model, maximize, minimize, optimize
 
 matrix = torch.tensor(
     [
@@ -88,3 +89,15 @@ def test_best_only():
     assert spins_all.shape == (42, 3)
     assert isinstance(energies_all, torch.Tensor)
     assert energies_all.shape == (42,)
+
+
+def test_input_type_deprecation():
+    with pytest.warns(DeprecationWarning):
+        optimize(matrix, vector, constant, input_type="int7")
+    with pytest.warns(DeprecationWarning):
+        minimize(matrix, vector, constant, input_type="spin")
+    with pytest.warns(DeprecationWarning):
+        maximize(matrix, vector, constant, input_type="binary")
+    with pytest.warns(DeprecationWarning):
+        model = build_model(matrix, vector, constant, input_type="int3")
+    assert isinstance(model, src.simulated_bifurcation.IntegerQuadraticPolynomial)

@@ -77,4 +77,6 @@ def test_optimize_binary_polynomial():
 
 def test_deprecation_warning():
     with pytest.warns(DeprecationWarning):
+        BinaryQuadraticPolynomial(matrix, vector, constant)
+    with pytest.warns(DeprecationWarning):
         BinaryPolynomial(matrix, vector, constant)

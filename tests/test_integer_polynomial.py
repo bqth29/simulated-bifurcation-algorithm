@@ -94,4 +94,6 @@ def test_optimize_integer_polynomial():
 
 def test_deprecation_warning():
     with pytest.warns(DeprecationWarning):
+        IntegerQuadraticPolynomial(matrix, vector, constant)
+    with pytest.warns(DeprecationWarning):
         IntegerPolynomial(matrix, vector, constant)

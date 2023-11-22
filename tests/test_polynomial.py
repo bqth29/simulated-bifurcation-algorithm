@@ -21,9 +21,6 @@ constant = 1
 
 
 class BaseMultivariateQuadraticPolynomialImpl(BaseMultivariateQuadraticPolynomial):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, silence_deprecation_warning=True)
-
     def to_ising(self):
         pass  # pragma: no cover
 
@@ -40,7 +37,9 @@ class IsingPolynomialInterfaceImpl(IsingPolynomialInterface):
 
 
 def test_init_polynomial_from_tensors():
-    polynomial = BaseMultivariateQuadraticPolynomialImpl(matrix, vector, constant)
+    polynomial = BaseMultivariateQuadraticPolynomialImpl(
+        matrix, vector, constant, silence_deprecation_warning=True
+    )
     assert torch.equal(polynomial.matrix, matrix)
     assert torch.equal(polynomial.vector, vector.reshape(3))
     assert polynomial.constant == 1.0
@@ -58,7 +57,7 @@ def test_init_polynomial_from_tensors():
 
 def test_init_polynomial_from_arrays():
     polynomial = BaseMultivariateQuadraticPolynomialImpl(
-        matrix.numpy(), vector.numpy(), constant
+        matrix.numpy(), vector.numpy(), constant, silence_deprecation_warning=True
     )
     assert torch.equal(polynomial.matrix, matrix)
     assert torch.equal(polynomial.vector, vector.reshape(3))
@@ -71,7 +70,9 @@ def test_init_polynomial_from_arrays():
 
 
 def test_init_polynomial_without_order_one_and_zero():
-    polynomial = BaseMultivariateQuadraticPolynomialImpl(matrix)
+    polynomial = BaseMultivariateQuadraticPolynomialImpl(
+        matrix, silence_deprecation_warning=True
+    )
     assert torch.equal(polynomial.matrix, matrix)
     assert torch.equal(polynomial.vector, torch.zeros(polynomial.dimension))
     assert polynomial.constant == 0.0
@@ -85,9 +86,11 @@ def test_init_polynomial_without_order_one_and_zero():
 def test_init_with_wrong_parameters():
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
-        BaseMultivariateQuadraticPolynomialImpl(None)
+        BaseMultivariateQuadraticPolynomialImpl(None, silence_deprecation_warning=True)
     with pytest.raises(ValueError):
-        BaseMultivariateQuadraticPolynomialImpl(torch.unsqueeze(matrix, 0))
+        BaseMultivariateQuadraticPolynomialImpl(
+            torch.unsqueeze(matrix, 0), silence_deprecation_warning=True
+        )
     with pytest.raises(ValueError):
         BaseMultivariateQuadraticPolynomialImpl(
             torch.tensor(
@@ -96,33 +99,50 @@ def test_init_with_wrong_parameters():
                     [4, 5, 6],
                 ],
                 dtype=torch.float32,
-            )
+            ),
+            silence_deprecation_warning=True,
         )
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
-        BaseMultivariateQuadraticPolynomialImpl(matrix, ("hello", "world!"))
+        BaseMultivariateQuadraticPolynomialImpl(
+            matrix, ("hello", "world!"), silence_deprecation_warning=True
+        )
     with pytest.raises(ValueError):
         # noinspection PyTypeChecker
-        BaseMultivariateQuadraticPolynomialImpl(matrix, 1)
+        BaseMultivariateQuadraticPolynomialImpl(
+            matrix, 1, silence_deprecation_warning=True
+        )
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
-        BaseMultivariateQuadraticPolynomialImpl(matrix, constant="hello world!")
+        BaseMultivariateQuadraticPolynomialImpl(
+            matrix, constant="hello world!", silence_deprecation_warning=True
+        )
 
 
 def test_check_device():
-    BaseMultivariateQuadraticPolynomialImpl(matrix, device="cpu")
+    BaseMultivariateQuadraticPolynomialImpl(
+        matrix, device="cpu", silence_deprecation_warning=True
+    )
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
-        BaseMultivariateQuadraticPolynomialImpl(matrix, device=1)
+        BaseMultivariateQuadraticPolynomialImpl(
+            matrix, device=1, silence_deprecation_warning=True
+        )
     if not torch.cuda.is_available():  # pragma: no cover
         with pytest.raises(RuntimeError):
-            BaseMultivariateQuadraticPolynomialImpl(matrix, device="cuda")
+            BaseMultivariateQuadraticPolynomialImpl(
+                matrix, device="cuda", silence_deprecation_warning=True
+            )
     else:  # pragma: no cover
-        BaseMultivariateQuadraticPolynomialImpl(matrix, device="cuda")
+        BaseMultivariateQuadraticPolynomialImpl(
+            matrix, device="cuda", silence_deprecation_warning=True
+        )
 
 
 def test_call_polynomial():
-    polynomial = BaseMultivariateQuadraticPolynomialImpl(matrix)
+    polynomial = BaseMultivariateQuadraticPolynomialImpl(
+        matrix, silence_deprecation_warning=True
+    )
     assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0.0
     assert torch.equal(
         polynomial(
@@ -150,7 +170,9 @@ def test_call_polynomial():
 
 
 def test_call_polynomial_with_accepted_values():
-    polynomial = BaseMultivariateQuadraticPolynomialImpl(matrix, accepted_values=[0, 1])
+    polynomial = BaseMultivariateQuadraticPolynomialImpl(
+        matrix, accepted_values=[0, 1], silence_deprecation_warning=True
+    )
     assert polynomial(torch.tensor([0, 0, 0], dtype=torch.float32)) == 0
     with pytest.raises(ValueError):
         polynomial(torch.tensor([0, 1, 2], dtype=torch.float32))
@@ -229,5 +251,7 @@ def test_maximize():
 
 
 def test_deprecation_warning():
+    with pytest.warns(DeprecationWarning):
+        BaseMultivariateQuadraticPolynomialImpl(matrix, accepted_values=[0, 1])
     with pytest.warns(DeprecationWarning):
         IsingPolynomialInterfaceImpl(matrix, accepted_values=[0, 1])
