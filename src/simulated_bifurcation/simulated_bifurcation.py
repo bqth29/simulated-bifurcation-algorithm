@@ -1052,7 +1052,12 @@ def build_model(
         )
     if domain == "binary":
         return BinaryQuadraticPolynomial(
-            matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device
+            matrix=matrix,
+            vector=vector,
+            constant=constant,
+            dtype=dtype,
+            device=device,
+            silence_deprecation_warning=True,
         )
     if int_type_pattern.match(domain) is None:
         raise ValueError(
