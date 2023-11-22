@@ -176,4 +176,4 @@ reset_env()
 
 
 # !MDC{set}{__version__ = "{version}"}
-__version__ = "1.2.1.dev0"
+__version__ = "1.2.1"

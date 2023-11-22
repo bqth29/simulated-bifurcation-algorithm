@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as readme:
 
 
 # !MDC{set}{package_version = "{version}"}
-package_version = "1.2.1.dev0"
+package_version = "1.2.1"
 
 
 dependencies = [
