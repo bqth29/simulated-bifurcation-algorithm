@@ -1070,4 +1070,5 @@ def build_model(
         dtype=dtype,
         device=device,
         number_of_bits=number_of_bits,
+        silence_deprecation_warning=True,
     )

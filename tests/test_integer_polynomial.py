@@ -20,11 +20,17 @@ constant = 1
 
 def test_init_integer_polynomial():
     with pytest.raises(ValueError):
-        IntegerQuadraticPolynomial(matrix, vector, constant, 0)
+        IntegerQuadraticPolynomial(
+            matrix, vector, constant, 0, silence_deprecation_warning=True
+        )
     with pytest.raises(ValueError):
         # noinspection PyTypeChecker
-        IntegerQuadraticPolynomial(matrix, vector, constant, 2.5)
-    integer_polynomial = IntegerQuadraticPolynomial(matrix, vector, constant, 2)
+        IntegerQuadraticPolynomial(
+            matrix, vector, constant, 2.5, silence_deprecation_warning=True
+        )
+    integer_polynomial = IntegerQuadraticPolynomial(
+        matrix, vector, constant, 2, silence_deprecation_warning=True
+    )
     ising = integer_polynomial.to_ising()
     assert integer_polynomial.convert_spins(ising) is None
     ising.computed_spins = torch.tensor(
@@ -69,14 +75,18 @@ def test_init_integer_polynomial():
 
 
 def test_call_integer_polynomial():
-    integer_polynomial = IntegerQuadraticPolynomial(matrix, vector, constant, 2)
+    integer_polynomial = IntegerQuadraticPolynomial(
+        matrix, vector, constant, 2, silence_deprecation_warning=True
+    )
     assert integer_polynomial(torch.tensor([2, 3, 0], dtype=torch.float32)) == 21
     with pytest.raises(ValueError):
         integer_polynomial(torch.tensor([1, 2, 8], dtype=torch.float32))
 
 
 def test_optimize_integer_polynomial():
-    integer_polynomial = IntegerQuadraticPolynomial(matrix, vector, constant, 2)
+    integer_polynomial = IntegerQuadraticPolynomial(
+        matrix, vector, constant, 2, silence_deprecation_warning=True
+    )
     int_vars, value = integer_polynomial.optimize(verbose=False)
     assert torch.equal(int_vars, torch.tensor([3, 0, 3], dtype=torch.float32))
     assert value == -23.0

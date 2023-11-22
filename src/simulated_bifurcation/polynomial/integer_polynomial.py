@@ -2,9 +2,10 @@
 Implementation of multivariate degree 2 polynomials over integer vectors.
 
 .. deprecated:: 1.2.1
-    `IntegerPolynomial` will be modified in simulated-bifurcation 1.3.0, it
-    is replaced by `IntegerQuadraticPolynomial` in prevision of the
-    addition of multivariate polynomials of an arbitrary degree.
+  `IntegerPolynomial` and `IntegerQuadraticPolynomial`. Achieving a similar
+  behaviour will be done by setting `domain="int..."` when creating a
+  polynomial (where ... should be replaced by a positive integer
+  corresponding to the number of bits of the integers).
 
 Multivariate degree 2 polynomials are the sum of a quadratic form and a
 linear form plus a constant term:
@@ -48,6 +49,13 @@ class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
 
     """
     Multivariate degree 2 polynomials over fixed bit-width integer vectors.
+
+    .. deprecated:: 1.2.1
+        `IntegerQuadraticPolynomial` will be removed in
+        simulated-bifurcation 1.3.0. Achieving a similar behaviour will be
+        done by setting `domain="int..."` when creating a polynomial (where
+        ... should be replaced by a positive integer corresponding to the
+        number of bits of the integers).
 
     Multivariate degree 2 polynomials are the sum of a quadratic form and a
     linear form plus a constant term:
@@ -122,7 +130,21 @@ class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
         number_of_bits: int = 1,
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
+        *,
+        silence_deprecation_warning=False,
     ) -> None:
+        if not silence_deprecation_warning:
+            # 2023-11-21, 1.2.1
+            warnings.warn(
+                "`IntegerQuadraticPolynomial` is deprecated as of simulated-bifurcation"
+                " 1.2.1, and it will be removed in simulated-bifurcation 1.3.0. "
+                "Achieving a similar behaviour will be done by setting "
+                '`domain="int..."` when creating a polynomial. (where ... should be '
+                "replaced by a positive integer corresponding to the number of bits of "
+                "the integers)",
+                DeprecationWarning,
+                stacklevel=3,
+            )
         if not isinstance(number_of_bits, int) or number_of_bits < 1:
             raise ValueError("The number of bits must be a non-negative integer.")
         super().__init__(
@@ -204,9 +226,11 @@ class IntegerPolynomial(IntegerQuadraticPolynomial):
         # 2023-10-03, 1.2.1
         warnings.warn(
             "`IntegerPolynomial` is deprecated as of simulated-bifurcation 1.2.1, and "
-            "its behaviour will change in simulated-bifurcation 1.3.0. Please use "
-            "`IntegerQuadraticPolynomial` instead.",
+            "it will be removed in simulated-bifurcation 1.3.0. Achieving a similar "
+            'behaviour will be done by setting `domain="int..."` when creating a '
+            "polynomial. (where ... should be replaced by a positive integer "
+            "corresponding to the number of bits of the integers)",
             DeprecationWarning,
             stacklevel=3,
         )
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, silence_deprecation_warning=True)
