@@ -263,7 +263,7 @@ If you are using this code for your own projects please cite our work:
 ```bibtex
 @software{Ageron_Simulated_Bifurcation_SB_2023,
     author = {Ageron, Romain and Bouquet, Thomas and Pugliese, Lorenzo},
-    month = aug,
+    month = nov,
     title = {{Simulated Bifurcation (SB) algorithm for Python}},
     url = {https://github.com/bqth29/simulated-bifurcation-algorithm},
     version = {1.2.1},
