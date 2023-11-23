@@ -49,6 +49,7 @@ jobs:
           coverage json
 
       - name: Metadata check
+        if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
         run: |
           python .github/scripts/metadata_checker
 
