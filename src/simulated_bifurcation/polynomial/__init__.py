@@ -5,8 +5,10 @@ Implementation of multivariate degree 2 polynomials.
      `BinaryPolynomial`, `BinaryQuadraticPolynomial`, `IntegerPolynomial`,
     `IntegerQuadraticPolynomial`, `SpinPolynomial`, and
     `SpinQuadraticPolynomial` will be removed in simulated-bifurcation
-    1.3.0. Achieving a similar behaviour will be done by using the
-    `domain` parameter when creating a polynomial.
+    1.3.0. From version 1.3.0 onwards, polynomials will no longer have a
+    definition domain. The domain only needs to be specified when creating
+    an Ising model, and conversely when converting spins back into the
+    original domain.
 
     `BaseMultivariateQuadraticPolynomial` and `IsingPolynomialInterface`
     will be removed in simulated-bifurcation 1.3.0. They are replaced by

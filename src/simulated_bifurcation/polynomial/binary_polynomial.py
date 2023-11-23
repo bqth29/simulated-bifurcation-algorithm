@@ -2,9 +2,11 @@
 Implementation of multivariate degree 2 polynomials over binary vectors.
 
 .. deprecated:: 1.2.1
-  `BinaryPolynomial` and `BinaryQuadraticPolynomial`. Achieving a similar
-  behaviour will be done by setting `domain="binary"` when creating a
-  polynomial.
+  `BinaryPolynomial` and `BinaryQuadraticPolynomial` will be removed in
+  simulated-bifurcation 1.3.0. From version 1.3.0 onwards, polynomials will
+  no longer have a definition domain. The domain only needs to be specified
+  when creating an Ising model, and conversely when converting spins back
+  into the original domain.
 
 Multivariate degree 2 polynomials are the sum of a quadratic form and a
 linear form plus a constant term:
@@ -49,9 +51,11 @@ class BinaryQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
     Multivariate degree 2 polynomials over binary vectors.
 
     .. deprecated:: 1.2.1
-        `BinaryQuadraticPolynomial` will be removed in
-        simulated-bifurcation 1.3.0. Achieving a similar behaviour will be
-        done by setting `domain="binary"` when creating a polynomial.
+      `BinaryQuadraticPolynomial` will be removed in simulated-bifurcation
+      1.3.0. From version 1.3.0 onwards, polynomials will no longer have a
+      definition domain. The domain only needs to be specified when
+      creating an Ising model, and conversely when converting spins back
+      into the original domain.
 
     Multivariate degree 2 polynomials are the sum of a quadratic form and a
     linear form plus a constant term:
@@ -126,8 +130,10 @@ class BinaryQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
             warnings.warn(
                 "`BinaryQuadraticPolynomial` is deprecated as of simulated-bifurcation "
                 "1.2.1, and it will be removed in simulated-bifurcation 1.3.0. "
-                "Achieving a similar behaviour will be done by setting "
-                '`domain="binary"` when creating a polynomial.',
+                "From version 1.3.0 onwards, polynomials will no longer have a "
+                "definition domain. The domain only needs to be specified when "
+                "creating an Ising model, and conversely when converting spins "
+                "back into the original domain.",
                 DeprecationWarning,
                 stacklevel=3,
             )
@@ -177,9 +183,11 @@ class BinaryPolynomial(BinaryQuadraticPolynomial):
 
     """
     .. deprecated:: 1.2.1
-        `BinaryPolynomial` will be removed in simulated-bifurcation 1.3.0.
-        Achieving a similar behaviour will be done by setting
-        `domain="binary"` when creating a polynomial.
+      `BinaryPolynomial` will be removed in simulated-bifurcation 1.3.0.
+      From version 1.3.0 onwards, polynomials will no longer have a
+      definition domain. The domain only needs to be specified when
+      creating an Ising model, and conversely when converting spins back
+      into the original domain.
 
     """
 
@@ -187,9 +195,10 @@ class BinaryPolynomial(BinaryQuadraticPolynomial):
         # 2023-10-03, 1.2.1
         warnings.warn(
             "`BinaryPolynomial` is deprecated as of simulated-bifurcation 1.2.1, and "
-            "it will be removed in simulated-bifurcation 1.3.0. Achieving a similar "
-            'behaviour will be done by setting `domain="binary"` when creating a '
-            "polynomial.",
+            "it will be removed in simulated-bifurcation 1.3.0. From version 1.3.0 "
+            "onwards, polynomials will no longer have a definition domain. The domain "
+            "only needs to be specified when creating an Ising model, and conversely "
+            "when converting spins back into the original domain.",
             DeprecationWarning,
             stacklevel=3,
         )
