@@ -49,7 +49,7 @@ Code snippets are indicated by three greater-than signs:
     `BinaryPolynomial`, `BinaryQuadraticPolynomial`, `IntegerPolynomial`,
     `IntegerQuadraticPolynomial`, `SpinPolynomial`, and
     `SpinQuadraticPolynomial` will be removed in simulated-bifurcation
-    1.3.0.  From version 1.3.0 onwards, polynomials will no longer have a
+    1.3.0. From version 1.3.0 onwards, polynomials will no longer have a
     definition domain. The domain only needs to be specified when creating
     an Ising model, and conversely when converting spins back into the
     original domain.

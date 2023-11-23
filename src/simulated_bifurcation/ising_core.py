@@ -324,7 +324,7 @@ class IsingCore:
             violate these constraints.
         Non-deterministic behaviour:
             The SB algorithm uses a randomized initialization, and this
-            package  is implemented with a PyTorch backend. To ensure a
+            package is implemented with a PyTorch backend. To ensure a
             consistent initialization when running the same script multiple
             times, use `torch.manual_seed`. However, results may not be
             reproducible between CPU and GPU executions, even when using
