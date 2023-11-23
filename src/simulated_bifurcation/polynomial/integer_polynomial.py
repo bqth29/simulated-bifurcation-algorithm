@@ -63,7 +63,7 @@ class IntegerQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
     `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
     or `x.T Q x + l.T x + c` in matrix notation,
     where `Q` is a square matrix, `l` is a vector and `c` is a constant.
-    The `x(i)`'s values  must be non-negative integers with a fixed
+    The `x(i)`'s values must be non-negative integers with a fixed
     bit-width. For instance 7-bits integers are the integers between 0 and
     127 inclusive.
 
