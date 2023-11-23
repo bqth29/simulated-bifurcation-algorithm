@@ -70,7 +70,7 @@ This can also be seen as the sum of a quadratic form, a linear form and a consta
 
 The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated input vector.
 
-The input types must be passed to the `input_type` argument:
+The input types must be passed to the `domain` argument:
 
 - `spin` (default value) for a spin optimization: the optimal vector will only have ±1 values
 - `binary` for a binary optimization: the optimal vector will only have 0 or 1 values
@@ -92,26 +92,26 @@ constant = 2.0
 
 ```python
 # Spin minimization
-spin_value, spin_vector = sb.minimize(matrix, vector, constant, input_type='spin')
+spin_value, spin_vector = sb.minimize(matrix, vector, constant, domain='spin')
 
 # Binary minimization
-binary_value, binary_vector = sb.minimize(matrix, vector, constant, input_type='binary')
+binary_value, binary_vector = sb.minimize(matrix, vector, constant, domain='binary')
 
 # 3-bits integer minimization
-int_value, int_vector = sb.minimize(matrix, vector, constant, input_type='int3')
+int_value, int_vector = sb.minimize(matrix, vector, constant, domain='int3')
 ```
 
 #### Maximization
 
 ```python
 # Spin maximization
-spin_value, spin_vector = sb.maximize(matrix, vector, constant, input_type='spin')
+spin_value, spin_vector = sb.maximize(matrix, vector, constant, domain='spin')
 
 # Binary maximization
-binary_value, binary_vector = sb.maximize(matrix, vector, constant, input_type='binary')
+binary_value, binary_vector = sb.maximize(matrix, vector, constant, domain='binary')
 
 # 10-bits integer maximization
-int_value, int_vector = sb.maximize(matrix, vector, constant, input_type='int10')
+int_value, int_vector = sb.maximize(matrix, vector, constant, domain='int10')
 ```
 
 > For both functions, only the matrix is required, the vector and constant terms are optional.
@@ -266,7 +266,7 @@ If you are using this code for your own projects please cite our work:
     month = aug,
     title = {{Simulated Bifurcation (SB) algorithm for Python}},
     url = {https://github.com/bqth29/simulated-bifurcation-algorithm},
-    version = {1.2.0},
+    version = {1.2.1},
     year = {2023},
 }
 ```

@@ -13,6 +13,15 @@ maximize:
 build_model:
     Instantiate a multivariate degree 2 polynomial over a given domain.
 
+.. deprecated:: 1.2.1
+    The functions `sb.optimize`, `sb.minimize`, and `sb.maximize` will be
+    modified in simulated-bifurcation 1.3.0. The `matrix`, `vector`, and
+    `constant` parameters will become positional-only parameters; the other
+    parameters will become keyword-only parameters.
+
+    In simulated-bifurcation 1.3.0, parameters `input_type` will be
+    removed. Use `domain` instead.
+
 See Also
 --------
 models:
@@ -23,6 +32,7 @@ models:
 
 
 import re
+import warnings
 from typing import Optional, Tuple, Union
 
 import torch
@@ -35,12 +45,20 @@ from .polynomial import (
     SpinQuadraticPolynomial,
 )
 
+warnings.warn(
+    "The functions `sb.optimize`, `sb.minimize`, and `sb.maximize` will be "
+    "modified in simulated-bifurcation 1.3.0. The `matrix`, `vector`, and"
+    "`constant` parameters will become positional-only parameters; the other"
+    "parameters will become keyword-only parameters.",
+    DeprecationWarning,
+)
+
 
 def optimize(
     matrix: Union[torch.Tensor, ndarray],
     vector: Union[torch.Tensor, ndarray, None] = None,
     constant: Union[int, float, None] = None,
-    input_type: str = "spin",
+    domain: str = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
@@ -55,14 +73,23 @@ def optimize(
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
+    input_type: Optional[str] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Optimize a multivariate degree 2 polynomial using the SB algorithm.
 
+    .. deprecated:: 1.2.1
+      In simulated-bifurcation 1.3.0, `input_type` will be removed.
+      Use `domain` instead.
+
+      In simulated-bifurcation 1.3.0, the `matrix`, `vector`, and
+      `constant` will become positional-only parameters; the other
+      parameters will become keyword-only parameters.
+
     The simulated bifurcated (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The optimization can either be a minimization or a maximization, and
-    it is done over a discrete domain specified through `input_type`.
+    it is done over a discrete domain specified through `domain`.
     The polynomial is the sum of a quadratic form and a linear form plus
     a constant term:
     `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
@@ -82,7 +109,7 @@ def optimize(
     constant : int | float | None, optional
         Constant of the polynomial. The default is None which signifies
         there is no constant term, that is `constant` = 0.
-    input_type : {"spin", "binary", "int..."}, default="spin"
+    domain : {"spin", "binary", "int..."}, default="spin"
         Domain over which the optimization is done.
         • "spin" : Optimize the polynomial over vectors whose entries are
         in {-1, 1}.
@@ -124,6 +151,7 @@ def optimize(
     verbose : bool, default=True
         Whether to display a progress bar to monitor the progress of the
         algorithm.
+    input_type : deprecated, use `domain` instead.
 
     Returns
     -------
@@ -159,7 +187,7 @@ def optimize(
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        If `domain` is not one of {"spin", "binary", "int..."}, where
         "int..." designates any string starting with "int" and followed by
         a positive integer, or more formally, any string matching the
         following regular expression: ^int[1-9][0-9]*$.
@@ -248,7 +276,7 @@ def optimize(
     >>> Q = torch.tensor([[1, -2],
     ...                   [0, 3]])
     >>> best_vector, best_value = sb.optimize(
-    ...     Q, minimize=False, input_type="binary"
+    ...     Q, minimize=False, domain="binary"
     ... )
     >>> best_vector
     tensor([0., 1.])
@@ -258,7 +286,7 @@ def optimize(
     Minimize a polynomial over {-1, 1} x {-1, 1} and return all the
     solutions found using 42 agents
     >>> best_vectors, best_values = sb.optimize(
-    ...     Q, input_type="spin", agents=42, best_only=False
+    ...     Q, domain="spin", agents=42, best_only=False
     ... )
     >>> best_vectors.shape  # (agents, dimension of the instance)
     (42, 2)
@@ -268,7 +296,7 @@ def optimize(
     Minimize a polynomial over {0, 1, 2, ..., 6, 7} x {0, 1, 2, ..., 6, 7}
     using the GPU to run the SB algorithm. Outputs are located on the GPU.
     >>> best_vector, best_value = sb.optimize(
-    ...     Q, input_type="int3", device="cuda"
+    ...     Q, domain="int3", device="cuda"
     ... )
     >>> best_vector
     tensor([0., 0.], device='cuda:0')
@@ -276,11 +304,21 @@ def optimize(
     tensor(0., device='cuda:0')
 
     """
+    if input_type is not None:
+        # 2023-11-21, 1.2.1
+        warnings.warn(
+            "`input_type` is deprecated as of simulated-bifurcation 1.2.1, and it will "
+            "be removed in simulated-bifurcation 1.3.0. Please use `domain` instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        domain = input_type
+
     model = build_model(
         matrix=matrix,
         vector=vector,
         constant=constant,
-        input_type=input_type,
+        domain=domain,
         dtype=dtype,
         device=device,
     )
@@ -304,7 +342,7 @@ def minimize(
     matrix: Union[torch.Tensor, ndarray],
     vector: Union[torch.Tensor, ndarray, None] = None,
     constant: Union[int, float, None] = None,
-    input_type: str = "spin",
+    domain: str = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
@@ -318,14 +356,23 @@ def minimize(
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
+    input_type: Optional[str] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Minimize a multivariate degree 2 polynomial using the SB algorithm.
 
+    .. deprecated:: 1.2.1
+      In simulated-bifurcation 1.3.0, `input_type` will be removed.
+      Use `domain` instead.
+
+      In simulated-bifurcation 1.3.0, the `matrix`, `vector`, and
+      `constant` will become positional-only parameters; the other
+      parameters will become keyword-only parameters.
+
     The simulated bifurcated (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The minimization is done over a discrete domain specified through
-    `input_type`.
+    `domain`.
     The polynomial is the sum of a quadratic form and a linear form plus
     a constant term:
     `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
@@ -345,7 +392,7 @@ def minimize(
     constant : int | float | None, optional
         Constant of the polynomial. The default is None which signifies
         there is no constant term, that is `constant` = 0.
-    input_type : {"spin", "binary", "int..."}, default="spin"
+    domain : {"spin", "binary", "int..."}, default="spin"
         Domain over which the minimization is done.
         • "spin" : Minimize the polynomial over vectors whose entries are
         in {-1, 1}.
@@ -384,6 +431,7 @@ def minimize(
     verbose : bool, default=True
         Whether to display a progress bar to monitor the progress of the
         algorithm.
+    input_type : deprecated, use `domain` instead.
 
     Returns
     -------
@@ -419,7 +467,7 @@ def minimize(
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        If `domain` is not one of {"spin", "binary", "int..."}, where
         "int..." designates any string starting with "int" and followed by
         a positive integer, or more formally, any string matching the
         following regular expression: ^int[1-9][0-9]*$.
@@ -506,7 +554,7 @@ def minimize(
     Minimize a polynomial over {0, 1} x {0, 1}
     >>> Q = torch.tensor([[1, -2],
     ...                   [0, 3]])
-    >>> best_vector, best_value = sb.minimize(Q, input_type="binary")
+    >>> best_vector, best_value = sb.minimize(Q, domain="binary")
     >>> best_vector
     tensor([0., 0.])
     >>> best_value
@@ -514,7 +562,7 @@ def minimize(
 
     Return all the solutions found using 42 agents
     >>> best_vectors, best_values = sb.minimize(
-    ...     Q, input_type="binary", agents=42, best_only=False
+    ...     Q, domain="binary", agents=42, best_only=False
     ... )
     >>> best_vectors.shape  # (agents, dimension of the instance)
     (42, 2)
@@ -524,7 +572,7 @@ def minimize(
     Minimize a polynomial over {0, 1, 2, ..., 6, 7} x {0, 1, 2, ..., 6, 7}
     using the GPU to run the SB algorithm. Outputs are located on the GPU.
     >>> best_vector, best_value = sb.minimize(
-    ...     Q, input_type="int3", device="cuda"
+    ...     Q, domain="int3", device="cuda"
     ... )
     >>> best_vector
     tensor([0., 0.], device='cuda:0')
@@ -532,11 +580,21 @@ def minimize(
     tensor(0., device='cuda:0')
 
     """
+    if input_type is not None:
+        # 2023-11-21, 1.2.1
+        warnings.warn(
+            "`input_type` is deprecated as of simulated-bifurcation 1.2.1, and it will "
+            "be removed in simulated-bifurcation 1.3.0. Please use `domain` instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        domain = input_type
+
     return optimize(
         matrix,
         vector,
         constant,
-        input_type,
+        domain,
         dtype,
         device,
         agents,
@@ -557,7 +615,7 @@ def maximize(
     matrix: Union[torch.Tensor, ndarray],
     vector: Union[torch.Tensor, ndarray, None] = None,
     constant: Union[int, float, None] = None,
-    input_type: str = "spin",
+    domain: str = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
@@ -571,14 +629,23 @@ def maximize(
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
+    input_type: Optional[str] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Maximize a multivariate degree 2 polynomial using the SB algorithm.
 
+    .. deprecated:: 1.2.1
+      In simulated-bifurcation 1.3.0, `input_type` will be removed.
+      Use `domain` instead.
+
+      In simulated-bifurcation 1.3.0, the `matrix`, `vector`, and
+      `constant` will become positional-only parameters; the other
+      parameters will become keyword-only parameters.
+
     The simulated bifurcated (SB) algorithm is a randomized approximation
     algorithm for combinatorial optimization problems.
     The maximization is done over a discrete domain specified through
-    `input_type`.
+    `domain`.
     The polynomial is the sum of a quadratic form and a linear form plus
     a constant term:
     `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
@@ -598,7 +665,7 @@ def maximize(
     constant : int | float | None, optional
         Constant of the polynomial. The default is None which signifies
         there is no constant term, that is `constant` = 0.
-    input_type : {"spin", "binary", "int..."}, default="spin"
+    domain : {"spin", "binary", "int..."}, default="spin"
         Domain over which the maximization is done.
         • "spin" : Maximize the polynomial over vectors whose entries are
         in {-1, 1}.
@@ -637,6 +704,7 @@ def maximize(
     verbose : bool, default=True
         Whether to display a progress bar to monitor the progress of the
         algorithm.
+    input_type : deprecated, use `domain` instead.
 
     Returns
     -------
@@ -672,7 +740,7 @@ def maximize(
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        If `domain` is not one of {"spin", "binary", "int..."}, where
         "int..." designates any string starting with "int" and followed by
         a positive integer, or more formally, any string matching the
         following regular expression: ^int[1-9][0-9]*$.
@@ -759,7 +827,7 @@ def maximize(
     Maximize a polynomial over {0, 1} x {0, 1}
     >>> Q = torch.tensor([[1, -2],
     ...                   [0, 3]])
-    >>> best_vector, best_value = sb.maximize(Q, input_type="binary")
+    >>> best_vector, best_value = sb.maximize(Q, domain="binary")
     >>> best_vector
     tensor([0., 1.])
     >>> best_value
@@ -767,7 +835,7 @@ def maximize(
 
     Return all the solutions found using 42 agents
     >>> best_vectors, best_values = sb.maximize(
-    ...     Q, input_type="binary", agents=42, best_only=False
+    ...     Q, domain="binary", agents=42, best_only=False
     ... )
     >>> best_vectors.shape  # (agents, dimension of the instance)
     (42, 2)
@@ -777,7 +845,7 @@ def maximize(
     Maximize a polynomial over {0, 1, 2, ..., 6, 7} x {0, 1, 2, ..., 6, 7}
     using the GPU to run the SB algorithm. Outputs are located on the GPU.
     >>> best_vector, best_value = sb.maximize(
-    ...     Q, input_type="int3", device="cuda"
+    ...     Q, domain="int3", device="cuda"
     ... )
     >>> best_vector
     tensor([0., 7.], device='cuda:0')
@@ -785,11 +853,21 @@ def maximize(
     tensor(147., device='cuda:0')
 
     """
+    if input_type is not None:
+        # 2023-11-21, 1.2.1
+        warnings.warn(
+            "`input_type` is deprecated as of simulated-bifurcation 1.2.1, and it will "
+            "be removed in simulated-bifurcation 1.3.0. Please use `domain` instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        domain = input_type
+
     return optimize(
         matrix,
         vector,
         constant,
-        input_type,
+        domain,
         dtype,
         device,
         agents,
@@ -810,12 +888,21 @@ def build_model(
     matrix: Union[torch.Tensor, ndarray],
     vector: Union[torch.Tensor, ndarray, None] = None,
     constant: Union[int, float, None] = None,
-    input_type: str = "spin",
+    domain: str = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
+    input_type: Optional[str] = None,
 ) -> BaseMultivariateQuadraticPolynomial:
     """
     Instantiate a multivariate degree 2 polynomial over a given domain.
+
+    .. deprecated:: 1.2.1
+      In simulated-bifurcation 1.3.0, `input_type` will be removed.
+      Use `domain` instead.
+
+      In simulated-bifurcation 1.3.0, the `matrix`, `vector`, and
+      `constant` will become positional-only parameters; the other
+      parameters will become keyword-only parameters.
 
     The polynomial is the sum of a quadratic form and a linear form plus
     a constant term:
@@ -836,7 +923,7 @@ def build_model(
     constant : int | float | None, optional
         Constant of the polynomial. The default is None which signifies
         there is no constant term, that is `constant` = 0.
-    input_type : {"spin", "binary", "int..."}, default="spin"
+    domain : {"spin", "binary", "int..."}, default="spin"
         Domain over which the maximization is done.
         - "spin" : Polynomial over vectors whose entries are in {-1, 1}.
         - "binary" : Polynomial over vectors whose entries are in {0, 1}.
@@ -849,20 +936,21 @@ def build_model(
     device : str | torch.device, default="cpu"
         Device on which the polynomial is located. If available, use "cuda"
         to use the polynomial on a GPU.
+    input_type : deprecated, use `domain` instead.
 
     Returns
     -------
     SpinQuadraticPolynomial | BinaryQuadraticPolynomial | IntegerQuadraticPolynomial
         The polynomial described by `matrix`, `vector` and `constant` on
-        the domain specified by `input_type`.
-        - `input_type="spin"` : SpinQuadraticPolynomial.
-        - `input_type="binary"` : BinaryQuadraticPolynomial.
-        - `input_type="int..."` : IntegerQuadraticPolynomial.
+        the domain specified by `domain`.
+        - `domain="spin"` : SpinQuadraticPolynomial.
+        - `domain="binary"` : BinaryQuadraticPolynomial.
+        - `domain="int..."` : IntegerQuadraticPolynomial.
 
     Raises
     ------
     ValueError
-        If `input_type` is not one of {"spin", "binary", "int..."}, where
+        If `domain` is not one of {"spin", "binary", "int..."}, where
         "int..." designates any string starting with "int" and followed by
         a positive integer, or more formally, any string matching the
         following regular expression: ^int[1-9][0-9]*$.
@@ -889,7 +977,7 @@ def build_model(
     Instantiate a polynomial over {0, 1} x {0, 1}
     >>> Q = torch.tensor([[1, -2],
     ...                   [0, 3]])
-    >>> poly = sb.build_model(Q, input_type="binary")
+    >>> poly = sb.build_model(Q, domain="binary")
 
     Maximize the polynomial
     >>> best_vector, best_value = poly.maximize()
@@ -924,7 +1012,7 @@ def build_model(
     and use it on the GPU
     >>> Q = torch.tensor([[1, -2],
     ...                   [0, 3]])
-    >>> poly = sb.build_model(Q, input_type="int4", device="cuda")
+    >>> poly = sb.build_model(Q, domain="int4", device="cuda")
 
     Maximize this polynomial (outputs are located on the GPU)
     >>> best_vector, best_value = poly.maximize()
@@ -940,18 +1028,38 @@ def build_model(
     tensor(123., device='cuda:0')
 
     """
+    if input_type is not None:
+        # 2023-11-21, 1.2.1
+        warnings.warn(
+            "`input_type` is deprecated as of simulated-bifurcation 1.2.1, and it will "
+            "be removed in simulated-bifurcation 1.3.0. Please use `domain` instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        domain = input_type
+
     int_type_regex = "^int[1-9][0-9]*$"
     int_type_pattern = re.compile(int_type_regex)
 
-    if input_type == "spin":
+    if domain == "spin":
         return SpinQuadraticPolynomial(
-            matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device
+            matrix=matrix,
+            vector=vector,
+            constant=constant,
+            dtype=dtype,
+            device=device,
+            silence_deprecation_warning=True,
         )
-    if input_type == "binary":
+    if domain == "binary":
         return BinaryQuadraticPolynomial(
-            matrix=matrix, vector=vector, constant=constant, dtype=dtype, device=device
+            matrix=matrix,
+            vector=vector,
+            constant=constant,
+            dtype=dtype,
+            device=device,
+            silence_deprecation_warning=True,
         )
-    if int_type_pattern.match(input_type) is None:
+    if int_type_pattern.match(domain) is None:
         raise ValueError(
             f'Input type must be one of "spin" or "binary", or be a string starting'
             f'with "int" and be followed by a positive integer.\n'
@@ -959,7 +1067,7 @@ def build_model(
             f"{int_type_regex}\n"
             f'Examples: "int7", "int42", ...'
         )
-    number_of_bits = int(input_type[3:])
+    number_of_bits = int(domain[3:])
     return IntegerQuadraticPolynomial(
         matrix=matrix,
         vector=vector,
@@ -967,4 +1075,5 @@ def build_model(
         dtype=dtype,
         device=device,
         number_of_bits=number_of_bits,
+        silence_deprecation_warning=True,
     )

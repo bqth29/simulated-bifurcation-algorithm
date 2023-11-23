@@ -1,7 +1,8 @@
 import pytest
 import torch
 
-from src.simulated_bifurcation import build_model, maximize, minimize
+import src.simulated_bifurcation
+from src.simulated_bifurcation import build_model, maximize, minimize, optimize
 
 matrix = torch.tensor(
     [
@@ -53,30 +54,30 @@ def test_maximize_integer():
     assert 37 == best_value
 
 
-def test_valid_input_type():
-    build_model(matrix, input_type="spin")
-    build_model(matrix, input_type="binary")
-    build_model(matrix, input_type="int1")
-    build_model(matrix, input_type="int3")
-    build_model(matrix, input_type="int10")
-    build_model(matrix, input_type="int22")
+def test_valid_domain():
+    build_model(matrix, domain="spin")
+    build_model(matrix, domain="binary")
+    build_model(matrix, domain="int1")
+    build_model(matrix, domain="int3")
+    build_model(matrix, domain="int10")
+    build_model(matrix, domain="int22")
 
 
-def test_invalid_input_type():
+def test_invalid_domain():
     with pytest.raises(ValueError):
-        build_model(matrix, input_type="float")
+        build_model(matrix, domain="float")
     with pytest.raises(ValueError):
-        build_model(matrix, input_type="")
+        build_model(matrix, domain="")
     with pytest.raises(ValueError):
-        build_model(matrix, input_type="int")
+        build_model(matrix, domain="int")
     with pytest.raises(ValueError):
-        build_model(matrix, input_type=" int3")
+        build_model(matrix, domain=" int3")
     with pytest.raises(ValueError):
-        build_model(matrix, input_type="int0")
+        build_model(matrix, domain="int0")
     with pytest.raises(ValueError):
-        build_model(matrix, input_type="int07")
+        build_model(matrix, domain="int07")
     with pytest.raises(ValueError):
-        build_model(matrix, input_type="int5.")
+        build_model(matrix, domain="int5.")
 
 
 def test_best_only():
@@ -88,3 +89,15 @@ def test_best_only():
     assert spins_all.shape == (42, 3)
     assert isinstance(energies_all, torch.Tensor)
     assert energies_all.shape == (42,)
+
+
+def test_input_type_deprecation():
+    with pytest.warns(DeprecationWarning):
+        optimize(matrix, vector, constant, input_type="int7")
+    with pytest.warns(DeprecationWarning):
+        minimize(matrix, vector, constant, input_type="spin")
+    with pytest.warns(DeprecationWarning):
+        maximize(matrix, vector, constant, input_type="binary")
+    with pytest.warns(DeprecationWarning):
+        model = build_model(matrix, vector, constant, input_type="int3")
+    assert isinstance(model, src.simulated_bifurcation.IntegerQuadraticPolynomial)

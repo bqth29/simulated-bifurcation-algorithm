@@ -2,9 +2,11 @@
 Implementation of multivariate degree 2 polynomials over binary vectors.
 
 .. deprecated:: 1.2.1
-    `BinaryPolynomial` will be modified in simulated-bifurcation 1.3.0, it
-    is replaced by `BinaryQuadraticPolynomial` in prevision of the addition
-    of multivariate polynomials of an arbitrary degree.
+  `BinaryPolynomial` and `BinaryQuadraticPolynomial` will be removed in
+  simulated-bifurcation 1.3.0. From version 1.3.0 onwards, polynomials will
+  no longer have a definition domain. The domain only needs to be specified
+  when creating an Ising model, and conversely when converting spins back
+  into the original domain.
 
 Multivariate degree 2 polynomials are the sum of a quadratic form and a
 linear form plus a constant term:
@@ -47,6 +49,13 @@ class BinaryQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
 
     """
     Multivariate degree 2 polynomials over binary vectors.
+
+    .. deprecated:: 1.2.1
+      `BinaryQuadraticPolynomial` will be removed in simulated-bifurcation
+      1.3.0. From version 1.3.0 onwards, polynomials will no longer have a
+      definition domain. The domain only needs to be specified when
+      creating an Ising model, and conversely when converting spins back
+      into the original domain.
 
     Multivariate degree 2 polynomials are the sum of a quadratic form and a
     linear form plus a constant term:
@@ -113,8 +122,30 @@ class BinaryQuadraticPolynomial(BaseMultivariateQuadraticPolynomial):
         constant: Union[float, int, None] = None,
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
+        *,
+        silence_deprecation_warning=False,
     ) -> None:
-        super().__init__(matrix, vector, constant, [0, 1], dtype, device)
+        if not silence_deprecation_warning:
+            # 2023-11-21, 1.2.1
+            warnings.warn(
+                "`BinaryQuadraticPolynomial` is deprecated as of simulated-bifurcation "
+                "1.2.1, and it will be removed in simulated-bifurcation 1.3.0. "
+                "From version 1.3.0 onwards, polynomials will no longer have a "
+                "definition domain. The domain only needs to be specified when "
+                "creating an Ising model, and conversely when converting spins "
+                "back into the original domain.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+        super().__init__(
+            matrix,
+            vector,
+            constant,
+            [0, 1],
+            dtype,
+            device,
+            silence_deprecation_warning=True,
+        )
 
     def to_ising(self) -> IsingCore:
         symmetrical_matrix = IsingCore.symmetrize(self.matrix)
@@ -152,9 +183,11 @@ class BinaryPolynomial(BinaryQuadraticPolynomial):
 
     """
     .. deprecated:: 1.2.1
-        `BinaryPolynomial` will be modified in simulated-bifurcation 1.3.0,
-        it is replaced by `BinaryQuadraticPolynomial` in prevision of the
-        addition of multivariate polynomials of an arbitrary degree.
+      `BinaryPolynomial` will be removed in simulated-bifurcation 1.3.0.
+      From version 1.3.0 onwards, polynomials will no longer have a
+      definition domain. The domain only needs to be specified when
+      creating an Ising model, and conversely when converting spins back
+      into the original domain.
 
     """
 
@@ -162,9 +195,11 @@ class BinaryPolynomial(BinaryQuadraticPolynomial):
         # 2023-10-03, 1.2.1
         warnings.warn(
             "`BinaryPolynomial` is deprecated as of simulated-bifurcation 1.2.1, and "
-            "its behaviour will change in simulated-bifurcation 1.3.0. Please use "
-            "`BinaryQuadraticPolynomial` instead.",
+            "it will be removed in simulated-bifurcation 1.3.0. From version 1.3.0 "
+            "onwards, polynomials will no longer have a definition domain. The domain "
+            "only needs to be specified when creating an Ising model, and conversely "
+            "when converting spins back into the original domain.",
             DeprecationWarning,
             stacklevel=3,
         )
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, silence_deprecation_warning=True)

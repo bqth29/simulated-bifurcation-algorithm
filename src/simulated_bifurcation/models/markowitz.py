@@ -39,7 +39,15 @@ class SequentialMarkowitz(IntegerQuadraticPolynomial):
         )
 
         matrix, vector, constant = self.compile_model()
-        super().__init__(matrix, vector, constant, number_of_bits, dtype, device)
+        super().__init__(
+            matrix,
+            vector,
+            constant,
+            number_of_bits,
+            dtype,
+            device,
+            silence_deprecation_warning=True,
+        )
 
     def compile_model(self) -> Tuple[torch.Tensor, torch.Tensor, float]:
         matrix = self.__compile_matrix()

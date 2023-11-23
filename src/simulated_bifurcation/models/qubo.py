@@ -21,5 +21,5 @@ class QUBO(BinaryQuadraticPolynomial):
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
     ) -> None:
-        super().__init__(Q, None, None, dtype, device)
+        super().__init__(Q, None, None, dtype, device, silence_deprecation_warning=True)
         self.Q = self.matrix

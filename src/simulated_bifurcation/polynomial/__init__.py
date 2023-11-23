@@ -2,19 +2,17 @@
 Implementation of multivariate degree 2 polynomials.
 
 .. deprecated:: 1.2.1
-    `IsingPolynomialInterface` will be removed in simulated-bifurcation
-    1.3.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
-    prevision of the addition of multivariate polynomials of an arbitrary
-    degree.
-    `BinaryPolynomial` will be modified in simulated-bifurcation 1.3.0, it
-    is replaced by `BinaryQuadraticPolynomial` in prevision of the addition
-    of multivariate polynomials of an arbitrary degree.
-    `IntegerPolynomial` will be modified in simulated-bifurcation 1.3.0, it
-    is replaced by `IntegerQuadraticPolynomial` in prevision of the
-    addition of multivariate polynomials of an arbitrary degree.
-    `SpinPolynomial` will be modified in simulated-bifurcation 1.3.0, it is
-    replaced by `SpinQuadraticPolynomial` in prevision of the addition of
-    multivariate polynomials of an arbitrary degree.
+     `BinaryPolynomial`, `BinaryQuadraticPolynomial`, `IntegerPolynomial`,
+    `IntegerQuadraticPolynomial`, `SpinPolynomial`, and
+    `SpinQuadraticPolynomial` will be removed in simulated-bifurcation
+    1.3.0. From version 1.3.0 onwards, polynomials will no longer have a
+    definition domain. The domain only needs to be specified when creating
+    an Ising model, and conversely when converting spins back into the
+    original domain.
+
+    `BaseMultivariateQuadraticPolynomial` and `IsingPolynomialInterface`
+    will be removed in simulated-bifurcation 1.3.0. They are replaced by
+    `QuadraticPolynomial`.
 
 Multivariate degree 2 polynomials are the sum of a quadratic form and a
 linear form plus a constant term:

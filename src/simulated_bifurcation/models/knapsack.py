@@ -28,7 +28,14 @@ class Knapsack(BinaryQuadraticPolynomial):
         self.max_weight = max_weight
         matrix = self.__make_matrix(dtype, device)
         vector = self.__make_vector(dtype, device)
-        super().__init__(matrix, vector, self.__make_penalty(), dtype, device)
+        super().__init__(
+            matrix,
+            vector,
+            self.__make_penalty(),
+            dtype,
+            device,
+            silence_deprecation_warning=True,
+        )
 
     @property
     def summary(self) -> Dict[str, Union[int, float, List[int]]]:
