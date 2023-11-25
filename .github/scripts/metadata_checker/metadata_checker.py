@@ -320,7 +320,7 @@ def check_license_date(
 
 
 def get_month_abbreviation(month_number: int) -> str:
-    with calendar.different_locale(("en-US", None)) as encoding:
+    with calendar.different_locale(("en_US", "utf-8")) as encoding:
         abbreviation = calendar.month_abbr[month_number]
         if encoding is not None:
             abbreviation = abbreviation.decode(encoding)

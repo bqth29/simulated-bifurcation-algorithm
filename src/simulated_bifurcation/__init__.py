@@ -36,7 +36,7 @@ have been imported and that simulated_bifurcation has been imported as `sb`:
 Code snippets are indicated by three greater-than signs:
 
   >>> x = 42
-  >>> x = x + 1
+  >>> x += 1
 
 Modules
 -------

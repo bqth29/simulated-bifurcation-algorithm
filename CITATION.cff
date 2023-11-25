@@ -10,5 +10,5 @@ authors:
   given-names: Lorenzo
 title: "Simulated Bifurcation (SB) algorithm for Python"
 version: 1.3.0.dev0
-date-released: 2023-08-11
+date-released: 2023-11-23
 url: "https://github.com/bqth29/simulated-bifurcation-algorithm"

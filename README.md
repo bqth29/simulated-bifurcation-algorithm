@@ -68,6 +68,8 @@ for which the $x_{i}$'s can be spins, binary or non-negative integer.
 
 This can also be seen as the sum of a quadratic form, a linear form and a constant term and such a formulation is the basis of many optimization problems.
 
+The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated input vector.
+
 The input types must be passed to the `domain` argument:
 
 - `spin` (default value) for a spin optimization: the optimal vector will only have ±1 values
@@ -301,10 +303,10 @@ If you are using this code for your own projects please cite our work:
 ```bibtex
 @software{Ageron_Simulated_Bifurcation_SB_2023,
     author = {Ageron, Romain and Bouquet, Thomas and Pugliese, Lorenzo},
-    month = aug,
+    month = nov,
     title = {{Simulated Bifurcation (SB) algorithm for Python}},
     url = {https://github.com/bqth29/simulated-bifurcation-algorithm},
-    version = {1.2.0},
+    version = {1.2.1},
     year = {2023},
 }
 ```
