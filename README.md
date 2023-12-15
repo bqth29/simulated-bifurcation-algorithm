@@ -88,31 +88,28 @@ vector = torch.tensor([-1, 0, 2])
 constant = 2.0
 ```
 
-The package provides a `polynomial` API to build quadratic multivariate polynomials from such tensors. Three options are possible.
+The package provides a `polynomial` API to build quadratic multivariate polynomials from such tensors. Four options are possible.
 
-> - the three following code snippets all create equivalent polynomials
-> - in the following examples, we consider a polynomial with spin input values which is based on the `SpinQuadraticPolynomial` class. An equivalent work could be pursued for binary or integer input values by calling the `BinaryQuadraticPolynomial` or `IntegerQuadraticPolynomial` classes instead.
+A polynomial can be defined using coefficient tensors or SymPy expressions to define polynomials in a more natural way from mathematical equations.
 
-1. Using the `SpinQuadraticPolynomial` class
+> The four following code snippets all create equivalent polynomials
 
-```python
-from simulated_bifurcation.poynomial import SpinQuadraticPolynomial
-
-polynomial = SpinQuadraticPolynomial(matrix, vector, constant)
-```
-
-2. Using the `sb.build_model` function
+1. Using the `QuadraticPolynomial` class
 
 ```python
-polynomial = sb.build_model(matrix, vector, constant)
+from simulated_bifurcation.core import QuadraticPolynomial
 ```
 
-3. Using SymPy expressions to define polynomials in a more natural way from mathematical equations
+**With tensors**
+
+```python
+polynomial = QuadraticPolynomial(matrix, vector, constant)
+```
+
+**With a SymPy expression**
 
 ```python
 from sympy import poly, symbols
-from simulated_bifurcation.poynomial import SpinQuadraticPolynomial
-
 x, y, z = symbols("x y z")
 expression = poly(
     x**2 - y**2 + 2 * z**2
@@ -123,7 +120,32 @@ expression = poly(
     + 2
 )
 
-polynomial = SpinQuadraticPolynomial.from_expression(expression)
+polynomial = QuadraticPolynomial(expression)
+```
+
+2. Using the `sb.build_model` function
+
+**With tensors**
+
+```python
+polynomial = sb.build_model(matrix, vector, constant)
+```
+
+**With a SymPy expression**
+
+```python
+from sympy import poly, symbols
+x, y, z = symbols("x y z")
+expression = poly(
+    x**2 - y**2 + 2 * z**2
+    + x * y + 2 * x * z
+    - 2 * y * z
+    - 2 * z * x
+    - x + 2 * z
+    + 2
+)
+
+polynomial = sb.build_model(expression)
 ```
 
 The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated input vector.
@@ -141,6 +163,19 @@ binary_value, binary_vector = sb.minimize(matrix, vector, constant, domain='bina
 int_value, int_vector = sb.minimize(matrix, vector, constant, domain='int3')
 ```
 
+Or, using a SymPy expression:
+
+```python
+# Spin minimization
+spin_value, spin_vector = sb.minimize(expression, domain='spin')
+
+# Binary minimization
+binary_value, binary_vector = sb.minimize(expression, domain='binary')
+
+# 3-bits integer minimization
+int_value, int_vector = sb.minimize(expression, domain='int3')
+```
+
 #### Maximization
 
 ```python
@@ -152,6 +187,19 @@ binary_value, binary_vector = sb.maximize(matrix, vector, constant, domain='bina
 
 # 10-bits integer maximization
 int_value, int_vector = sb.maximize(matrix, vector, constant, domain='int10')
+```
+
+Or, using a SymPy expression:
+
+```python
+# Spin minimization
+spin_value, spin_vector = sb.maximize(expression, domain='spin')
+
+# Binary minimization
+binary_value, binary_vector = sb.maximize(expression, domain='binary')
+
+# 3-bits integer minimization
+int_value, int_vector = sb.maximize(expression, domain='int10')
 ```
 
 > For both functions, only the matrix is required, the vector and constant terms are optional.

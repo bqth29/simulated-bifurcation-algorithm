@@ -30,7 +30,7 @@ from ..polynomial import Polynomial, PolynomialLike
 from .ising import Ising
 
 INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
-domain_ERROR = ValueError(
+DOMAIN_ERROR = ValueError(
     f'Input type must be one of "spin" or "binary", or be a string starting'
     f'with "int" and be followed by a positive integer.\n'
     f"More formally, it should match the following regular expression.\n"
@@ -235,7 +235,7 @@ class QuadraticPolynomial(Polynomial):
             )
             return Ising(J, h, self.dtype, self.device)
         if INTEGER_REGEX.match(domain) is None:
-            raise domain_ERROR
+            raise DOMAIN_ERROR
         number_of_bits = int(domain[3:])
         symmetrical_matrix = Ising.symmetrize(self[2])
         integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
@@ -300,7 +300,7 @@ class QuadraticPolynomial(Polynomial):
         if domain == "binary":
             return (ising.computed_spins + 1) / 2
         if INTEGER_REGEX.match(domain) is None:
-            raise domain_ERROR
+            raise DOMAIN_ERROR
         number_of_bits = int(domain[3:])
         integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
             self.n_variables, number_of_bits, device=self.device
