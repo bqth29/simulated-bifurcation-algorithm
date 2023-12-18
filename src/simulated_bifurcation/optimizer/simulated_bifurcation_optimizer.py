@@ -7,7 +7,7 @@ import torch
 from numpy import minimum
 from tqdm import tqdm
 
-from .optimization_variables import OptimizationVariable
+from .environment import ENVIRONMENT
 from .optimizer_mode import OptimizerMode
 from .stop_window import StopWindow
 from .symplectic_integrator import SymplecticIntegrator
@@ -79,15 +79,15 @@ class SimulatedBifurcationOptimizer:
         self.mode = mode
         self.window = None
         self.symplectic_integrator = None
-        self.heat_coefficient = OptimizationVariable.HEAT_COEFFICIENT.get()
+        self.heat_coefficient = ENVIRONMENT.heat_coefficient
         self.heated = heated
         self.verbose = verbose
         self.start_time = None
         self.simulation_time = None
         # Simulation parameters
-        self.time_step = OptimizationVariable.TIME_STEP.get()
+        self.time_step = ENVIRONMENT.time_step
         self.agents = agents
-        self.pressure_slope = OptimizationVariable.PRESSURE_SLOPE.get()
+        self.pressure_slope = ENVIRONMENT.pressure_slope
         # Stopping criterion parameters
         self.convergence_threshold = convergence_threshold
         self.sampling_period = sampling_period
