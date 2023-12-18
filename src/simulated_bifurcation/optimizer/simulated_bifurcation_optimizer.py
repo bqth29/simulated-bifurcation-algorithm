@@ -8,7 +8,7 @@ from numpy import minimum
 from tqdm import tqdm
 
 from .environment import ENVIRONMENT
-from .optimizer_mode import OptimizerMode
+from .simulated_bifurcation_engine import SimulatedBifurcationEngine
 from .stop_window import StopWindow
 from .symplectic_integrator import SymplecticIntegrator
 
@@ -69,18 +69,17 @@ class SimulatedBifurcationOptimizer:
         agents: int,
         max_steps: Optional[int],
         timeout: Optional[float],
-        mode: OptimizerMode,
-        heated: bool,
+        engine: SimulatedBifurcationEngine,
         verbose: bool,
         sampling_period: int,
         convergence_threshold: int,
     ) -> None:
         # Optimizer setting
-        self.mode = mode
+        self.engine = engine
         self.window = None
         self.symplectic_integrator = None
         self.heat_coefficient = ENVIRONMENT.heat_coefficient
-        self.heated = heated
+        self.heated = engine.heated
         self.verbose = verbose
         self.start_time = None
         self.simulation_time = None
@@ -139,7 +138,10 @@ class SimulatedBifurcationOptimizer:
 
     def __init_symplectic_integrator(self, matrix: torch.Tensor) -> None:
         self.symplectic_integrator = SymplecticIntegrator(
-            (matrix.shape[0], self.agents), self.mode, matrix.dtype, matrix.device
+            (matrix.shape[0], self.agents),
+            self.engine.activation_function,
+            matrix.dtype,
+            matrix.device,
         )
 
     def __step_update(self) -> None:

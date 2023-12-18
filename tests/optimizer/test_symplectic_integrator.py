@@ -1,11 +1,14 @@
 import torch
 
-from src.simulated_bifurcation.optimizer import OptimizerMode, SymplecticIntegrator
+from src.simulated_bifurcation.optimizer import (
+    SimulatedBifurcationEngine,
+    SymplecticIntegrator,
+)
 
 
 def test_init_ballistic_symplectic_integrator():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), OptimizerMode.BALLISTIC, torch.float32, "cpu"
+        (3, 2), torch.nn.Identity(), torch.float32, "cpu"
     )
     symplectic_integrator.position = torch.tensor(
         [
@@ -30,7 +33,7 @@ def test_init_ballistic_symplectic_integrator():
 
 def test_init_discrete_symplectic_integrator():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), OptimizerMode.DISCRETE, torch.float32, "cpu"
+        (3, 2), torch.sign, torch.float32, "cpu"
     )
     symplectic_integrator.position = torch.tensor(
         [
@@ -55,7 +58,7 @@ def test_init_discrete_symplectic_integrator():
 
 def test_position_update():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), OptimizerMode.BALLISTIC, torch.float32, "cpu"
+        (3, 2), torch.nn.Identity(), torch.float32, "cpu"
     )
     symplectic_integrator.position = torch.tensor(
         [
@@ -92,7 +95,7 @@ def test_position_update():
 
 def test_momentum_update():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), OptimizerMode.BALLISTIC, torch.float32, "cpu"
+        (3, 2), torch.nn.Identity(), torch.float32, "cpu"
     )
     symplectic_integrator.position = torch.tensor(
         [
@@ -129,7 +132,7 @@ def test_momentum_update():
 
 def test_quadratic_position_update():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), OptimizerMode.BALLISTIC, torch.float32, "cpu"
+        (3, 2), torch.nn.Identity(), torch.float32, "cpu"
     )
     symplectic_integrator.position = torch.tensor(
         [
@@ -176,7 +179,7 @@ def test_quadratic_position_update():
 
 def test_inelastic_walls_simulation():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), OptimizerMode.BALLISTIC, torch.float32, "cpu"
+        (3, 2), torch.nn.Identity(), torch.float32, "cpu"
     )
     symplectic_integrator.position = torch.tensor(
         [
@@ -227,7 +230,7 @@ def test_inelastic_walls_simulation():
 
 def test_full_step():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), OptimizerMode.BALLISTIC, torch.float32, "cpu"
+        (3, 2), torch.nn.Identity(), torch.float32, "cpu"
     )
     symplectic_integrator.position = torch.tensor(
         [

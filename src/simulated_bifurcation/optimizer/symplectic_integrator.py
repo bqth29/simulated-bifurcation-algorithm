@@ -1,8 +1,6 @@
-from typing import Tuple, Union
+from typing import Any, Tuple, Union
 
 import torch
-
-from .optimizer_mode import OptimizerMode
 
 
 class SymplecticIntegrator:
@@ -16,13 +14,13 @@ class SymplecticIntegrator:
     def __init__(
         self,
         shape: Tuple[int, int],
-        mode: OptimizerMode,
+        activation_function: Any,
         dtype: torch.dtype,
         device: Union[str, torch.device],
     ):
         self.position = self.__init_oscillator(shape, dtype, device)
         self.momentum = self.__init_oscillator(shape, dtype, device)
-        self.activation_function = mode.activation_function
+        self.activation_function = activation_function
 
     @staticmethod
     def __init_oscillator(

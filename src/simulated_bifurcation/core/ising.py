@@ -24,7 +24,7 @@ from typing import Optional, TypeVar, Union
 import torch
 from numpy import ndarray
 
-from ..optimizer import OptimizerMode, SimulatedBifurcationOptimizer
+from ..optimizer import SimulatedBifurcationEngine, SimulatedBifurcationOptimizer
 
 # Workaround because `Self` type is only available in Python >= 3.11
 SelfIsing = TypeVar("SelfIsing", bound="Ising")
@@ -389,16 +389,12 @@ class Ising:
         https://doi.org/10.1038/s42005-022-00929-9
 
         """
-        if ballistic:
-            optimizer_mode = OptimizerMode.BALLISTIC
-        else:
-            optimizer_mode = OptimizerMode.DISCRETE
+        engine = SimulatedBifurcationEngine.get_engine(ballistic, heated)
         optimizer = SimulatedBifurcationOptimizer(
             agents,
             max_steps,
             timeout,
-            optimizer_mode,
-            heated,
+            engine,
             verbose,
             sampling_period,
             convergence_threshold,

@@ -4,7 +4,7 @@ import torch
 from src.simulated_bifurcation import ConvergenceWarning, reset_env, set_env
 from src.simulated_bifurcation.core import Ising
 from src.simulated_bifurcation.optimizer import (
-    OptimizerMode,
+    SimulatedBifurcationEngine,
     SimulatedBifurcationOptimizer,
 )
 
@@ -124,7 +124,7 @@ def test_set_optimization_environment():
     torch.manual_seed(42)
     set_env(time_step=0.05, pressure_slope=0.005, heat_coefficient=0.1)
     optimizer = SimulatedBifurcationOptimizer(
-        128, 10000, None, OptimizerMode.BALLISTIC, True, True, 50, 50
+        128, 10000, None, SimulatedBifurcationEngine.HbSB, True, 50, 50
     )
     assert optimizer.heat_coefficient == 0.1
     assert optimizer.pressure_slope == 0.005
@@ -136,7 +136,7 @@ def test_set_only_one_optimization_variable():
     torch.manual_seed(42)
     set_env(time_step=0.05)
     optimizer = SimulatedBifurcationOptimizer(
-        128, 10000, None, OptimizerMode.BALLISTIC, True, True, 50, 50
+        128, 10000, None, SimulatedBifurcationEngine.HbSB, True, 50, 50
     )
     assert optimizer.heat_coefficient == 0.06
     assert optimizer.pressure_slope == 0.01
@@ -150,7 +150,7 @@ def test_wrong_value_throws_exception_and_variables_not_updated():
         # noinspection PyTypeChecker
         set_env(heat_coefficient="Hello world!")
     optimizer = SimulatedBifurcationOptimizer(
-        128, 10000, None, OptimizerMode.BALLISTIC, True, True, 50, 50
+        128, 10000, None, SimulatedBifurcationEngine.HbSB, True, 50, 50
     )
     assert optimizer.heat_coefficient == 0.06
     assert optimizer.pressure_slope == 0.01
@@ -170,7 +170,7 @@ def test_timeout():
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = Ising(J, h)
     optimizer = SimulatedBifurcationOptimizer(
-        128, 100000, 3.0, OptimizerMode.BALLISTIC, True, True, 50, 50
+        128, 100000, 3.0, SimulatedBifurcationEngine.HbSB, True, 50, 50
     )
     optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
     assert optimizer.simulation_time > 3.0
@@ -189,7 +189,7 @@ def test_window():
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = Ising(J, h)
     optimizer = SimulatedBifurcationOptimizer(
-        1, 100000, None, OptimizerMode.BALLISTIC, True, True, 1, 1
+        1, 100000, None, SimulatedBifurcationEngine.HbSB, True, 1, 1
     )
     optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), True)
 
@@ -207,7 +207,7 @@ def test_max_steps():
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = Ising(J, h)
     optimizer = SimulatedBifurcationOptimizer(
-        1, 10, None, OptimizerMode.BALLISTIC, True, True, 50, 50
+        1, 10, None, SimulatedBifurcationEngine.HbSB, True, 50, 50
     )
     optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
     assert optimizer.step == 10
@@ -226,7 +226,7 @@ def test_no_stop_criterion():
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = Ising(J, h)
     optimizer = SimulatedBifurcationOptimizer(
-        1, None, None, OptimizerMode.BALLISTIC, True, True, 50, 50
+        1, None, None, SimulatedBifurcationEngine.HbSB, True, 50, 50
     )
     with pytest.raises(ValueError, match="No stopping criterion provided."):
         optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
