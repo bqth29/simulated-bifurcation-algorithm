@@ -317,9 +317,9 @@ A lot of mathematical problems (QUBO, Travelling Salesman Problem, MAXCUT, ...) 
 
 ### Custom models
 
-You are also free to create your own models using our API. Depending on the type of model you wish to implement, you cen create a subclass of one of the `SpinQuadraticPolynomial`, `BinaryQuadraticPolynomial` or `IntegerQuadraticPolynomial` APIs to quickly and efficiently link your custom model to an Ising problem and solve it using the SB algorithm.
+You are also free to create your own models using our API. Depending on the type of model you wish to implement, you can create a subclass of the `ABCModel` class to quickly and efficiently link your custom model to an Ising problem and solve it using the SB algorithm. Such a model must have a `domain` class attribute that set the definition domain of all the instances.
 
-The advantage of doing so is that your model can directly call the `optimize` method that it inherits from the `BaseMultivariateQuadraticPolynomial` interface without having to redefine it.
+The advantage of doing so is that your model can directly call the `optimize` method that it inherits from the `QuadraticPolynomial` interface without having to redefine it.
 
 For instance, here is how the QUBO model was implemented:
 
@@ -327,15 +327,21 @@ For instance, here is how the QUBO model was implemented:
 > $$\sum_{i=1}^{N} \sum_{j=1}^{N} Q_{ij}x_{i}x_{j}$$
 
 ```python
-from simulated_bifurcation import BinaryQuadraticPolynomial
+from simulated_bifurcation.models import ABCModel
 
 
-class QUBO(BinaryQuadraticPolynomial):
+class QUBO(ABCModel):
 
-    def __init__(self, Q, dtype, device) -> None:
-        super().__init__(matrix=Q, vector=None, constant=None,
-            dtype=dtype, device=device)
-        self.Q = self.matrix
+    domain = "binary"
+
+    def __init__(
+        self,
+        Q: Union[torch.Tensor, np.ndarray],
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
+    ) -> None:
+        super().__init__(Q, dtype=dtype, device=device)
+        self.Q = self[2]
 ```
 
 > You can check Andrew Lucas' paper on Ising formulations of NP-complete and NP-hard problems, including all of Karp's 21 NP-complete problems.
