@@ -4,7 +4,7 @@
 #
 #    pip-compile docs.in
 #
--e ../src
+-e ..
 alabaster==0.7.12
     # via sphinx
 babel==2.11.0
