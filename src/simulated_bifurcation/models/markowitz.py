@@ -3,10 +3,10 @@ from typing import Optional, Tuple, Union
 import numpy as np
 import torch
 
-from ..polynomial import IntegerQuadraticPolynomial
+from .abc_model import ABCModel
 
 
-class SequentialMarkowitz(IntegerQuadraticPolynomial):
+class SequentialMarkowitz(ABCModel):
     """
     Implementation of the Markowitz model for the integer
     trading trajectory optimization problem.
@@ -43,30 +43,43 @@ class SequentialMarkowitz(IntegerQuadraticPolynomial):
         initial_stocks: Optional[Union[torch.Tensor, np.ndarray]] = None,
         risk_coefficient: float = 1,
         number_of_bits: int = 1,
-        dtype: torch.dtype = torch.float32,
-        device: str = "cpu",
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         """
         Instantiates a Markowitz problem model that can be optimized using
         the Simulated Bifurcation algorithm.
         """
-        self.covariances = self._cast_matrix_to_tensor(covariances, dtype, device)
-        self.expected_returns = self._cast_matrix_to_tensor(
-            expected_returns, dtype, device
+        self.covariances = self.__cast_to_tensor(
+            covariances, dtype=dtype, device=device
         )
-        self.rebalancing_costs = self._cast_matrix_to_tensor(
-            rebalancing_costs, dtype, device
+        self.expected_returns = self.__cast_to_tensor(
+            expected_returns, dtype=dtype, device=device
+        )
+        self.rebalancing_costs = self.__cast_to_tensor(
+            rebalancing_costs, dtype=dtype, device=device
         )
         self.risk_coefficient = risk_coefficient
-        self.timestamps = self.covariances.shape[0]
-        self.assets = self.covariances.shape[1]
+        self.timestamps = covariances.shape[0]
+        self.assets = covariances.shape[1]
 
         self.initial_stocks = (
             torch.zeros(self.assets) if initial_stocks is None else initial_stocks
         )
 
+        self.number_of_bits = number_of_bits
+        self.domain = f"int{number_of_bits}"
+
         matrix, vector, constant = self.compile_model()
-        super().__init__(matrix, vector, constant, number_of_bits, dtype, device)
+        super().__init__(
+            matrix,
+            vector.reshape(
+                -1,
+            ),
+            constant,
+            dtype=dtype,
+            device=device,
+        )
 
     def compile_model(self) -> Tuple[torch.Tensor, torch.Tensor, float]:
         matrix = self.__compile_matrix()
@@ -112,6 +125,17 @@ class SequentialMarkowitz(IntegerQuadraticPolynomial):
         )
         return constant.item()
 
+    def __cast_to_tensor(
+        self,
+        tensor_like: Union[torch.Tensor, np.ndarray],
+        dtype: torch.dtype,
+        device: Union[str, torch.device],
+    ) -> torch.Tensor:
+        if isinstance(tensor_like, torch.Tensor):
+            return tensor_like.to(dtype=dtype, device=device)
+        else:
+            return torch.from_numpy(tensor_like).to(dtype=dtype, device=device)
+
     @property
     def portfolio(self) -> Optional[torch.Tensor]:
         if self.sb_result is None:
@@ -141,8 +165,8 @@ class Markowitz(SequentialMarkowitz):
         expected_return: Union[torch.Tensor, np.ndarray],
         risk_coefficient: float = 1,
         number_of_bits: int = 1,
-        dtype: torch.dtype = torch.float32,
-        device: str = "cpu",
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         covariance = torch.unsqueeze(covariance, 0)
         expected_return = torch.unsqueeze(expected_return, 0)
@@ -160,11 +184,11 @@ class Markowitz(SequentialMarkowitz):
 
     @property
     def covariance(self) -> torch.Tensor:
-        return -(2 / self.risk_coefficient) * self.matrix
+        return -(2 / self.risk_coefficient) * self[2]
 
     @property
     def expected_return(self) -> torch.Tensor:
-        return self.vector
+        return self[1]
 
     @property
     def portfolio(self) -> Optional[torch.Tensor]:

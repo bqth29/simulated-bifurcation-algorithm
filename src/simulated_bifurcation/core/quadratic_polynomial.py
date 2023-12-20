@@ -1,281 +1,264 @@
 """
-.. deprecated:: 1.2.1
-    `IsingPolynomialInterface` will be removed in simulated-bifurcation
-    1.3.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
-    prevision of the addition of multivariate polynomials of an arbitrary
-    degree.
+Implementation of the QuadraticPolynomial class.
+
+QuadraticPolynomial is a utility class to implement multivariate
+quadratic polynomials from SymPy polynomial expressions or tensors.
+They can automatically be casted to Ising model so they can be optimized
+using the Simulated Bifurcation algorithm on a given domain. The available
+domains are:
+
+- spin optimization: variables are either -1 or +1
+- binary optimization: variables are either 0 or 1
+- n-bits integer optimization : variables are all integer values in the range
+    0 to 2^n - 1 (inclusive)
+
+See Also
+--------
+Ising:
+    Interface to the Simulated Bifurcation algorithm used for optimizing
+    user-defined polynomial.
 
 """
 
-
-import warnings
-from abc import ABC, abstractmethod
-from typing import Iterable, List, Optional, Tuple, Union, final
+import re
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
 
-from ..ising_core import IsingCore
+from ..polynomial import Polynomial, PolynomialLike
+from .ising import Ising
+
+INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
+DOMAIN_ERROR = ValueError(
+    f'Input type must be one of "spin" or "binary", or be a string starting'
+    f'with "int" and be followed by a positive integer.\n'
+    f"More formally, it should match the following regular expression.\n"
+    f"{INTEGER_REGEX}\n"
+    f'Examples: "int7", "int42", ...'
+)
 
 
-class BaseMultivariateQuadraticPolynomial(ABC):
+class QuadraticPolynomialError(ValueError):
+    def __init__(self, degree: int) -> None:
+        super().__init__(f"Expected a degree 2 polynomial, got {degree}.")
 
+
+class QuadraticPolynomial(Polynomial):
     """
-    Abstract class to implement an order two multivariate polynomial that can
-    be translated as an equivalent Ising problem to be solved with the
-    Simulated Bifurcation algorithm.
+    Internal implementation of a multivariate quadratic polynomial.
 
-    The polynomial is the combination of a quadratic and a linear form plus a
-    constant term:
+    A multivariate quadratic polynomial is the sum of a quadratic form and a
+    linear form plus a constant term: `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`.
+    In matrix notation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
+    square matrix, `l` a vector and `c` a constant.
 
-    `ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
+    Multivariate quadratic polynomials are a common interface to express several
+    optimization problems defined of different domains including:
 
-    where `Q` is a square matrix, `l` a vector a `c` a constant.
+    - spin optimization: variables are either -1 or +1
+    - binary optimization: variables are either 0 or 1
+    - n-bits integer optimization : variables are all integer values in the range
+      0 to 2^n - 1 (inclusive)
+
+    A multivariate quadratic polynomial defined on a given domain can be casted to
+    an equivalent Ising model and thus optimized using the Simulated Bifurcation
+    algorithm. The notion of equivalence means that finding the ground state of this
+    Ising model is strictly equivalent to finding the vector solution that
+    minimizes/maximizes the original polynomial when converted back to the original
+    domain (for Ising optimization is in spins).
+
+    Parameters
+    ----------
+    polynomial : PolynomialLike
+        Source data of the multivariate quadratic polynomial to optimize. It can
+        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        If tensors/arrays are provided, the monomial degree associated to
+        the coefficients is the number of dimensions of the tensor/array,
+        and all dimensions must be equal. The quadratic tensor must be square
+        and symmetric and is mandatory. The linear tensor must be 1-dimensional
+        and the constant term can either be a float/int or a 0-dimensional tensor.
+        Both are optional. Tensors can be passed in an arbitrary order.
+
+    Keyword-Only Parameters
+    -----------------------
+    dtype : torch.dtype, default=torch.float32
+        Data-type used for the polynomial data.
+    device : str | torch.device, default="cpu"
+        Device on which the polynomial data is defined.
+
+    Examples
+    --------
+    (Option 1) Instantiate a polynomial from tensors
+
+      >>> Q = torch.tensor([[1, -2],
+      ...                   [0, 3]])
+      >>> poly = QuadraticPolynomial(Q)
+
+    (Option 2) Instantiate a polynomial from a SymPy expression
+
+      >>> x, y = sympy.symbols("x y")
+      >>> expression = sympy.poly(x**2 - 2 * x * y + 3 * y**2)
+      >>> poly = QuadraticPolynomial(expression)
+
+    Maximize the polynomial over {0, 1} x {0, 1}
+
+      >>> best_vector, best_value = poly.maximize(domain="binary")
+      >>> best_vector
+      tensor([0, 1])
+      >>> best_value
+      tensor(3)
+
+    Return all the solutions found using 42 agents
+
+      >>> best_vectors, best_values = poly.maximize(
+      ...      agents=42, best_only=False
+      ... )
+      >>> best_vectors.shape  # (agents, dimension of the instance)
+      (42, 2)
+      >>> best_values.shape  # (agents,)
+      (42,)
+
+    Evaluate the polynomial at a single point
+
+      >>> point = torch.tensor([1, 1], dtype=torch.float32)
+      >>> poly(point)
+      tensor(2)
+
+    Evaluate the polynomial at several points simultaneously
+
+      >>> points = torch.tensor(
+      ...     [[0, 0], [0, 1], [1, 0], [1, 1]],
+      ...     dtype=torch.float32,
+      ... )
+      >>> poly(points)
+      tensor([0, 3, 1, 2])
+
+    Migrate the polynomial to the GPU for faster computation
+
+      >>> poly.to(device="cuda")
+
+    Maximize this polynomial over {0, 1, ..., 14, 15} x {0, 1, ..., 14, 15}
+    (outputs are located on the GPU)
+
+      >>> best_vector, best_value = poly.maximize(domain="int4)
+      >>> best_vector
+      tensor([ 0., 15.], device='cuda:0')
+      >>> best_value
+      tensor(675., device='cuda:0')
+
+    Evaluate this polynomial at a given point
+
+      >>> point = torch.tensor([12, 7], dtype=torch.float32)
+      >>> point = point.to(device="cuda")  # send tensor to GPU
+      >>> poly(point)  # (output is located on GPU)
+      tensor(123., device='cuda:0')
+
     """
 
     def __init__(
         self,
-        matrix: Union[torch.Tensor, np.ndarray],
-        vector: Union[torch.Tensor, np.ndarray, None] = None,
-        constant: Union[int, float, None] = None,
-        accepted_values: Union[torch.Tensor, np.ndarray, List[int], None] = None,
-        dtype: torch.dtype = torch.float32,
-        device: Union[str, torch.device] = "cpu",
+        *polynomial_like: PolynomialLike,
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
-        """
-        Parameters
-        ----------
-        matrix : Tensor | ndarray
-            the square matrix that manages the order-two terms in the
-            polynomial (quadratic form matrix).
-        vector : Tensor | ndarray | None, optional
-            the vector that manages the order-one terms in the polynomial
-            (linear form vector). `None` means no vector (default is `None`)
-        constant : float | int | None, optional
-            the constant term of the polynomial. `None` means no constant term
-            (default is `None`)
-        accepted_values : Tensor | ndarray | List[int] | None, optional
-            the values accepted as input values of the polynomial. Input with
-            wrong values lead to a `ValueError` when evaluating the
-            polynomial. `None` means no restriction in input values
-            (default is `None`)
-        dtype : torch.dtype, optional
-            the dtype used to encode polynomial's coefficients (default is
-            `float32`)
-        device : str | torch.device, optional
-            the device on which to perform the computations of the Simulated
-            Bifurcation algorithm (default `"cpu"`)
-        """
-        self.__check_device(device)
-        self.__init_matrix(matrix, dtype, device)
-        self.__init_vector(vector, dtype, device)
-        self.__init_constant(constant, dtype, device)
-        if accepted_values is not None:
-            self.__accepted_values = torch.tensor(
-                accepted_values, dtype=dtype, device=device
-            )
-        else:
-            self.__accepted_values = None
+        super().__init__(*polynomial_like, dtype=dtype, device=device)
         self.sb_result = None
+        if self.degree != 2:
+            raise QuadraticPolynomialError(self.degree)
 
-    @property
-    def matrix(self) -> torch.Tensor:
-        return self.__matrix
-
-    @property
-    def vector(self) -> torch.Tensor:
-        return self.__vector
-
-    @property
-    def constant(self) -> torch.Tensor:
-        return self.__constant
-
-    @property
-    def dimension(self) -> int:
-        return self.__dimension
-
-    @property
-    def dtype(self) -> torch.dtype:
-        return self.__matrix.dtype
-
-    @property
-    def device(self) -> torch.device:
-        return self.__matrix.device
-
-    @final
-    def __call__(
-        self,
-        value: Union[torch.Tensor, np.ndarray],
-        /,
-        *,
-        input_values_check: bool = True,
-    ) -> torch.Tensor:
+    def __call__(self, value: Union[torch.Tensor, np.ndarray]) -> torch.Tensor:
         if not isinstance(value, torch.Tensor):
             try:
                 value = torch.tensor(value, dtype=self.dtype, device=self.device)
             except Exception as err:
-                raise TypeError(f"Input value cannot be cast to Tensor.") from err
+                raise TypeError("Input value cannot be cast to Tensor.") from err
 
-        if (
-            input_values_check
-            and self.__accepted_values is not None
-            and torch.any(torch.isin(value, self.__accepted_values, invert=True))
-        ):
-            raise ValueError(
-                f"Input values must all belong to {self.__accepted_values.tolist()}."
-            )
-
-        if value.shape[-1] != self.dimension:
+        if value.shape[-1] != self.n_variables:
             raise ValueError(
                 f"Size of the input along the last axis should be "
-                f"{self.dimension}, it is {value.shape[-1]}."
+                f"{self.n_variables}, it is {value.shape[-1]}."
             )
 
         quadratic_term = torch.nn.functional.bilinear(
             value,
             value,
-            torch.unsqueeze(self.matrix, 0),
+            torch.unsqueeze(self[2], 0),
         )
-        affine_term = value @ self.vector + self.constant
+        affine_term = value @ self[1] + self[0]
         evaluation = torch.squeeze(quadratic_term, -1) + affine_term
         return evaluation
 
-    @final
-    def __getitem__(self, coefficient: int) -> Union[torch.Tensor, float]:
-        if coefficient == 0:
-            return self.constant
-        if coefficient == 1:
-            return self.vector
-        if coefficient == 2:
-            return self.matrix
-        raise ValueError("Only accepts 0, 1 or 2 as arguments.")
-
-    @final
-    def __len__(self) -> int:
-        return self.__dimension
-
-    @staticmethod
-    def __check_device(device: Union[str, torch.device]):
-        if isinstance(device, torch.device):
-            device = device.type
-        elif not isinstance(device, str):
-            raise TypeError(
-                f"device should a string or a torch.device, received {device}."
-            )
-        if "cuda" in device and not torch.cuda.is_available():
-            raise RuntimeError(
-                "CUDA is not available, the SB algorithm cannot be run on GPU.\n"
-                "See https://pytorch.org/get-started/locally/ for further information"
-                "about installing with CUDA support."
-            )  # pragma: no cover
-
-    def __init_matrix(
-        self, matrix: Iterable, dtype: torch.dtype, device: Union[str, torch.device]
-    ) -> None:
-        tensor_matrix = self._cast_matrix_to_tensor(matrix, dtype, device)
-        self.__check_square_matrix(tensor_matrix)
-        self.__matrix = tensor_matrix
-        self.__dimension = tensor_matrix.shape[0]
-
-    def __init_vector(
-        self, vector: Iterable, dtype: torch.dtype, device: Union[str, torch.device]
-    ) -> None:
-        tensor_vector = self._cast_vector_to_tensor(vector, dtype, device)
-        self.__check_vector_shape(tensor_vector)
-        self.__vector = tensor_vector
-
-    def __init_constant(
-        self,
-        constant: Union[float, int, None],
-        dtype: torch.dtype,
-        device: Union[str, torch.device],
-    ) -> None:
-        self.__constant = self._cast_constant_to_scalar_tensor(constant, dtype, device)
-
-    @staticmethod
-    def _cast_matrix_to_tensor(
-        matrix: Iterable, dtype: torch.dtype, device: Union[str, torch.device]
-    ) -> torch.Tensor:
-        if isinstance(matrix, torch.Tensor):
-            return matrix.to(dtype=dtype, device=device)
-        try:
-            return torch.tensor(matrix, dtype=dtype, device=device)
-        except Exception as err:
-            raise TypeError("Matrix cannot be cast to tensor.") from err
-
-    def _cast_vector_to_tensor(
-        self,
-        vector: Optional[Iterable],
-        dtype: torch.dtype,
-        device: Union[str, torch.device],
-    ) -> torch.Tensor:
-        if vector is None:
-            return torch.zeros(self.dimension, dtype=dtype, device=device)
-        if isinstance(vector, torch.Tensor):
-            return torch.squeeze(vector).to(dtype=dtype, device=device)
-        try:
-            return torch.squeeze(torch.tensor(vector, dtype=dtype, device=device))
-        except Exception as err:
-            raise TypeError("Vector cannot be cast to tensor.") from err
-
-    @staticmethod
-    def _cast_constant_to_scalar_tensor(
-        constant: Union[float, int, None],
-        dtype: torch.dtype,
-        device: Union[str, torch.device],
-    ) -> torch.Tensor:
-        if constant is None:
-            return torch.tensor(0.0, dtype=dtype, device=device)
-        try:
-            return torch.tensor(float(constant), dtype=dtype, device=device)
-        except Exception as err:
-            raise TypeError("Constant cannot be cast to scalar tensor.") from err
-
-    @staticmethod
-    def __check_square_matrix(matrix: torch.Tensor) -> None:
-        if matrix.ndim != 2:
-            raise ValueError(f"Matrix requires two dimension, got {matrix.ndim}.")
-        if matrix.shape[0] != matrix.shape[1]:
-            raise ValueError("Matrix must be square.")
-
-    def __check_vector_shape(self, vector: torch.Tensor) -> None:
-        allowed_shapes = [(self.dimension,), (self.dimension, 1), (1, self.dimension)]
-        if vector.shape not in allowed_shapes:
-            raise ValueError(
-                f"Vector must be of size {self.dimension}, got {vector.shape}."
-            )
-
-    @final
-    def to(
-        self,
-        device: Optional[Union[str, torch.device]] = None,
-        dtype: Optional[torch.dtype] = None,
-    ) -> None:
-        args = {}
-        if device is not None:
-            args["device"] = device
-        if dtype is not None:
-            args["dtype"] = dtype
-        self.__matrix = self.__matrix.to(**args)
-        self.__vector = self.__vector.to(**args)
-        self.__constant = self.__constant.to(**args)
-
-    @abstractmethod
-    def to_ising(self) -> IsingCore:
+    def to_ising(self, domain: str) -> Ising:
         """
         Generate an equivalent Ising model of the problem.
         The notion of equivalence means that finding the ground
         state of this new model is strictly equivalent to find
         the ground state of the original problem.
 
+        Parameters
+        ----------
+        domain : str
+            Domain over which the optimization is done.
+
+            - "spin" : Optimize the polynomial over vectors whose entries are
+              in {-1, 1}.
+            - "binary" : Optimize the polynomial over vectors whose entries are
+              in {0, 1}.
+            - "int..." : Optimize the polynomial over vectors whose entries
+              are n-bits non-negative integers, that is integers between 0 and
+              2^n - 1 inclusive. "int..." represents any string starting with
+              "int" and followed by a positive integer n, e.g. "int3", "int42".
+
         Returns
         -------
-        IsingCore
-        """
-        raise NotImplementedError
+        Ising
+            The equivalent Ising model to optimize with the Simulated
+            Bifurcation algorithm.
 
-    @abstractmethod
-    def convert_spins(self, ising: IsingCore) -> Optional[torch.Tensor]:
+        Raises
+        ------
+        ValueError
+            If `domain` is not one of {"spin", "binary", "int..."}, where
+            "int..." designates any string starting with "int" and followed by
+            a positive integer, or more formally, any string matching the
+            following regular expression: ^int[1-9][0-9]*$.
+
+        """
+        if domain == "spin":
+            return Ising(-2 * self[2], self[1], self.dtype, self.device)
+        if domain == "binary":
+            symmetrical_matrix = Ising.symmetrize(self[2])
+            J = -0.5 * symmetrical_matrix
+            h = 0.5 * self[1] + 0.5 * symmetrical_matrix @ torch.ones(
+                self.n_variables, dtype=self.dtype, device=self.device
+            )
+            return Ising(J, h, self.dtype, self.device)
+        if INTEGER_REGEX.match(domain) is None:
+            raise DOMAIN_ERROR
+        number_of_bits = int(domain[3:])
+        symmetrical_matrix = Ising.symmetrize(self[2])
+        integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
+            self.n_variables, number_of_bits, device=self.device
+        )
+        J = (
+            -0.5
+            * integer_to_binary_matrix
+            @ symmetrical_matrix
+            @ integer_to_binary_matrix.t()
+        )
+        h = 0.5 * integer_to_binary_matrix @ self[
+            1
+        ] + 0.5 * integer_to_binary_matrix @ self[
+            2
+        ] @ integer_to_binary_matrix.t() @ torch.ones(
+            (self.n_variables * number_of_bits),
+            dtype=self.dtype,
+            device=self.device,
+        )
+        return Ising(J, h, self.dtype, self.device)
+
+    def convert_spins(self, ising: Ising, domain: str) -> Optional[torch.Tensor]:
         """
         Retrieves information from the optimized equivalent Ising model.
         Returns the best found vector if `ising.ground_state` is not `None`.
@@ -284,17 +267,49 @@ class BaseMultivariateQuadraticPolynomial(ABC):
         Parameters
         ----------
         ising : IsingCore
-            Equivalent Ising model of the problem.
+            Equivalent Ising model to optimized with the Simulated
+            Bifurcation algorithm.
+        domain : str
+            Domain over which the optimization is done.
+
+            - "spin" : Optimize the polynomial over vectors whose entries are
+              in {-1, 1}.
+            - "binary" : Optimize the polynomial over vectors whose entries are
+              in {0, 1}.
+            - "int..." : Optimize the polynomial over vectors whose entries
+              are n-bits non-negative integers, that is integers between 0 and
+              2^n - 1 inclusive. "int..." represents any string starting with
+              "int" and followed by a positive integer n, e.g. "int3", "int42".
 
         Returns
         -------
         Tensor
-        """
-        raise NotImplementedError
 
-    @final
+        Raises
+        ------
+        ValueError
+            If `domain` is not one of {"spin", "binary", "int..."}, where
+            "int..." designates any string starting with "int" and followed by
+            a positive integer, or more formally, any string matching the
+            following regular expression: ^int[1-9][0-9]*$.
+        """
+        if ising.computed_spins is None:
+            return None
+        if domain == "spin":
+            return ising.computed_spins
+        if domain == "binary":
+            return (ising.computed_spins + 1) / 2
+        if INTEGER_REGEX.match(domain) is None:
+            raise DOMAIN_ERROR
+        number_of_bits = int(domain[3:])
+        integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
+            self.n_variables, number_of_bits, device=self.device
+        )
+        return 0.5 * integer_to_binary_matrix.t() @ (ising.computed_spins + 1)
+
     def optimize(
         self,
+        domain: str,
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
@@ -386,9 +401,9 @@ class BaseMultivariateQuadraticPolynomial(ABC):
         Tensor
         """
         if minimize:
-            ising_equivalent = self.to_ising()
+            ising_equivalent = self.to_ising(domain)
         else:
-            ising_equivalent = -self.to_ising()
+            ising_equivalent = -self.to_ising(domain)
         ising_equivalent.minimize(
             agents,
             max_steps,
@@ -400,8 +415,8 @@ class BaseMultivariateQuadraticPolynomial(ABC):
             convergence_threshold=convergence_threshold,
             timeout=timeout,
         )
-        self.sb_result = self.convert_spins(ising_equivalent)
-        result = self.sb_result.t()
+        self.sb_result = self.convert_spins(ising_equivalent, domain)
+        result = self.sb_result.t().to(dtype=self.dtype)
         evaluation = self(result)
         if best_only:
             i_best = torch.argmin(evaluation) if minimize else torch.argmax(evaluation)
@@ -409,9 +424,9 @@ class BaseMultivariateQuadraticPolynomial(ABC):
             evaluation = evaluation[i_best]
         return result, evaluation
 
-    @final
     def minimize(
         self,
+        domain: str,
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
@@ -499,6 +514,7 @@ class BaseMultivariateQuadraticPolynomial(ABC):
         Tensor
         """
         return self.optimize(
+            domain,
             agents,
             max_steps,
             best_only,
@@ -512,9 +528,9 @@ class BaseMultivariateQuadraticPolynomial(ABC):
             timeout=timeout,
         )
 
-    @final
     def maximize(
         self,
+        domain: str,
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
@@ -601,6 +617,7 @@ class BaseMultivariateQuadraticPolynomial(ABC):
         Tensor
         """
         return self.optimize(
+            domain,
             agents,
             max_steps,
             best_only,
@@ -614,25 +631,29 @@ class BaseMultivariateQuadraticPolynomial(ABC):
             timeout=timeout,
         )
 
+    @staticmethod
+    def __integer_to_binary_matrix(
+        dimension: int, number_of_bits: int, device: Union[str, torch.device]
+    ) -> torch.Tensor:
+        """
+        Generates a matrix to convert a binary quadratic multivariate polynomial
+        to an n-bits integer polynomial.
 
-class IsingPolynomialInterface(BaseMultivariateQuadraticPolynomial, ABC):
+        Parameters
+        ----------
+        dimension : int
+            Dimension of the polynomial.
+        number_of_bits : int
+            Number of bits to encode the integer values.
+        device : str | torch.device
+            Device on which to perform the computations.
 
-    """
-    .. deprecated:: 1.2.1
-        `IsingPolynomialInterface` will be removed in simulated-bifurcation
-        1.3.0, it is replaced by `BaseMultivariateQuadraticPolynomial` in
-        prevision of the addition of multivariate polynomials of an
-        arbitrary degree.
-
-    """
-
-    def __init__(self, *args, **kwargs) -> None:
-        # 2023-10-03, 1.2.1
-        warnings.warn(
-            "`IsingPolynomialInterface` is deprecated as of simulated-bifurcation "
-            "1.2.1, and will be removed in simulated-bifurcation 1.3.0. Please use "
-            "`BaseQuadraticMultivariatePolynomial` instead.",
-            DeprecationWarning,
-            stacklevel=3,
-        )
-        super().__init__(*args, **kwargs)
+        Returns
+        -------
+        Tensor
+        """
+        matrix = torch.zeros((dimension * number_of_bits, dimension), device=device)
+        for row in range(dimension):
+            for col in range(number_of_bits):
+                matrix[row * number_of_bits + col][row] = 2.0**col
+        return matrix

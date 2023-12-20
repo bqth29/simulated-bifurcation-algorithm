@@ -4,27 +4,35 @@ on:
   push:
     branches:
     - main
-    - github-actions-test
   pull_request:
     branches:
       - main
     types:
       - opened
       - synchronize
+  workflow_run:
+    workflows: ["lint"]
+    types:
+      - completed
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
+    name: Install and test package on ${{ matrix.os }} for Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Python
+      - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: ${{ matrix.python-version }}
 
       - name: Install package [pip]
         run: |
@@ -41,10 +49,12 @@ jobs:
           coverage json
 
       - name: Metadata check
+        if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
         run: |
           python .github/scripts/metadata_checker
 
       - name: Upload coverage to Codecov
+        if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

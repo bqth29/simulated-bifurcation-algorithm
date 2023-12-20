@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 from src.simulated_bifurcation.models import SequentialMarkowitz
@@ -35,10 +36,18 @@ def test_sequential_markowitz():
     model = SequentialMarkowitz(
         covariances,
         expected_returns,
-        rebalancing_costs,
+        np.array(
+            [
+                [[0.1, 0.0], [0.0, 0.2]],
+                [[0.11, 0.0], [0.0, 0.2]],
+                [[0.05, 0.0], [0.0, 0.4]],
+                [[0.01, 0.0], [0.0, 0.5]],
+            ]
+        ),
         initial_stocks,
         risk_coefficient=1,
         number_of_bits=1,
+        dtype=torch.float32,
     )
 
     assert torch.equal(covariances, model.covariances)
@@ -62,7 +71,7 @@ def test_sequential_markowitz():
                     [0.0, 0.0, 0.0, 0.0, 0.0, 0.50, 0.06, -1.0],
                 ]
             ),
-            model.matrix,
+            model[2],
         )
     )
     assert torch.all(
@@ -70,10 +79,10 @@ def test_sequential_markowitz():
             torch.tensor(
                 [0.5000, 1.0000, 0.5500, 0.5500, 0.7000, 0.5000, 1.4000, 0.2000]
             ),
-            model.vector,
+            model[1],
         )
     )
-    assert torch.equal(torch.tensor(-0.2), model.constant)
+    assert torch.equal(torch.tensor(-0.2), model[0])
 
     model.maximize(agents=128, use_window=False, verbose=False)
     assert (4, 2) == model.portfolio.shape
