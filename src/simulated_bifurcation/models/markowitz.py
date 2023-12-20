@@ -7,6 +7,7 @@ from .abc_model import ABCModel
 
 
 class SequentialMarkowitz(ABCModel):
+
     """
     Implementation of the Markowitz model for the integer
     trading trajectory optimization problem.
@@ -20,18 +21,18 @@ class SequentialMarkowitz(ABCModel):
 
     .. math::
 
-        \hbox{argmax } \sum_{t = 1}^{T} w_{t}^{T} \mu_{t} - \\frac{\gamma}{2}
-        w_{t}^{T} \Sigma_{t} w_{t} - \Delta w_t^T \Lambda_t \Delta w_t
+        \\hbox{argmax } \\sum_{t = 1}^{T} w_{t}^{T} \\mu_{t} - \\frac{\\gamma}{2}
+        w_{t}^{T} \\Sigma_{t} w_{t} - \\Delta w_t^T \\Lambda_t \\Delta w_t
 
     where:
 
     - :math:`1, ..., t, ... T` are the trading decision instants
     - :math:`w_{t}` is the stocks portolio at time :math:`t`. All the stocks
       are integer values.
-    - :math:`\Sigma_{t}` is the assets' covariance matrix at time :math:`t`
-    - :math:`\mu_{t}` is the vector of expected returns at time :math:`t`
-    - :math:`\gamma` is a risk aversion coefficient
-    - :math:`\Lambda_{t} = w_{t} - w_{t - 1}` are the rebalancing transaction costs
+    - :math:`\\Sigma_{t}` is the assets' covariance matrix at time :math:`t`
+    - :math:`\\mu_{t}` is the vector of expected returns at time :math:`t`
+    - :math:`\\gamma` is a risk aversion coefficient
+    - :math:`\\Lambda_{t} = w_{t} - w_{t - 1}` are the rebalancing transaction costs
       resulting from the stock difference between time :math:`t - 1` and :math:`t`
     """
 

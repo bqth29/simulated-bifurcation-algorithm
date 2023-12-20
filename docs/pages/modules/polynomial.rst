@@ -3,14 +3,8 @@ Polynomial
 
 .. automodule:: simulated_bifurcation.polynomial
 
-.. autoclass:: IsingPolynomialInterface
+.. autoclass:: PolynomialMap
     :members:
 
-.. autoclass:: SpinPolynomial
-    :members:
-
-.. autoclass:: BinaryPolynomial
-    :members:
-
-.. autoclass:: IntegerPolynomial
+.. autoclass:: Polynomial
     :members:

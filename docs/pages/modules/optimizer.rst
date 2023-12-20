@@ -6,11 +6,14 @@ Optimizer
 .. autoclass:: SimulatedBifurcationOptimizer
     :members:
 
-.. autoclass:: OptimizerMode
+.. autoclass:: SimulatedBifurcationEngine
     :members:
 
 .. autoclass:: SymplecticIntegrator
     :members:
 
 .. autoclass:: StopWindow
+    :members:
+
+.. autoclass:: Environment
     :members:

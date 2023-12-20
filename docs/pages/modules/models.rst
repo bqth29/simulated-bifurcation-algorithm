@@ -3,6 +3,9 @@ Models
 
 .. automodule:: simulated_bifurcation.models
 
+.. autoclass:: ABCModel
+    :members:
+
 .. autoclass:: Ising
     :members:
 
