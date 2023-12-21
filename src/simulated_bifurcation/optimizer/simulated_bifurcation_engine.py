@@ -4,6 +4,17 @@ import torch
 
 
 class SimulatedBifurcationEngine(Enum):
+
+    """
+    Enum class that gathers the 4 variants of the Simulated Bifurcation
+    algorithm:
+
+    1. Ballistic SB (bSB)
+    2. Discrete SB (dSB)
+    3. Heated ballistic SB (HbSB)
+    4. Heated discrete SB (HdSB)
+    """
+
     bSB = torch.nn.Identity(), False
     dSB = torch.sign, False
     HbSB = torch.nn.Identity(), True

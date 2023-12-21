@@ -16,6 +16,7 @@ dependencies = [
 ]
 
 # optional dependencies
+docs = ["sphinx", "sphinx-rtd-theme", "numpydoc"]
 lint = [
     "black",
     "flake8",
@@ -25,7 +26,7 @@ test = [
     "coverage",
     "pytest",
 ]
-dev = lint + test
+dev = docs + lint + test
 
 
 setuptools.setup(
@@ -47,12 +48,7 @@ setuptools.setup(
         "Intended Audience :: Science/Research",
     ],
     install_requires=dependencies,
-    extras_require={
-        "lint": lint,
-        "test": test,
-        "dev": dev,
-        "all": dev,
-    },
+    extras_require={"lint": lint, "test": test, "dev": dev, "all": dev, "docs": docs},
     python_requires=">=3.8",
     package_dir={"": "src"},
 )

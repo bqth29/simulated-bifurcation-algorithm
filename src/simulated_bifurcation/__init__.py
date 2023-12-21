@@ -4,9 +4,8 @@ Simulated Bifurcation
 
 This package provides:
 
-1. A GPU compatible implementation of the Simulated Bifurcation (SB)
-  algorithm, a quantum physics inspired combinatorial optimization
-  approximation algorithm.
+1. A GPU compatible implementation of the Simulated Bifurcation (SB) algorithm,
+  a quantum physics inspired combinatorial optimization approximation algorithm.
 2. An implementation of several common combinatorial optimization problems.
 3. A polynomial API for further customization.
 
@@ -105,12 +104,15 @@ agents (~2000) is used.
 References
 ----------
 [1] https://en.wikipedia.org/wiki/Ising_model
+
 [2] Hayato Goto et al., "Combinatorial optimization by simulating adiabatic
 bifurcations in nonlinear Hamiltonian systems". Sci. Adv.5, eaav2372(2019).
 DOI:10.1126/sciadv.aav2372
+
 [3] Hayato Goto et al., "High-performance combinatorial optimization based
 on classical mechanics". Sci. Adv.7, eabe7953(2021).
 DOI:10.1126/sciadv.abe7953
+
 [4] Kanao, T., Goto, H. "Simulated bifurcation assisted by thermal
 fluctuation". Commun Phys 5, 153 (2022).
 https://doi.org/10.1038/s42005-022-00929-9
@@ -175,6 +177,7 @@ Create a QUBO instance and minimize it using a GPU to run the SB algorithm
 
 
 from . import models
+from .core import Ising, QuadraticPolynomial
 from .optimizer import ConvergenceWarning, get_env, reset_env, set_env
 from .simulated_bifurcation import build_model, maximize, minimize, optimize
 

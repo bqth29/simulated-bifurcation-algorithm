@@ -76,11 +76,8 @@ def set_env(
     value to `None`. `None` means that the variable is not
     changed in the environment.
 
-    See Also
-    --------
     To set a default dtype and a default device for tensors
-    please use `torch.set_default_dtype` and
-    `torch.set_default_device`.
+    please use `torch.set_default_dtype` and `torch.set_default_device`.
     """
     if time_step is not None:
         ENVIRONMENT.set_time_step(time_step)
