@@ -83,10 +83,72 @@ import simulated_bifurcation as sb
 ```
 
 ```python
-matrix = torch.tensor([[0, 1, 2], [1, 0, -2], [2, -2, 0]])
+matrix = torch.tensor([[1, 1, 2], [0, -1, -2], [-2, 0, 2]])
 vector = torch.tensor([-1, 0, 2])
 constant = 2.0
 ```
+
+The package provides a `polynomial` API to build quadratic multivariate polynomials from such tensors. Four options are possible.
+
+A polynomial can be defined using coefficient tensors or SymPy expressions to define polynomials in a more natural way from mathematical equations.
+
+> The four following code snippets all create equivalent polynomials
+
+1. Using the `QuadraticPolynomial` class
+
+```python
+from simulated_bifurcation.core import QuadraticPolynomial
+```
+
+**With tensors**
+
+```python
+polynomial = QuadraticPolynomial(matrix, vector, constant)
+```
+
+**With a SymPy expression**
+
+```python
+from sympy import poly, symbols
+x, y, z = symbols("x y z")
+expression = poly(
+    x**2 - y**2 + 2 * z**2
+    + x * y + 2 * x * z
+    - 2 * y * z
+    - 2 * z * x
+    - x + 2 * z
+    + 2
+)
+
+polynomial = QuadraticPolynomial(expression)
+```
+
+2. Using the `sb.build_model` function
+
+**With tensors**
+
+```python
+polynomial = sb.build_model(matrix, vector, constant)
+```
+
+**With a SymPy expression**
+
+```python
+from sympy import poly, symbols
+x, y, z = symbols("x y z")
+expression = poly(
+    x**2 - y**2 + 2 * z**2
+    + x * y + 2 * x * z
+    - 2 * y * z
+    - 2 * z * x
+    - x + 2 * z
+    + 2
+)
+
+polynomial = sb.build_model(expression)
+```
+
+The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated input vector.
 
 #### Minimization
 
@@ -101,6 +163,19 @@ binary_value, binary_vector = sb.minimize(matrix, vector, constant, domain='bina
 int_value, int_vector = sb.minimize(matrix, vector, constant, domain='int3')
 ```
 
+Or, using a SymPy expression:
+
+```python
+# Spin minimization
+spin_value, spin_vector = sb.minimize(expression, domain='spin')
+
+# Binary minimization
+binary_value, binary_vector = sb.minimize(expression, domain='binary')
+
+# 3-bits integer minimization
+int_value, int_vector = sb.minimize(expression, domain='int3')
+```
+
 #### Maximization
 
 ```python
@@ -112,6 +187,19 @@ binary_value, binary_vector = sb.maximize(matrix, vector, constant, domain='bina
 
 # 10-bits integer maximization
 int_value, int_vector = sb.maximize(matrix, vector, constant, domain='int10')
+```
+
+Or, using a SymPy expression:
+
+```python
+# Spin minimization
+spin_value, spin_vector = sb.maximize(expression, domain='spin')
+
+# Binary minimization
+binary_value, binary_vector = sb.maximize(expression, domain='binary')
+
+# 3-bits integer minimization
+int_value, int_vector = sb.maximize(expression, domain='int10')
 ```
 
 > For both functions, only the matrix is required, the vector and constant terms are optional.
@@ -229,9 +317,9 @@ A lot of mathematical problems (QUBO, Travelling Salesman Problem, MAXCUT, ...) 
 
 ### Custom models
 
-You are also free to create your own models using our API. Depending on the type of model you wish to implement, you cen create a subclass of one of the `SpinQuadraticPolynomial`, `BinaryQuadraticPolynomial` or `IntegerQuadraticPolynomial` APIs to quickly and efficiently link your custom model to an Ising problem and solve it using the SB algorithm.
+You are also free to create your own models using our API. Depending on the type of model you wish to implement, you can create a subclass of the `ABCModel` class to quickly and efficiently link your custom model to an Ising problem and solve it using the SB algorithm. Such a model must have a `domain` class attribute that set the definition domain of all the instances.
 
-The advantage of doing so is that your model can directly call the `optimize` method that it inherits from the `BaseMultivariateQuadraticPolynomial` interface without having to redefine it.
+The advantage of doing so is that your model can directly call the `optimize` method that it inherits from the `QuadraticPolynomial` interface without having to redefine it.
 
 For instance, here is how the QUBO model was implemented:
 
@@ -239,15 +327,21 @@ For instance, here is how the QUBO model was implemented:
 > $$\sum_{i=1}^{N} \sum_{j=1}^{N} Q_{ij}x_{i}x_{j}$$
 
 ```python
-from simulated_bifurcation import BinaryQuadraticPolynomial
+from simulated_bifurcation.models import ABCModel
 
 
-class QUBO(BinaryQuadraticPolynomial):
+class QUBO(ABCModel):
 
-    def __init__(self, Q, dtype, device) -> None:
-        super().__init__(matrix=Q, vector=None, constant=None,
-            dtype=dtype, device=device)
-        self.Q = self.matrix
+    domain = "binary"
+
+    def __init__(
+        self,
+        Q: Union[torch.Tensor, np.ndarray],
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
+    ) -> None:
+        super().__init__(Q, dtype=dtype, device=device)
+        self.Q = self[2]
 ```
 
 > You can check Andrew Lucas' paper on Ising formulations of NP-complete and NP-hard problems, including all of Karp's 21 NP-complete problems.

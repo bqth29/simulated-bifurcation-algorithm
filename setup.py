@@ -5,12 +5,13 @@ with open("README.md", "r", encoding="utf-8") as readme:
 
 
 # !MDC{set}{package_version = "{version}"}
-package_version = "1.2.1"
+package_version = "1.3.0.dev0"
 
 
 dependencies = [
-    "torch>=2.0.1",
     "numpy",
+    "sympy",
+    "torch>=2.0.1",
     "tqdm",
 ]
 

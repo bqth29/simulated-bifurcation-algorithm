@@ -2,32 +2,33 @@
 Simulated Bifurcation
 =====================
 
-Provides
-  1. GPU compatible implementation of the simulated bifurcation (SB)
+This package provides:
+
+1. A GPU compatible implementation of the Simulated Bifurcation (SB)
   algorithm, a quantum physics inspired combinatorial optimization
   approximation algorithm.
-  2. Implementation of several common combinatorial optimization problems.
-  3. A polynomial API for further customization.
+2. An implementation of several common combinatorial optimization problems.
+3. A polynomial API for further customization.
 
-The simulated bifurcated (SB) algorithm is a randomized approximation
+The Simulated Bifurcation (SB) algorithm is a randomized approximation
 algorithm for combinatorial optimization problems. More specifically, it
 solves the Ising problem, an NP-hard optimization problem which consists
 in finding the ground state of an Ising model. It corresponds to the
-minimization (or equivalently maximization) of a multivariate degree 2
-polynomial over vectors whose entries are in {-1, 1}. Such polynomial is
-the sum of a quadratic form and a linear form plus a constant term :
-`ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`
-or `x.T Q x + l.T x + c` in matrix notation,
-where `Q` is a square matrix, `l` a vector a `c` a constant.
+minimization (or equivalently maximization) of a multivariate quadratic
+polynomial over vectors whose entries are in {-1, 1}. Such polynomial
+is the sum of a quadratic form and a linear form plus a constant term:
+`ΣΣ Q(i,j)x(i)x(j) + Σ l(i)x(i) + c`. In matrix notation, this gives:
+`x.T Q x + l.T x + c`, where `Q` is a square matrix, `l` a vector and
+`c` a constant.
 
 Several common combinatorial optimization problems are reframed as Ising
 problems in the `models` module, e.g.: QUBO, knapsack, Markowitz model...
 Polynomials over vectors whose entries are in {0, 1} or whose entries are
-fixed bit-width integers are also implemented, as well as an abstract
-polynomial class `BaseMultivariateQuadraticPolynomial` for further customization.
+fixed bit-width integers are also implemented, as well as a utility
+polynomial class `QuadraticPolynomial` for further customization.
 
-The docstring examples assume that `torch` (PyTorch) has been imported and
-that simulated_bifurcation has been imported as `sb`:
+The docstring examples assume that `torch` (PyTorch) and `sympy` (SymPy)
+have been imported and that simulated_bifurcation has been imported as `sb`:
 
   >>> import torch
   >>> import simulated_bifurcation as sb
@@ -37,26 +38,22 @@ Code snippets are indicated by three greater-than signs:
   >>> x = 42
   >>> x += 1
 
-.. deprecated:: 1.2.1
-    The functions `sb.optimize`, `sb.minimize`, and `sb.maximize` will be
-    modified in simulated-bifurcation 1.3.0. The `matrix`, `vector`, and
-    `constant` parameters will become positional-only parameters; the other
-    parameters will become keyword-only parameters.
-
-    In simulated-bifurcation 1.3.0, parameters `input_type` will be
-    removed. Use `domain` instead.
-
-    `BinaryPolynomial`, `BinaryQuadraticPolynomial`, `IntegerPolynomial`,
-    `IntegerQuadraticPolynomial`, `SpinPolynomial`, and
-    `SpinQuadraticPolynomial` will be removed in simulated-bifurcation
-    1.3.0. From version 1.3.0 onwards, polynomials will no longer have a
-    definition domain. The domain only needs to be specified when creating
-    an Ising model, and conversely when converting spins back into the
-    original domain.
-
-    `BaseMultivariateQuadraticPolynomial` and `IsingPolynomialInterface`
-    will be removed in simulated-bifurcation 1.3.0. They are replaced by
-    `QuadraticPolynomial`.
+Modules
+-------
+simulated_bifurcation:
+    Module defining high-level routines for a basic usage.
+core:
+    Module of utility models to help define and solve optimization
+    problems with the Simulated Bifurcation algorithm.
+models:
+    Package containing the implementation of several common combinatorial
+    optimization problems.
+optimizer:
+    Provides an implementation of the Simulated Bifurcation algorithm.
+    Serves as a back-end of the `core` module.
+polynomial:
+    Utility classes to define and utilize high-order multivariate
+    polynomials.
 
 Notes
 -----
@@ -76,16 +73,20 @@ For more comprehensive details on reproducibility, refer to the PyTorch
 documentation available at:
 https://pytorch.org/docs/stable/notes/randomness.html.
 
-The original version of the SB algorithm [2] is not implemented since it is
-less efficient than the more recent variants of the SB algorithm described
-in [3] :
-  ballistic SB : Uses the position of the particles for the position-based
-    update of the momentums ; usually faster but less accurate.
-  discrete SB : Uses the sign of the position of the particles for the
-    position-based update of the momentums ; usually slower but more
-    accurate.
+The original version of the SB algorithm [1] is not implemented since
+it is less efficient than the more recent variants of the SB algorithm
+described in [2]:
+
+- ballistic SB : Uses the position of the particles for the
+  position-based update of the momentums ; usually faster but
+  less accurate. Use this variant by setting `ballistic=True`.
+- discrete SB : Uses the sign of the position of the particles for
+  the position-based update of the momentums ; usually slower
+  but more accurate. Use this variant by setting
+  `ballistic=False`.
+
 On top of these two variants, an additional thermal fluctuation term
-can be added in order to help escape local optima [4]. Use this
+can be added in order to help escape local maxima [3]. Use this
 additional term by setting `heated=True`.
 
 The hyperparameters of the SB algorithm which correspond to physical
@@ -117,65 +118,68 @@ https://doi.org/10.1038/s42005-022-00929-9
 Examples
 --------
 Minimize a polynomial over {0, 1} x {0, 1}
->>> matrix = torch.tensor([[1, -2], [0, 3]], dtype=torch.float32)
->>> vector = torch.tensor([3.5, 2.2], dtype=torch.float32)
->>> constant = 3.14
->>> best_vector, best_value = sb.minimize(
-...     matrix, vector, constant, "binary"
-... )
->>> best_vector
-tensor([0., 0.])
->>> best_value
-tensor(3.14)
 
-Instantiate a polynomial over vectors whose entries are 3-bits integers
-({0, 1, 2, ..., 6, 7})
->>> poly = sb.build_model(matrix, vector, constant, "int3")
+  >>> matrix = torch.tensor([[1, -2], [0, 3]], dtype=torch.float32)
+  >>> vector = torch.tensor([3.5, 2.2], dtype=torch.float32)
+  >>> constant = 3.14
+  >>> best_vector, best_value = sb.minimize(
+  ...     matrix, vector, constant, domain="binary"
+  ... )
+  >>> best_vector
+  tensor([0., 0.])
+  >>> best_value
+  tensor(3.14)
+
+Define an equivalent polynomial with a SymPy polynomial expression
+for more readability
+
+  >>> x, y = sympy.symbols("x y")
+  >>> expression = sympy.poly(
+  ...     x**2 - 2 * x * y + 3 * y**2
+  ...     + 3.5 * x + 2.2 * y
+  ...     + 3.14
+  ... )
+  >>> poly = sb.build_model(expression)
 
 Maximize the polynomial over vectors whose entries are 3-bits integers
->>> best_vector, best_value = poly.maximize()
->>> best_vector
-tensor([0., 7.])
->>> best_value
-tensor(165.54)
+
+  >>> best_vector, best_value = poly.maximize(domain="int3")
+  >>> best_vector
+  tensor([0., 7.])
+  >>> best_value
+  tensor(165.54)
 
 Evaluate the polynomial at a single point
->>> point = torch.tensor([6, 3], dtype=torch.float32)
->>> poly(point)
-tensor(57.74)
+
+  >>> point = torch.tensor([6, 3], dtype=torch.float32)
+  >>> poly(point)
+  tensor(57.74)
 
 Evaluate the polynomial at several points simultaneously
->>> points = torch.tensor(
-...     [[3, 5], [4, 4], [7, 1], [2, 6]],
-...     dtype=torch.float32,
-... )
->>> poly(points)
-tensor([78.64, 57.94, 67.84, 111.34])
+
+  >>> points = torch.tensor(
+  ...     [[3, 5], [4, 4], [7, 1], [2, 6]],
+  ...     dtype=torch.float32,
+  ... )
+  >>> poly(points)
+  tensor([78.64, 57.94, 67.84, 111.34])
 
 Create a QUBO instance and minimize it using a GPU to run the SB algorithm
->>> qubo = sb.models.QUBO(matrix, device="cuda")
->>> best_vector, best_value = qubo.minimize()  # Output is located on GPU
->>> best_vector
-tensor([0., 0.], device='cuda:0')
+
+  >>> qubo = sb.models.QUBO(matrix, device="cuda")
+  >>> best_vector, best_value = qubo.minimize()  # Output is located on GPU
+  >>> best_vector
+  tensor([0., 0.], device='cuda:0')
 
 """
 
 
 from . import models
-from .environment import get_env, reset_env, set_env
-from .optimizer.simulated_bifurcation_optimizer import ConvergenceWarning
-from .polynomial import (
-    BinaryPolynomial,
-    BinaryQuadraticPolynomial,
-    IntegerPolynomial,
-    IntegerQuadraticPolynomial,
-    SpinPolynomial,
-    SpinQuadraticPolynomial,
-)
+from .optimizer import ConvergenceWarning, get_env, reset_env, set_env
 from .simulated_bifurcation import build_model, maximize, minimize, optimize
 
 reset_env()
 
 
 # !MDC{set}{__version__ = "{version}"}
-__version__ = "1.2.1"
+__version__ = "1.3.0.dev0"

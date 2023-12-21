@@ -3,15 +3,17 @@ from typing import Dict, List, Optional, Union
 import torch
 from numpy import sum
 
-from ..polynomial import SpinQuadraticPolynomial
+from .abc_model import ABCModel
 
 
-class NumberPartitioning(SpinQuadraticPolynomial):
+class NumberPartitioning(ABCModel):
 
     """
     A solver that separates a set of numbers into two subsets, the
     respective sums of which are as close as possible.
     """
+
+    domain = "spin"
 
     def __init__(
         self,
@@ -24,12 +26,7 @@ class NumberPartitioning(SpinQuadraticPolynomial):
             -1, 1
         )
         super().__init__(
-            tensor_numbers @ tensor_numbers.t(),
-            None,
-            None,
-            dtype,
-            device,
-            silence_deprecation_warning=True,
+            tensor_numbers @ tensor_numbers.t(), dtype=dtype, device=device
         )
 
     @property
@@ -46,7 +43,7 @@ class NumberPartitioning(SpinQuadraticPolynomial):
 
         left_subset = []
         right_subset = []
-        for elt in range(len(self)):
+        for elt in range(self.n_variables):
             if best_vector[elt].item() > 0:
                 left_subset.append(self.numbers[elt])
             else:

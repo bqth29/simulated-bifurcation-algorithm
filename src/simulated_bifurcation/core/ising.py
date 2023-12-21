@@ -1,16 +1,20 @@
 """
-Implementation of the IsingCore class.
+Implementation of the Ising class.
 
-IsingCore is an interface to the SB algorithm and is used for implementing
-user-defined polynomial types. See models.Ising for an implementation of
-the Ising model which behaves like other models and polynomials.
+Ising is an interface to the Simulated Bifurcation algorithm and is
+used for optimizing user-defined polynomial. See models.Ising for
+an implementation of the Ising model which behaves like other models
+and polynomials.
 
 See Also
 --------
 models.Ising:
     Implementation of the Ising model which behaves like other models and
     polynomials.
-BaseMultivariateQuadraticPolynomial: Abstract multivariate polynomial class.
+QuadraticPolynomial:
+    Class to implement multivariate quadratic polynomials from SymPy
+    polynomial expressions or tensors that can be casted to Ising model
+    for Simulated Bifurcation algorithm compatibility purposes.
 
 """
 
@@ -20,13 +24,13 @@ from typing import Optional, TypeVar, Union
 import torch
 from numpy import ndarray
 
-from .optimizer import OptimizerMode, SimulatedBifurcationOptimizer
+from ..optimizer import SimulatedBifurcationEngine, SimulatedBifurcationOptimizer
 
 # Workaround because `Self` type is only available in Python >= 3.11
-SelfIsingCore = TypeVar("SelfIsingCore", bound="IsingCore")
+SelfIsing = TypeVar("SelfIsing", bound="Ising")
 
 
-class IsingCore:
+class Ising:
 
     """
     Internal implementation of the Ising model.
@@ -100,7 +104,7 @@ class IsingCore:
     def __len__(self) -> int:
         return self.dimension
 
-    def __neg__(self) -> SelfIsingCore:
+    def __neg__(self) -> SelfIsing:
         return self.__class__(-self.J, -self.h, self.dtype, self.device)
 
     def __init_from_tensor(
@@ -121,7 +125,7 @@ class IsingCore:
 
     def clip_vector_to_tensor(self) -> torch.Tensor:
         """
-        Gather `self.matrix` and `self.vector` into a single matrix.
+        Gather `self.J` and `self.h` into a single matrix.
 
         The output matrix describes an equivalent Ising model in dimension
         `self.dimension + 1` with no linear term.
@@ -246,7 +250,8 @@ class IsingCore:
         timeout: Optional[float] = None,
     ) -> None:
         """
-        Minimize the energy of the Ising model using the SB algorithm.
+        Minimize the energy of the Ising model using the Simulated Bifurcation
+        algorithm.
 
         Parameters
         ----------
@@ -305,13 +310,14 @@ class IsingCore:
         within `max_steps` iterations, a warning is logged in the console.
         This is just an indication however; the returned vectors may still
         be of good quality. Solutions to this warning include:
-            - increasing the time step in the SB algorithm (may decrease
-                numerical stability), see the `set_env` function.
-            - increasing `max_steps` (at the expense of runtime).
-            - changing the values of `ballistic` and `heated` to use
-                different variants of the SB algorithm.
-            - changing the values of some hyperparameters corresponding to
-                physical constants (advanced usage, see Other Parameters).
+
+        - increasing the time step in the SB algorithm (may decrease
+          numerical stability), see the `set_env` function.
+        - increasing `max_steps` (at the expense of runtime).
+        - changing the values of `ballistic` and `heated` to use
+          different variants of the SB algorithm.
+        - changing the values of some hyperparameters corresponding to
+          physical constants (advanced usage, see Other Parameters).
 
         Warnings
         --------
@@ -338,21 +344,26 @@ class IsingCore:
         models.Ising:
             Implementation of the Ising model which behaves like other
             models and polynomials.
-        BaseMultivariateQuadraticPolynomial: Abstract multivariate polynomial class.
+        QuadraticPolynomial:
+            Class to implement multivariate quadratic polynomials from SymPy
+            polynomial expressions or tensors that can be casted to Ising model
+            for Simulated Bifurcation algorithm compatibility purposes.
 
         Notes
         -----
         The original version of the SB algorithm [1] is not implemented
         since it is less efficient than the more recent variants of the SB
         algorithm described in [2]:
-            ballistic SB : Uses the position of the particles for the
-                position-based update of the momentums ; usually faster but
-                less accurate. Use this variant by setting
-                `ballistic=True`.
-            discrete SB : Uses the sign of the position of the particles
-                for the position-based update of the momentums ; usually
-                slower but more accurate. Use this variant by setting
-                `ballistic=False`.
+
+        - ballistic SB : Uses the position of the particles for the
+          position-based update of the momentums ; usually faster but
+          less accurate. Use this variant by setting
+          `ballistic=True`.
+        - discrete SB : Uses the sign of the position of the particles
+          for the position-based update of the momentums ; usually
+          slower but more accurate. Use this variant by setting
+          `ballistic=False`.
+
         On top of these two variants, an additional thermal fluctuation
         term can be added in order to help escape local optima [3]. Use
         this additional term by setting `heated=True`.
@@ -378,16 +389,12 @@ class IsingCore:
         https://doi.org/10.1038/s42005-022-00929-9
 
         """
-        if ballistic:
-            optimizer_mode = OptimizerMode.BALLISTIC
-        else:
-            optimizer_mode = OptimizerMode.DISCRETE
+        engine = SimulatedBifurcationEngine.get_engine(ballistic, heated)
         optimizer = SimulatedBifurcationOptimizer(
             agents,
             max_steps,
             timeout,
-            optimizer_mode,
-            heated,
+            engine,
             verbose,
             sampling_period,
             convergence_threshold,

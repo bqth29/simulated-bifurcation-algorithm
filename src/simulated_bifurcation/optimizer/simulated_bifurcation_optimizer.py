@@ -7,8 +7,8 @@ import torch
 from numpy import minimum
 from tqdm import tqdm
 
-from .optimization_variables import OptimizationVariable
-from .optimizer_mode import OptimizerMode
+from .environment import ENVIRONMENT
+from .simulated_bifurcation_engine import SimulatedBifurcationEngine
 from .stop_window import StopWindow
 from .symplectic_integrator import SymplecticIntegrator
 
@@ -23,7 +23,7 @@ LOGGER.addHandler(CONSOLE_HANDLER)
 
 class ConvergenceWarning(Warning):
     def __str__(self) -> str:
-        return "No agent has converged. Returned final positions' signs instead."
+        return "No agent has converged. Returned signs of final positions instead."
 
 
 class SimulatedBifurcationOptimizer:
@@ -34,7 +34,8 @@ class SimulatedBifurcationOptimizer:
     Ising problems. The spins dynamics is simulated using
     a first order symplectic integrator.
 
-    There are different version of the SB algorithm:
+    There are 4 different version of the SB algorithm:
+
     - the ballistic Simulated Bifurcation (bSB) which uses the particles'
     position for the matrix computations (usually faster but less accurate)
     - the discrete Simulated Bifurcation (dSB) which uses the particles'
@@ -60,6 +61,7 @@ class SimulatedBifurcationOptimizer:
     also slightly increases the computation time. In the end, only the best
     spin vector (energy-wise) is kept and used as the new Ising model's
     ground state.
+
     """
 
     def __init__(
@@ -67,25 +69,24 @@ class SimulatedBifurcationOptimizer:
         agents: int,
         max_steps: Optional[int],
         timeout: Optional[float],
-        mode: OptimizerMode,
-        heated: bool,
+        engine: SimulatedBifurcationEngine,
         verbose: bool,
         sampling_period: int,
         convergence_threshold: int,
     ) -> None:
         # Optimizer setting
-        self.mode = mode
+        self.engine = engine
         self.window = None
         self.symplectic_integrator = None
-        self.heat_coefficient = OptimizationVariable.HEAT_COEFFICIENT.get()
-        self.heated = heated
+        self.heat_coefficient = ENVIRONMENT.heat_coefficient
+        self.heated = engine.heated
         self.verbose = verbose
         self.start_time = None
         self.simulation_time = None
         # Simulation parameters
-        self.time_step = OptimizationVariable.TIME_STEP.get()
+        self.time_step = ENVIRONMENT.time_step
         self.agents = agents
-        self.pressure_slope = OptimizationVariable.PRESSURE_SLOPE.get()
+        self.pressure_slope = ENVIRONMENT.pressure_slope
         # Stopping criterion parameters
         self.convergence_threshold = convergence_threshold
         self.sampling_period = sampling_period
@@ -137,7 +138,10 @@ class SimulatedBifurcationOptimizer:
 
     def __init_symplectic_integrator(self, matrix: torch.Tensor) -> None:
         self.symplectic_integrator = SymplecticIntegrator(
-            (matrix.shape[0], self.agents), self.mode, matrix.dtype, matrix.device
+            (matrix.shape[0], self.agents),
+            self.engine.activation_function,
+            matrix.dtype,
+            matrix.device,
         )
 
     def __step_update(self) -> None:
@@ -232,7 +236,28 @@ class SimulatedBifurcationOptimizer:
 
     def run_integrator(self, matrix: torch.Tensor, use_window: bool) -> torch.Tensor:
         """
-        Runs the Simulated Bifurcation (SB) algorithm.
+        Runs the Simulated Bifurcation (SB) algorithm. Given an input matrix,
+        the SB algorithm aims at finding the groud state of the Ising model
+        defined from this matrix, i.e. the {-1, +1}-vector that minimizes the
+        Ising energy defined as `-0.5 * ΣΣ J(i,j)x(i)x(j)`, where `J`
+        designates the matrix.
+
+        Parameters
+        ----------
+        matrix : torch.Tensor
+            The matrix that defines the Ising model to optimize.
+        use_window : bool
+            Whether to use a stop window or not to perform early-stopping.
+
+        Returns
+        -------
+        torch.Tensor
+            The optimized spins. The shape is (dimension of the matrix, agents).
+
+        Raises
+        ------
+        ValueError
+            If no stopping criterion was provided, the algorithm will not start.
         """
         if (
             self.max_steps == float("inf")
@@ -254,6 +279,17 @@ class SimulatedBifurcationOptimizer:
         otherwise the actual final spins are returned.
 
         If the stop window was not used, the final spins are returned.
+
+        Parameters
+        ----------
+        spins : torch.Tensor
+            The spins returned by the Simulated Bifurcation algorithm.
+        use_window : bool
+            Whether the stop window was used or not.
+
+        Returns
+        -------
+        torch.Tensor
         """
         if use_window:
             if not self.window.has_bifurcated_spins():
