@@ -138,17 +138,20 @@ class Ising:
         Notes
         -----
         The output matrix is defined as the following block matrix.
-        (            |    )
-        (   self.J   | -h )
-        (____________|____)
-        (    -h.T    |  0 )
+
+            (            |    )
+            (   self.J   | -h )
+            (____________|____)
+            (    -h.T    |  0 )
 
         This matrix describes another Ising model `other` with no linear
         term in dimension `self.dimension + 1`, with the same minimal
         energy, and with a one to two correspondence between the ground
         states of the two models defined as follows.
-        {Ground states of `self`}  -> {Ground states of `other`} ~ R^n x R
-                    s             |->     {(s, 1), (-s, -1)}
+
+        Ground states of `self` → Ground states of `other` ~ R^n x R
+
+        s ↦ {(s, 1), (-s, -1)}
 
         """
         tensor = torch.zeros(

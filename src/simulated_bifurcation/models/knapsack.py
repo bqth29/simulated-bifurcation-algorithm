@@ -41,14 +41,11 @@ class Knapsack(ABCModel):
         as a dictionnary.
 
         Keys:
-        - items : the list of items put in the knapsack (0
-            list if no object)
-        - total_cost : the combined value of the objects in the
-            knapsack (0 if no object)
-        - total_weight : the combined weight of the objects in the
-            knapsack (0 if no object)
-        - status : the optimization status of the model (one of:
-            success, failed or not optimized)
+
+        - items : the list of items put in the knapsack (0 list if no object)
+        - total_cost : the combined value of the objects in the knapsack (0 if no object)
+        - total_weight : the combined weight of the objects in the knapsack (0 if no object)
+        - status : the optimization status of the model (one of: success, failed or not optimized)
         """
         content = {
             "items": [],

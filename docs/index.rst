@@ -23,10 +23,10 @@ Content
    pages/main_features/advanced
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 3
    :caption: Modules
 
-   pages/module/core
+   pages/modules/core
    pages/modules/optimizer
    pages/modules/polynomial
    pages/modules/models

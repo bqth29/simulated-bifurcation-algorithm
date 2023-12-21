@@ -15,5 +15,11 @@ Models
 .. autoclass:: NumberPartitioning
     :members:
 
+.. autoclass:: Knapsack
+    :members:
+
+.. autoclass:: Markowitz
+    :members:
+
 .. autoclass:: SequentialMarkowitz
     :members:

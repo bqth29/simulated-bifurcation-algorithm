@@ -80,7 +80,7 @@ def build_model(
         Shorthands for polynomial creation and optimization.
     polynomial :
         Module providing some polynomial types as well as an abstract
-        polynomial class `BaseMultivariateQuadraticPolynomial`.
+        polynomial class `QuadraticPolynomial`.
     models :
         Module containing the implementation of several common
         combinatorial optimization problems.
@@ -198,18 +198,7 @@ def optimize(
         and symmetric and is mandatory. The linear tensor must be 1-dimensional
         and the constant term can either be a float/int or a 0-dimensional tensor.
         Both are optional. Tensors can be passed in an arbitrary order.
-
-    Returns
-    -------
-    result : ([`agents`], M) Tensor
-        Best vector found, or all the vectors found is `best_only` is
-        False.
-    evaluation : ([`agents`],) Tensor
-        Value of the polynomial at `result`.
-
-    Keyword-Only Parameters
-    -----------------------
-    domain : {"spin", "binary", "int..."}, default="spin"
+    domain : {"spin", "binary", "int..."}, default="spin", keyword-only
         Domain over which the optimization is done.
 
         - "spin" : Optimize the polynomial over vectors whose entries are
@@ -221,56 +210,64 @@ def optimize(
           2^n - 1 inclusive. "int..." represents any string starting with
           "int" and followed by a positive integer n, e.g. "int3", "int42".
 
-    dtype : torch.dtype, default=torch.float32
+    dtype : torch.dtype, default=torch.float32, keyword-only
         Data-type used for running the computations in the SB algorithm.
-    device : str | torch.device, default="cpu"
+    device : str | torch.device, default="cpu", keyword-only
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
         dimensional instances or when running the algorithm with many
         agents). Output tensors are located on this device.
-    agents : int, default=128
+    agents : int, default=128, keyword-only
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
-    max_steps : int, default=10_000
+    max_steps : int, default=10_000, keyword-only
         Number of iterations after which the algorithm is stopped
         regardless of whether convergence has been achieved.
-    best_only : bool, default=True
+    best_only : bool, default=True, keyword-only
         If True, return only the best vector found and the value of the
         polynomial at this vector. Otherwise, returns all the vectors
         found by the SB algorithm and the values of polynomial at these
         points.
-    ballistic : bool, default=False
+    ballistic : bool, default=False, keyword-only
         Whether to use the ballistic or the discrete SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
-    heated : bool, default=False
+    heated : bool, default=False, keyword-only
         Whether to use the heated or non-heated SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
-    minimize : bool, default=True
+    minimize : bool, default=True, keyword-only
         If True, minimizes the polynomial over the specified domain.
         Otherwise, the polynomial is maximized.
-    verbose : bool, default=True
+    verbose : bool, default=True, keyword-only
         Whether to display a progress bar to monitor the progress of the
         algorithm.
-    use_window : bool, default=True
-        Whether to use the window as a stopping criterion: an agent is said
-        to have converged if its energy has not changed over the last
-        `convergence_threshold` energy samplings (done every
-        `sampling_period` steps).
-    sampling_period : int, default=50
+    use_window : bool, default=True, keyword-only
+        Whether to use the window as a stopping criterion. An agent is said
+        to have converged if its energy has not changed over the
+        last `convergence_threshold` energy samplings
+        (done every `sampling_period` steps).
+    sampling_period : int, default=50, keyword-only
         Number of iterations between two consecutive energy samplings by
         the window.
-    convergence_threshold : int, default=50
+    convergence_threshold : int, default=50, keyword-only
         Number of consecutive identical energy samplings considered as a
         proof of convergence by the window.
-    timeout : float | None, default=None
+    timeout : float | None, default=None, keyword-only
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
 
+    Returns
+    -------
+    result : ([`agents`], M) Tensor
+        Best vector found, or all the vectors found is `best_only` is
+        False.
+    evaluation : ([`agents`],) Tensor
+        Value of the polynomial at `result`.
+
     Other Parameters
     ----------------
-    Hyperparameters corresponding to physical constants :
+    Hyperparameters corresponding to physical constants
         These parameters have been fine-tuned (Goto et al.) to give the
         best results most of the time. Nevertheless, the relevance of
         specific hyperparameters may vary depending on the properties of
@@ -287,37 +284,34 @@ def optimize(
 
     Warns
     -----
-    If `use_window` is True and no agent has reached the convergence
-    criterion defined by `sampling_period` and `convergence_threshold`
-    within `max_steps` iterations, a warning is logged in the console.
-    This is just an indication however; the returned vectors may still be
-    of good quality. Solutions to this warning include:
+    Use of Stop Window
+        If `use_window` is True and no agent has reached the convergence
+        criterion defined by `sampling_period` and `convergence_threshold`
+        within `max_steps` iterations, a warning is logged in the console.
+        This is just an indication however; the returned vectors may still be
+        of good quality. Solutions to this warning include
 
-    - increasing the time step in the SB algorithm (may decrease
-      numerical stability), see the `set_env` function.
-    - increasing `max_steps` (at the expense of runtime).
-    - changing the values of `ballistic` and `heated` to use different
-      variants of the SB algorithm.
-    - changing the values of some hyperparameters corresponding to
-      physical constants (advanced usage, see Other Parameters).
+        - increasing the time step in the SB algorithm (may decrease numerical stability), see the `set_env` function.
+        - increasing `max_steps` (at the expense of runtime).
+        - changing the values of `ballistic` and `heated` to use different variants of the SB algorithm.
+        - changing the values of some hyperparameters corresponding to physical constants (advanced usage, see Other Parameters).
 
     Warnings
     --------
-    Approximation algorithm:
+    Approximation algorithm
         The SB algorithm is an approximation algorithm, which implies that
         the returned values may not correspond to global optima. Therefore,
         if some constraints are embedded as penalties in the polynomial,
         that is adding terms that ensure that any global optimum satisfies
         the constraints, the return values may violate these constraints.
-    Non-deterministic behaviour:
+    Non-deterministic behaviour
         The SB algorithm uses a randomized initialization, and this package
         is implemented with a PyTorch backend. To ensure a consistent
-        initialization when running the same script multiple times, use
-        `torch.manual_seed`. However, results may not be reproducible
-        between CPU and GPU executions, even when using identical seeds.
-        Furthermore, certain PyTorch operations are not deterministic.
-        For more comprehensive details on reproducibility, refer to the
-        PyTorch documentation available at:
+        initialization when running the same script multiple times, use `torch.manual_seed`.
+        However, results may not be reproducible between CPU and GPU executions,
+        even when using identical seeds. Furthermore, certain PyTorch operations
+        are not deterministic. For more comprehensive details on reproducibility,
+        refer to the PyTorch documentation available at
         https://pytorch.org/docs/stable/notes/randomness.html.
 
     See Also
@@ -325,7 +319,7 @@ def optimize(
     minimize : Alias for optimize(*args, **kwargs, minimize=True).
     maximize : Alias for optimize(*args, **kwargs, minimize=False).
     build_model : Create a polynomial object.
-    BaseMultivariateQuadraticPolynomial :
+    QuadraticPolynomial :
         Native class to define multivariate quadratic polynomials
         to be used with the SB algorithm.
     models :
@@ -473,7 +467,7 @@ def minimize(
     Parameters
     ----------
     polynomial : PolynomialLike
-        Source data of the multivariate quadratic polynomial to minimize. It can
+        Source data of the multivariate quadratic polynomial to optimize. It can
         be a SymPy polynomial expression or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
         the coefficients is the number of dimensions of the tensor/array,
@@ -481,18 +475,7 @@ def minimize(
         and symmetric and is mandatory. The linear tensor must be 1-dimensional
         and the constant term can either be a float/int or a 0-dimensional tensor.
         Both are optional. Tensors can be passed in an arbitrary order.
-
-    Returns
-    -------
-    result : ([`agents`], M) Tensor
-        Best vector found, or all the vectors found is `best_only` is
-        False.
-    evaluation : ([`agents`],) Tensor
-        Value of the polynomial at `result`.
-
-    Keyword-Only Parameters
-    -----------------------
-    domain : {"spin", "binary", "int..."}, default="spin"
+    domain : {"spin", "binary", "int..."}, default="spin", keyword-only
         Domain over which the optimization is done.
 
         - "spin" : Optimize the polynomial over vectors whose entries are
@@ -504,49 +487,57 @@ def minimize(
           2^n - 1 inclusive. "int..." represents any string starting with
           "int" and followed by a positive integer n, e.g. "int3", "int42".
 
-    dtype : torch.dtype, default=torch.float32
+    dtype : torch.dtype, default=torch.float32, keyword-only
         Data-type used for running the computations in the SB algorithm.
-    device : str | torch.device, default="cpu"
+    device : str | torch.device, default="cpu", keyword-only
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
         dimensional instances or when running the algorithm with many
         agents). Output tensors are located on this device.
-    agents : int, default=128
+    agents : int, default=128, keyword-only
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
-    max_steps : int, default=10_000
+    max_steps : int, default=10_000, keyword-only
         Number of iterations after which the algorithm is stopped
         regardless of whether convergence has been achieved.
-    best_only : bool, default=True
+    best_only : bool, default=True, keyword-only
         If True, return only the best vector found and the value of the
         polynomial at this vector. Otherwise, returns all the vectors
         found by the SB algorithm and the values of polynomial at these
         points.
-    ballistic : bool, default=False
+    ballistic : bool, default=False, keyword-only
         Whether to use the ballistic or the discrete SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
-    heated : bool, default=False
+    heated : bool, default=False, keyword-only
         Whether to use the heated or non-heated SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
-    verbose : bool, default=True
+    verbose : bool, default=True, keyword-only
         Whether to display a progress bar to monitor the progress of the
         algorithm.
-    use_window : bool, default=True
-        Whether to use the window as a stopping criterion: an agent is said
-        to have converged if its energy has not changed over the last
-        `convergence_threshold` energy samplings (done every
-        `sampling_period` steps).
-    sampling_period : int, default=50
+    use_window : bool, default=True, keyword-only
+        Whether to use the window as a stopping criterion. An agent is said
+        to have converged if its energy has not changed over the
+        last `convergence_threshold` energy samplings
+        (done every `sampling_period` steps).
+    sampling_period : int, default=50, keyword-only
         Number of iterations between two consecutive energy samplings by
         the window.
-    convergence_threshold : int, default=50
+    convergence_threshold : int, default=50, keyword-only
         Number of consecutive identical energy samplings considered as a
         proof of convergence by the window.
-    timeout : float | None, default=None
+    timeout : float | None, default=None, keyword-only
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
+
+    Returns
+    -------
+    result : ([`agents`], M) Tensor
+        Best vector found, or all the vectors found is `best_only` is
+        False.
+    evaluation : ([`agents`],) Tensor
+        Value of the polynomial at `result`.
 
     Other Parameters
     ----------------
@@ -567,44 +558,41 @@ def minimize(
 
     Warns
     -----
-    If `use_window` is True and no agent has reached the convergence
-    criterion defined by `sampling_period` and `convergence_threshold`
-    within `max_steps` iterations, a warning is logged in the console.
-    This is just an indication however; the returned vectors may still be
-    of good quality. Solutions to this warning include:
+    Use of Stop Window
+        If `use_window` is True and no agent has reached the convergence
+        criterion defined by `sampling_period` and `convergence_threshold`
+        within `max_steps` iterations, a warning is logged in the console.
+        This is just an indication however; the returned vectors may still be
+        of good quality. Solutions to this warning include
 
-    - increasing the time step in the SB algorithm (may decrease
-      numerical stability), see the `set_env` function.
-    - increasing `max_steps` (at the expense of runtime).
-    - changing the values of `ballistic` and `heated` to use different
-      variants of the SB algorithm.
-    - changing the values of some hyperparameters corresponding to
-      physical constants (advanced usage, see Other Parameters).
+        - increasing the time step in the SB algorithm (may decrease numerical stability), see the `set_env` function.
+        - increasing `max_steps` (at the expense of runtime).
+        - changing the values of `ballistic` and `heated` to use different variants of the SB algorithm.
+        - changing the values of some hyperparameters corresponding to physical constants (advanced usage, see Other Parameters).
 
     Warnings
     --------
-    Approximation algorithm:
+    Approximation algorithm
         The SB algorithm is an approximation algorithm, which implies that
-        the returned values may not correspond to global minima. Therefore,
+        the returned values may not correspond to global optima. Therefore,
         if some constraints are embedded as penalties in the polynomial,
-        that is adding terms that ensure that any global minimum satisfies
+        that is adding terms that ensure that any global optimum satisfies
         the constraints, the return values may violate these constraints.
-    Non-deterministic behaviour:
+    Non-deterministic behaviour
         The SB algorithm uses a randomized initialization, and this package
         is implemented with a PyTorch backend. To ensure a consistent
-        initialization when running the same script multiple times, use
-        `torch.manual_seed`. However, results may not be reproducible
-        between CPU and GPU executions, even when using identical seeds.
-        Furthermore, certain PyTorch operations are not deterministic.
-        For more comprehensive details on reproducibility, refer to the
-        PyTorch documentation available at:
+        initialization when running the same script multiple times, use `torch.manual_seed`.
+        However, results may not be reproducible between CPU and GPU executions,
+        even when using identical seeds. Furthermore, certain PyTorch operations
+        are not deterministic. For more comprehensive details on reproducibility,
+        refer to the PyTorch documentation available at
         https://pytorch.org/docs/stable/notes/randomness.html.
 
     See Also
     --------
     maximize : Maximize a polynomial.
     build_model : Create a polynomial object.
-    BaseMultivariateQuadraticPolynomial :
+    QuadraticPolynomial :
         Native class to define multivariate quadratic polynomials
         to be used with the SB algorithm.
     models :
@@ -742,7 +730,7 @@ def maximize(
     Parameters
     ----------
     polynomial : PolynomialLike
-        Source data of the multivariate quadratic polynomial to maximize. It can
+        Source data of the multivariate quadratic polynomial to optimize. It can
         be a SymPy polynomial expression or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
         the coefficients is the number of dimensions of the tensor/array,
@@ -750,18 +738,7 @@ def maximize(
         and symmetric and is mandatory. The linear tensor must be 1-dimensional
         and the constant term can either be a float/int or a 0-dimensional tensor.
         Both are optional. Tensors can be passed in an arbitrary order.
-
-    Returns
-    -------
-    result : ([`agents`], M) Tensor
-        Best vector found, or all the vectors found is `best_only` is
-        False.
-    evaluation : ([`agents`],) Tensor
-        Value of the polynomial at `result`.
-
-    Keyword-Only Parameters
-    -----------------------
-    domain : {"spin", "binary", "int..."}, default="spin"
+    domain : {"spin", "binary", "int..."}, default="spin", keyword-only
         Domain over which the optimization is done.
 
         - "spin" : Optimize the polynomial over vectors whose entries are
@@ -773,49 +750,57 @@ def maximize(
           2^n - 1 inclusive. "int..." represents any string starting with
           "int" and followed by a positive integer n, e.g. "int3", "int42".
 
-    dtype : torch.dtype, default=torch.float32
+    dtype : torch.dtype, default=torch.float32, keyword-only
         Data-type used for running the computations in the SB algorithm.
-    device : str | torch.device, default="cpu"
+    device : str | torch.device, default="cpu", keyword-only
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
         dimensional instances or when running the algorithm with many
         agents). Output tensors are located on this device.
-    agents : int, default=128
+    agents : int, default=128, keyword-only
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
-    max_steps : int, default=10_000
+    max_steps : int, default=10_000, keyword-only
         Number of iterations after which the algorithm is stopped
         regardless of whether convergence has been achieved.
-    best_only : bool, default=True
+    best_only : bool, default=True, keyword-only
         If True, return only the best vector found and the value of the
         polynomial at this vector. Otherwise, returns all the vectors
         found by the SB algorithm and the values of polynomial at these
         points.
-    ballistic : bool, default=False
+    ballistic : bool, default=False, keyword-only
         Whether to use the ballistic or the discrete SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
-    heated : bool, default=False
+    heated : bool, default=False, keyword-only
         Whether to use the heated or non-heated SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
-    verbose : bool, default=True
+    verbose : bool, default=True, keyword-only
         Whether to display a progress bar to monitor the progress of the
         algorithm.
-    use_window : bool, default=True
-        Whether to use the window as a stopping criterion: an agent is said
-        to have converged if its energy has not changed over the last
-        `convergence_threshold` energy samplings (done every
-        `sampling_period` steps).
-    sampling_period : int, default=50
+    use_window : bool, default=True, keyword-only
+        Whether to use the window as a stopping criterion. An agent is said
+        to have converged if its energy has not changed over the
+        last `convergence_threshold` energy samplings
+        (done every `sampling_period` steps).
+    sampling_period : int, default=50, keyword-only
         Number of iterations between two consecutive energy samplings by
         the window.
-    convergence_threshold : int, default=50
+    convergence_threshold : int, default=50, keyword-only
         Number of consecutive identical energy samplings considered as a
         proof of convergence by the window.
-    timeout : float | None, default=None
+    timeout : float | None, default=None, keyword-only
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
+
+    Returns
+    -------
+    result : ([`agents`], M) Tensor
+        Best vector found, or all the vectors found is `best_only` is
+        False.
+    evaluation : ([`agents`],) Tensor
+        Value of the polynomial at `result`.
 
     Other Parameters
     ----------------
@@ -836,44 +821,41 @@ def maximize(
 
     Warns
     -----
-    If `use_window` is True and no agent has reached the convergence
-    criterion defined by `sampling_period` and `convergence_threshold`
-    within `max_steps` iterations, a warning is logged in the console.
-    This is just an indication however; the returned vectors may still be
-    of good quality. Solutions to this warning include:
+    Use of Stop Window
+        If `use_window` is True and no agent has reached the convergence
+        criterion defined by `sampling_period` and `convergence_threshold`
+        within `max_steps` iterations, a warning is logged in the console.
+        This is just an indication however; the returned vectors may still be
+        of good quality. Solutions to this warning include
 
-    - increasing the time step in the SB algorithm (may decrease
-      numerical stability), see the `set_env` function.
-    - increasing `max_steps` (at the expense of runtime).
-    - changing the values of `ballistic` and `heated` to use different
-      variants of the SB algorithm.
-    - changing the values of some hyperparameters corresponding to
-      physical constants (advanced usage, see Other Parameters).
+        - increasing the time step in the SB algorithm (may decrease numerical stability), see the `set_env` function.
+        - increasing `max_steps` (at the expense of runtime).
+        - changing the values of `ballistic` and `heated` to use different variants of the SB algorithm.
+        - changing the values of some hyperparameters corresponding to physical constants (advanced usage, see Other Parameters).
 
     Warnings
     --------
-    Approximation algorithm:
+    Approximation algorithm
         The SB algorithm is an approximation algorithm, which implies that
-        the returned values may not correspond to global maxima. Therefore,
+        the returned values may not correspond to global optima. Therefore,
         if some constraints are embedded as penalties in the polynomial,
-        that is adding terms that ensure that any global maximum satisfies
+        that is adding terms that ensure that any global optimum satisfies
         the constraints, the return values may violate these constraints.
-    Non-deterministic behaviour:
+    Non-deterministic behaviour
         The SB algorithm uses a randomized initialization, and this package
         is implemented with a PyTorch backend. To ensure a consistent
-        initialization when running the same script multiple times, use
-        `torch.manual_seed`. However, results may not be reproducible
-        between CPU and GPU executions, even when using identical seeds.
-        Furthermore, certain PyTorch operations are not deterministic.
-        For more comprehensive details on reproducibility, refer to the
-        PyTorch documentation available at:
+        initialization when running the same script multiple times, use `torch.manual_seed`.
+        However, results may not be reproducible between CPU and GPU executions,
+        even when using identical seeds. Furthermore, certain PyTorch operations
+        are not deterministic. For more comprehensive details on reproducibility,
+        refer to the PyTorch documentation available at
         https://pytorch.org/docs/stable/notes/randomness.html.
 
     See Also
     --------
     minimize : Minimize a polynomial.
     build_model : Create a polynomial object.
-    BaseMultivariateQuadraticPolynomial :
+    QuadraticPolynomial :
         Native class to define multivariate quadratic polynomials
         to be used with the SB algorithm.
     models :

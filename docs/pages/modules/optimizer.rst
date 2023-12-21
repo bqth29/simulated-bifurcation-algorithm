@@ -14,6 +14,3 @@ Optimizer
 
 .. autoclass:: StopWindow
     :members:
-
-.. autoclass:: Environment
-    :members:
