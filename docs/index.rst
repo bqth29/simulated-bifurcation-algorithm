@@ -26,6 +26,7 @@ Content
    :maxdepth: 4
    :caption: Modules
 
+   pages/module/core
    pages/modules/optimizer
    pages/modules/polynomial
    pages/modules/models
