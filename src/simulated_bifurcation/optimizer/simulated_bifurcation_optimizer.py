@@ -144,7 +144,7 @@ class SimulatedBifurcationOptimizer:
             matrix.device,
         )
 
-    def __step_update(self) -> None:
+    def _step_update(self) -> None:
         self.step += 1
         self.iterations_progress.update()
 
@@ -206,7 +206,7 @@ class SimulatedBifurcationOptimizer:
                 if self.heated:
                     self.__heat(momentum_copy)
 
-                self.__step_update()
+                self._step_update()
                 if use_window and self.__do_sampling:
                     sampled_spins = self.symplectic_integrator.sample_spins()
                     self.window.update(sampled_spins)
