@@ -232,7 +232,7 @@ def test_no_stop_criterion():
         optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
 
 
-def test_hahaha():
+def test_keyboard_interrupt():
     class SimulatedBifurcationOptimizerTest(SimulatedBifurcationOptimizer):
         def _step_update(self) -> None:
             super()._step_update()
