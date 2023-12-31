@@ -9,7 +9,6 @@ class Preprocessing:
         self.h = h.clone()
         self.optimized_spins = torch.zeros(self.J.shape[0])
         self.shifted_indices = list(range(self.J.shape[0]))
-        self.dimension = self.J.shape[0]
 
     def _remove_row(self, index: int):
         self.J = torch.cat((self.J[:index], self.J[index + 1 :]), dim=0)

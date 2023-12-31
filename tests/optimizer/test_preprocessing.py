@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from src.simulated_bifurcation.optimizer import Preprocessing
+from src.simulated_bifurcation.optimizer.preprocessing import Preprocessing
 
 J = torch.tensor(
     [
