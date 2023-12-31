@@ -241,12 +241,12 @@ class Ising:
 
     def minimize(
         self,
+        *,
         agents: int = 128,
         max_steps: int = 10000,
         ballistic: bool = False,
         heated: bool = False,
         verbose: bool = True,
-        *,
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
