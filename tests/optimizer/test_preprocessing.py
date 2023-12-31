@@ -98,15 +98,15 @@ def test_get_first_optimizable_spin():
 def test_delete_index():
     preprocesser = Preprocessing(J, h)
     assert [0, 1, 2] == preprocesser.shifted_indices
-    preprocesser._delete_index(1)
+    preprocesser._drop_index(1)
     assert [0, 2] == preprocesser.shifted_indices
-    preprocesser._delete_index(0)
+    preprocesser._drop_index(0)
     assert [2] == preprocesser.shifted_indices
 
 
 def test_get_original_index():
     preprocesser = Preprocessing(J, h)
-    preprocesser._delete_index(1)
+    preprocesser._drop_index(1)
     assert 0 == preprocesser._get_original_index(0)
     assert 2 == preprocesser._get_original_index(1)
 
