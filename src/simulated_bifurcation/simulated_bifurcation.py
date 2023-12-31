@@ -158,7 +158,7 @@ def build_model(
 
 def optimize(
     *polynomial: PolynomialLike,
-    domain: str = "spin",
+    domain: str,
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
@@ -198,7 +198,7 @@ def optimize(
         and symmetric and is mandatory. The linear tensor must be 1-dimensional
         and the constant term can either be a float/int or a 0-dimensional tensor.
         Both are optional. Tensors can be passed in an arbitrary order.
-    domain : {"spin", "binary", "int..."}, default="spin", keyword-only
+    domain : {"spin", "binary", "int..."}, keyword-only
         Domain over which the optimization is done.
 
         - "spin" : Optimize the polynomial over vectors whose entries are
@@ -436,7 +436,7 @@ def optimize(
 
 def minimize(
     *polynomial: PolynomialLike,
-    domain: str = "spin",
+    domain: str,
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
@@ -475,7 +475,7 @@ def minimize(
         and symmetric and is mandatory. The linear tensor must be 1-dimensional
         and the constant term can either be a float/int or a 0-dimensional tensor.
         Both are optional. Tensors can be passed in an arbitrary order.
-    domain : {"spin", "binary", "int..."}, default="spin", keyword-only
+    domain : {"spin", "binary", "int..."}, keyword-only
         Domain over which the optimization is done.
 
         - "spin" : Optimize the polynomial over vectors whose entries are
@@ -699,7 +699,7 @@ def minimize(
 
 def maximize(
     *polynomial: PolynomialLike,
-    domain: str = "spin",
+    domain: str,
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
@@ -738,7 +738,7 @@ def maximize(
         and symmetric and is mandatory. The linear tensor must be 1-dimensional
         and the constant term can either be a float/int or a 0-dimensional tensor.
         Both are optional. Tensors can be passed in an arbitrary order.
-    domain : {"spin", "binary", "int..."}, default="spin", keyword-only
+    domain : {"spin", "binary", "int..."}, keyword-only
         Domain over which the optimization is done.
 
         - "spin" : Optimize the polynomial over vectors whose entries are
