@@ -22,7 +22,7 @@ class Preprocessing:
         self._remove_column(index)
 
     def _project_coefficients_in_linear_part(self, row_index: int, sign: int):
-        self.h += sign * self.J[row_index]
+        self.h -= sign * self.J[row_index]
 
     def _project_coefficients_and_delete_row_and_column(
         self, spin_index: int, spin_sign: int

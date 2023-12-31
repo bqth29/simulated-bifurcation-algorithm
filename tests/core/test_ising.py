@@ -116,5 +116,5 @@ def test_presolve_solves_all_spins():
     ising = Ising(presolvable_J, presolvable_h)
     ising.minimize(agents=3, presolve=True)
     assert torch.equal(
-        ising.computed_spins, torch.tensor([[-1, -1, -1], [-1, -1, -1], [1, 1, 1]])
+        ising.computed_spins, torch.tensor([[-1, -1, -1], [1, 1, 1], [1, 1, 1]])
     )

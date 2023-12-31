@@ -66,10 +66,10 @@ def test_project_coefficients_in_linear_part():
     preprocesser = Preprocessing(J, h)
     preprocesser._project_coefficients_in_linear_part(1, 1)
     assert torch.equal(preprocesser.J, J)
-    assert torch.equal(preprocesser.h, torch.tensor([3, 1, 2], dtype=torch.float32))
+    assert torch.equal(preprocesser.h, torch.tensor([-1, -1, -6], dtype=torch.float32))
     preprocesser._project_coefficients_in_linear_part(0, -1)
     assert torch.equal(preprocesser.J, J)
-    assert torch.equal(preprocesser.h, torch.tensor([2, -1, -1], dtype=torch.float32))
+    assert torch.equal(preprocesser.h, torch.tensor([0, 1, -3], dtype=torch.float32))
 
 
 def test_project_coefficients_and_delete_row_and_column():
@@ -78,7 +78,7 @@ def test_project_coefficients_and_delete_row_and_column():
     assert torch.equal(
         preprocesser.J, torch.tensor([[1, 2], [2, 1]], dtype=torch.float32)
     )
-    assert torch.equal(preprocesser.h, torch.tensor([-2, -4], dtype=torch.float32))
+    assert torch.equal(preprocesser.h, torch.tensor([4, 4], dtype=torch.float32))
 
 
 def test_get_optimizable_spins():
@@ -129,7 +129,7 @@ def test_set_first_optimal_spin():
         optimizable_preprocesser.J, torch.tensor([[0, 2], [2, 0]], dtype=torch.float32)
     )
     assert torch.equal(
-        optimizable_preprocesser.h, torch.tensor([0.5, -3], dtype=torch.float32)
+        optimizable_preprocesser.h, torch.tensor([1.5, -5], dtype=torch.float32)
     )
     assert torch.equal(
         optimizable_preprocesser.optimized_spins, torch.tensor([-1, 0, 0])
@@ -149,6 +149,6 @@ def test_presolve():
     assert torch.equal(non_optimized_h, h)
     optimizable_preprocesser = Preprocessing(optimizable_J, optimizable_h)
     optimized_spins, optimized_J, optimized_h = optimizable_preprocesser.presolve()
-    assert torch.equal(optimized_spins, torch.tensor([-1, -1, 1]))
+    assert torch.equal(optimized_spins, torch.tensor([-1, 1, 1]))
     assert torch.equal(optimized_J, torch.tensor([]).reshape(0, 0))
     assert torch.equal(optimized_h, torch.tensor([]))
