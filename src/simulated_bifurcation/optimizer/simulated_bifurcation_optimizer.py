@@ -128,9 +128,11 @@ class SimulatedBifurcationOptimizer:
 
     def __init_window(self, matrix: torch.Tensor, use_window: bool) -> None:
         self.window = StopWindow(
-            self.convergence_threshold, (self.verbose and use_window)
+            self.convergence_threshold,
+            matrix,
+            self.agents,
+            (self.verbose and use_window),
         )
-        self.window.reset(matrix, self.agents)
 
     def __init_symplectic_integrator(self, matrix: torch.Tensor) -> None:
         self.symplectic_integrator = SymplecticIntegrator(
@@ -146,7 +148,9 @@ class SimulatedBifurcationOptimizer:
 
     def __check_stop(self, use_window: bool) -> None:
         if use_window and self.__do_sampling:
-            self.run = self.window.must_continue()
+            stored_spins = self.window.get_stored_spins()
+            all_agents_converged = torch.any(torch.eq(stored_spins, 0)).item()
+            self.run = all_agents_converged
             if not self.run:
                 LOGGER.info("Optimizer stopped. Reason: all agents converged.")
                 return
@@ -204,7 +208,13 @@ class SimulatedBifurcationOptimizer:
             self.__step_update()
             if use_window and self.__do_sampling:
                 sampled_spins = self.symplectic_integrator.sample_spins()
-                self.window.update(sampled_spins)
+                not_converged_agents = self.window.update(sampled_spins)
+                self.symplectic_integrator.momentum = (
+                    self.symplectic_integrator.momentum[:, not_converged_agents]
+                )
+                self.symplectic_integrator.position = (
+                    self.symplectic_integrator.position[:, not_converged_agents]
+                )
 
             self.__check_stop(use_window)
 
@@ -288,11 +298,11 @@ class SimulatedBifurcationOptimizer:
         torch.Tensor
         """
         if use_window:
-            if not self.window.has_bifurcated_spins():
+            final_spins = self.window.get_stored_spins()
+            any_converged_agents = torch.any(torch.not_equal(final_spins, 0)).item()
+            if not any_converged_agents:
                 warnings.warn(ConvergenceWarning(), stacklevel=2)
-            final_spins = self.window.get_final_spins()
-            # window_stable_spins[:, torch.all(torch.eq(final_spins, 0), dim=0)] = spins
-            # return final_spins
-            return torch.where(self.window.bifurcated, final_spins, spins)
+            final_spins[:, torch.all(torch.eq(final_spins, 0), dim=0)] = spins
+            return final_spins
         else:
             return spins

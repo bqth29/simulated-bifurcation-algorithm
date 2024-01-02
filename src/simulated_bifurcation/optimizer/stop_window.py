@@ -12,46 +12,45 @@ class StopWindow:
     Allows an early stopping of the iterations and saves computation time.
     """
 
-    def __init__(self, convergence_threshold: int, verbose: bool) -> None:
+    def __init__(
+        self,
+        convergence_threshold: int,
+        ising_tensor: torch.Tensor,
+        n_agents: int,
+        verbose: bool,
+    ) -> None:
         self.__init_convergence_threshold(convergence_threshold)
         self.verbose = verbose
-        self.ising_tensor = None
-        self.n_agents = None
-        self.stability = None
-        self.newly_bifurcated = None
-        self.previously_bifurcated = None
-        self.bifurcated = None
-        self.stable_agents = None
-        self.energies = None
-        self.progress = None
-        self.current_spins = None
-        self.final_spins = None
-        self.shifted_agents_index = None
-
-    def reset(self, ising_tensor: torch.Tensor, n_agents: int):
         self.ising_tensor = ising_tensor
-        self.n_agents = n_agents
-        self.__init_tensors(ising_tensor.device)
-        self.__init_energies(ising_tensor.dtype, ising_tensor.device)
-        self.__init_progress_bar(self.verbose)
-        self.__init_current_and_final_spins(
-            ising_tensor.shape[0], n_agents, ising_tensor.dtype, ising_tensor.device
+        self.stability = torch.zeros(
+            n_agents, dtype=torch.int16, device=ising_tensor.device
         )
-        self.shifted_agents_index = list(range(n_agents))
+        self.energies = torch.tensor(
+            [float("inf") for _ in range(n_agents)],
+            dtype=ising_tensor.dtype,
+            device=ising_tensor.device,
+        )
+        self.progress = tqdm(
+            total=n_agents,
+            desc="🏁 Bifurcated agents",
+            disable=not self.verbose,
+            smoothing=0,
+            unit=" agents",
+        )
+        self.stored_spins = torch.zeros(
+            ising_tensor.shape[0],
+            n_agents,
+            dtype=ising_tensor.dtype,
+            device=ising_tensor.device,
+        )
+        self.shifted_agents_indices = torch.tensor(
+            list(range(n_agents)), device=ising_tensor.device
+        )
 
     def __compute_energies(self, sampled_spins: torch.Tensor) -> torch.Tensor:
         return torch.nn.functional.bilinear(
             sampled_spins.t(), sampled_spins.t(), torch.unsqueeze(self.ising_tensor, 0)
-        ).reshape(self.n_agents)
-
-    def __init_progress_bar(self, verbose: bool) -> None:
-        self.progress = tqdm(
-            total=self.n_agents,
-            desc="🏁 Bifurcated agents",
-            disable=not verbose,
-            smoothing=0,
-            unit=" agents",
-        )
+        ).reshape(sampled_spins.shape[1])
 
     def __init_convergence_threshold(self, convergence_threshold: int) -> None:
         if not isinstance(convergence_threshold, int):
@@ -71,95 +70,47 @@ class StopWindow:
             )
         self.convergence_threshold = convergence_threshold
 
-    def __init_tensor(self, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
-        return torch.zeros(self.n_agents, device=device, dtype=dtype)
+    def update(self, sampled_spins: torch.Tensor) -> torch.Tensor:
+        """_summary_
 
-    def __init_tensors(self, device: torch.device) -> None:
-        self.stability = self.__init_tensor(torch.int16, device)
-        self.newly_bifurcated = self.__init_tensor(torch.bool, device)
-        self.previously_bifurcated = self.__init_tensor(torch.bool, device)
-        self.bifurcated = self.__init_tensor(torch.bool, device)
-        self.stable_agents = self.__init_tensor(torch.bool, device)
+        Parameters
+        ----------
+        sampled_spins : torch.Tensor
+            _description_
 
-    def __init_energies(self, dtype: torch.dtype, device: torch.device) -> None:
-        self.energies = torch.tensor(
-            [float("inf") for _ in range(self.n_agents)], dtype=dtype, device=device
-        )
-
-    def __init_spins(
-        self, n_spins: int, n_agents: int, dtype: torch.dtype, device: torch.device
-    ) -> torch.Tensor:
-        return torch.zeros(n_spins, n_agents, dtype=dtype, device=device)
-
-    def __init_current_and_final_spins(
-        self, n_spins: int, n_agents: int, dtype: torch.dtype, device: torch.device
-    ):
-        self.current_spins = self.__init_spins(n_spins, n_agents, dtype, device)
-        self.final_spins = self.__init_spins(n_spins, n_agents, dtype, device)
-
-    def __update_final_spins(self, sampled_spins) -> None:
-        self.final_spins[:, self.newly_bifurcated] = sampled_spins[
-            :, self.newly_bifurcated
-        ]
-
-    def __set_previously_bifurcated_spins(self) -> None:
-        self.previously_bifurcated = torch.clone(self.bifurcated)
-
-    def __set_newly_bifurcated_spins(self) -> None:
-        torch.logical_xor(
-            self.bifurcated, self.previously_bifurcated, out=self.newly_bifurcated
-        )
-
-    def __update_bifurcated_spins(self) -> None:
-        torch.eq(self.stability, self.convergence_threshold - 1, out=self.bifurcated)
-
-    def __update_stability_streak(self) -> None:
-        self.stability[torch.logical_and(self.stable_agents, self.not_bifurcated)] += 1
-        self.stability[torch.logical_and(self.changed_agents, self.not_bifurcated)] = 0
-
-    @property
-    def changed_agents(self) -> torch.Tensor:
-        return torch.logical_not(self.stable_agents)
-
-    @property
-    def not_bifurcated(self) -> torch.Tensor:
-        return torch.logical_not(self.bifurcated)
-
-    def __compare_energies(self, energies: torch.Tensor) -> None:
-        torch.eq(
-            energies,
-            self.energies,
-            out=self.stable_agents,
-        )
-        self.energies = energies
-
-    def __get_number_newly_bifurcated_agents(self) -> int:
-        return torch.count_nonzero(self.newly_bifurcated).item()
-
-    def update(self, sampled_spins: torch.Tensor):
-        energies = self.__compute_energies(sampled_spins)
-        self.__compare_energies(energies)
-        self.__update_stability_streak()
-        self.__update_bifurcated_spins()
-        self.__set_newly_bifurcated_spins()
-        self.__set_previously_bifurcated_spins()
-        self.__update_final_spins(sampled_spins)
-        self.progress.update(self.__get_number_newly_bifurcated_agents())
-
-    def must_continue(self) -> bool:
-        return torch.any(
-            torch.lt(self.stability, self.convergence_threshold - 1)
-        ).item()
-
-    def has_bifurcated_spins(self) -> bool:
-        return torch.any(torch.not_equal(self.final_spins, 0)).item()
-
-    def get_final_spins(self) -> torch.Tensor:
+        Returns
+        -------
+        torch.Tensor
+            The agents that still have not converged.
         """
-        Returns the final spins of the window.
+        current_agents = self.energies.shape[0]
+        energies = self.__compute_energies(sampled_spins)
+        stable_agents = torch.eq(energies, self.energies)
+        self.energies = energies
+        self.stability = torch.where(
+            stable_agents, self.stability + 1, torch.zeros(current_agents)
+        )
+
+        converged_agents = torch.eq(self.stability, self.convergence_threshold - 1)
+        not_converged_agents = torch.logical_not(converged_agents)
+
+        self.stored_spins[
+            :, self.shifted_agents_indices[converged_agents]
+        ] = sampled_spins[:, converged_agents]
+
+        self.shifted_agents_indices = self.shifted_agents_indices[not_converged_agents]
+        self.energies = self.energies[not_converged_agents]
+        self.stability = self.stability[not_converged_agents]
+        new_agents = self.energies.shape[0]
+        self.progress.update(current_agents - new_agents)
+        return not_converged_agents
+
+    def get_stored_spins(self) -> torch.Tensor:
+        """
+        Returns the converged spins stored in the window.
 
         Returns
         -------
         torch.Tensor
         """
-        return self.final_spins.clone()
+        return self.stored_spins.clone()
