@@ -247,7 +247,7 @@ class Ising:
         heated: bool = False,
         verbose: bool = True,
         *,
-        use_window: bool = True,
+        early_stopping: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
@@ -276,17 +276,17 @@ class Ising:
         verbose : bool, default=True
             Whether to display a progress bar to monitor the progress of
             the algorithm.
-        use_window : bool, default=True
-            Whether to use the window as a stopping criterion: an agent is
-            said to have converged if its energy has not changed over the
-            last `convergence_threshold` energy samplings (done every
-            `sampling_period` steps).
-        sampling_period : int, default=50
-            Number of iterations between two consecutive energy samplings
-            by the window.
-        convergence_threshold : int, default=50
-            Number of consecutive identical energy samplings considered as
-            a proof of convergence by the window.
+        early_stopping : bool, default=True, keyword-only
+            Whether to use early stopping or not, making agents' convergence a
+            stopping criterion. An agent is said to have converged if its energy
+            has not changed over the last `convergence_threshold` energy samplings
+            (done every `sampling_period` steps).
+        sampling_period : int, default=50, keyword-only
+            Number of iterations between two consecutive spins samplings used for
+            early stopping.
+        convergence_threshold : int, default=50, keyword-only
+            Number of consecutive identical energy samplings considered as a
+            proof of convergence of an agent.
         timeout : float | None, default=None
             Time in seconds after which the simulation is stopped.
             None means no timeout.
@@ -308,7 +308,7 @@ class Ising:
 
         Warns
         -----
-        If `use_window` is True and no agent has reached the convergence
+        If `early_stopping` is True and no agent has reached the convergence
         criterion defined by `sampling_period` and `convergence_threshold`
         within `max_steps` iterations, a warning is logged in the console.
         This is just an indication however; the returned vectors may still
@@ -403,7 +403,7 @@ class Ising:
             convergence_threshold,
         )
         tensor = self.as_simulated_bifurcation_tensor()
-        spins = optimizer.run_integrator(tensor, use_window)
+        spins = optimizer.run_integrator(tensor, early_stopping)
         if self.linear_term:
             self.computed_spins = spins[-1] * spins[:-1]
         else:

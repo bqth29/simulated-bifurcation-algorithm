@@ -2,7 +2,7 @@ import torch
 from tqdm import tqdm
 
 
-class StopWindow:
+class ConvergenceChecker:
 
     """
     Optimization tool to monitor agents bifurcation and convergence for the Simulated
@@ -97,10 +97,9 @@ class StopWindow:
 
     def update(self, sampled_spins: torch.Tensor) -> torch.Tensor:
         """
-        Update the stability streaks and the stored spins of the
-        window with sampled spins from the Simulated Bifurcation
-        optimizer. When an agent converges, it is stored in the
-        window's memory and removed from the optimization process.
+        Update the stability streaks and the spins stored in the memory with sampled
+        spins from the Simulated Bifurcation optimizer. When an agent converges, it is
+        stored in the memory and removed from the optimization process.
 
         Return a boolean tensor that indicates which agents still have not converged.
 
@@ -120,8 +119,7 @@ class StopWindow:
 
     def __update_stability_streaks(self, sampled_spins: torch.Tensor):
         """
-        Update the stability streaks of the window from the
-        sampled spins provided by the optimizer.
+        Update the stability streaks from the sampled spins provided by the optimizer.
 
         Parameters
         ----------
@@ -140,8 +138,8 @@ class StopWindow:
 
     def __store_converged_spins(self, sampled_spins: torch.Tensor) -> torch.Tensor:
         """
-        Store the newly converged agents in the window's memory and updates the
-        utility tensors by removing data relative to converged agents.
+        Store the newly converged agents in the memory and updates the utility tensors
+        by removing data relative to converged agents.
 
         Return a boolean tensor that indicates which agents still have not converged.
 
@@ -179,7 +177,7 @@ class StopWindow:
 
     def get_stored_spins(self) -> torch.Tensor:
         """
-        Return the converged spins stored in the window.
+        Return the converged spins stored in the memory.
 
         Returns
         -------
