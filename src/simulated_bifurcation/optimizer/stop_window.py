@@ -125,8 +125,7 @@ class StopWindow:
     def not_bifurcated(self) -> torch.Tensor:
         return torch.logical_not(self.bifurcated)
 
-    def __compare_energies(self, sampled_spins: torch.Tensor) -> None:
-        energies = self.__compute_energies(sampled_spins)
+    def __compare_energies(self, energies: torch.Tensor) -> None:
         torch.eq(
             energies,
             self.energies,
@@ -138,7 +137,8 @@ class StopWindow:
         return torch.count_nonzero(self.newly_bifurcated).item()
 
     def update(self, sampled_spins: torch.Tensor):
-        self.__compare_energies(sampled_spins)
+        energies = self.__compute_energies(sampled_spins)
+        self.__compare_energies(energies)
         self.__update_stability_streak()
         self.__update_bifurcated_spins()
         self.__set_newly_bifurcated_spins()
@@ -154,19 +154,12 @@ class StopWindow:
     def has_bifurcated_spins(self) -> bool:
         return torch.any(torch.not_equal(self.final_spins, 0)).item()
 
-    def get_final_spins(self, spins: torch.Tensor) -> torch.Tensor:
+    def get_final_spins(self) -> torch.Tensor:
         """
-        Returns the final spins of the window. If an agent did not converge,
-        the spins provided in input are returned instead.
-
-        Parameters
-        ----------
-        spins : torch.Tensor
-            Spins coming from the optimizer.
+        Returns the final spins of the window.
 
         Returns
         -------
         torch.Tensor
-            Final spins.
         """
-        return torch.where(self.bifurcated, self.final_spins, spins)
+        return self.final_spins.clone()

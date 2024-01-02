@@ -85,7 +85,6 @@ def test_use_scenario():
     window.update(SCENARIO[0])
     assert window.must_continue()
     assert not window.has_bifurcated_spins()
-    assert torch.equal(window.get_final_spins(SCENARIO[0]), SCENARIO[0])
     assert torch.equal(window.energies, torch.tensor([2.0, 0.0]))
     assert torch.equal(window.final_spins, torch.zeros((3, 2)))
     assert torch.equal(window.stability, torch.tensor([0, 0], dtype=torch.int16))
@@ -106,7 +105,6 @@ def test_use_scenario():
     window.update(SCENARIO[1])
     assert window.must_continue()
     assert not window.has_bifurcated_spins()
-    assert torch.equal(window.get_final_spins(SCENARIO[1]), SCENARIO[1])
     assert torch.equal(window.energies, torch.tensor([0.0, -6.0]))
     assert torch.equal(window.final_spins, torch.zeros((3, 2)))
     assert torch.equal(window.stability, torch.tensor([0, 0], dtype=torch.int16))
@@ -127,7 +125,6 @@ def test_use_scenario():
     window.update(SCENARIO[2])
     assert window.must_continue()
     assert not window.has_bifurcated_spins()
-    assert torch.equal(window.get_final_spins(SCENARIO[2]), SCENARIO[2])
     assert torch.equal(window.energies, torch.tensor([-6.0, -6.0]))
     assert torch.equal(window.final_spins, torch.zeros((3, 2)))
     assert torch.equal(window.stability, torch.tensor([0, 1], dtype=torch.int16))
@@ -148,7 +145,6 @@ def test_use_scenario():
     window.update(SCENARIO[3])
     assert window.must_continue()
     assert window.has_bifurcated_spins()
-    assert torch.equal(window.get_final_spins(SCENARIO[3]), SCENARIO[3])
     assert torch.equal(window.energies, torch.tensor([-6.0, -6.0]))
     assert torch.equal(
         window.final_spins,
@@ -178,7 +174,7 @@ def test_use_scenario():
     assert not window.must_continue()
     assert window.has_bifurcated_spins()
     assert torch.equal(
-        window.get_final_spins(SCENARIO[4]),
+        window.get_final_spins(),
         torch.tensor(
             [
                 [-1, -1],

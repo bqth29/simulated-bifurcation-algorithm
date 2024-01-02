@@ -290,6 +290,9 @@ class SimulatedBifurcationOptimizer:
         if use_window:
             if not self.window.has_bifurcated_spins():
                 warnings.warn(ConvergenceWarning(), stacklevel=2)
-            return self.window.get_final_spins(spins)
+            final_spins = self.window.get_final_spins()
+            # window_stable_spins[:, torch.all(torch.eq(final_spins, 0), dim=0)] = spins
+            # return final_spins
+            return torch.where(self.window.bifurcated, final_spins, spins)
         else:
             return spins
