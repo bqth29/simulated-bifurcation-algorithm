@@ -53,14 +53,25 @@ SCENARIO = [
 
 
 def test_wrong_convergence_threshold_value():
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError, match="convergence_threshold should be an integer, received 30.0."
+    ):
         # noinspection PyTypeChecker
         StopWindow(30.0, TENSOR, AGENTS, verbose=False)
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="convergence_threshold should be a positive integer, received 0.",
+    ):
         StopWindow(0, TENSOR, AGENTS, verbose=False)
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="convergence_threshold should be a positive integer, received -42.",
+    ):
         StopWindow(-42, TENSOR, AGENTS, verbose=False)
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="convergence_threshold should be less than or equal to 32767, received 32768.",
+    ):
         StopWindow(2**15, TENSOR, AGENTS, verbose=False)
 
 

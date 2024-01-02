@@ -209,17 +209,20 @@ class SimulatedBifurcationOptimizer:
             if use_window and self.__do_sampling:
                 sampled_spins = self.symplectic_integrator.sample_spins()
                 not_converged_agents = self.window.update(sampled_spins)
-                self.symplectic_integrator.momentum = (
-                    self.symplectic_integrator.momentum[:, not_converged_agents]
-                )
-                self.symplectic_integrator.position = (
-                    self.symplectic_integrator.position[:, not_converged_agents]
-                )
+                self.__remove_converged_agents(not_converged_agents)
 
             self.__check_stop(use_window)
 
         sampled_spins = self.symplectic_integrator.sample_spins()
         return sampled_spins
+
+    def __remove_converged_agents(self, not_converged_agents: torch.Tensor):
+        self.symplectic_integrator.momentum = self.symplectic_integrator.momentum[
+            :, not_converged_agents
+        ]
+        self.symplectic_integrator.position = self.symplectic_integrator.position[
+            :, not_converged_agents
+        ]
 
     def __heat(self, momentum_copy: torch.Tensor) -> None:
         torch.add(
