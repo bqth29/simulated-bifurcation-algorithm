@@ -51,38 +51,16 @@ SCENARIO = [
 ]
 
 
-def test_init_window():
-    window = StopWindow(
-        TENSOR,
-        AGENTS,
-        CONVERGENCE_THRESHOLD,
-        dtype=torch.float32,
-        device="cpu",
-        verbose=False,
-    )
-    assert window.n_spins == 3
-    assert window.n_agents == 2
-    assert window.convergence_threshold == 3
-    assert window.shape == (3, 2)
-    assert torch.equal(window.final_spins, torch.zeros((3, 2)))
-
-
 def test_wrong_convergence_threshold_value():
     with pytest.raises(TypeError):
         # noinspection PyTypeChecker
-        StopWindow(
-            TENSOR, AGENTS, 30.0, dtype=torch.float32, device="cpu", verbose=False
-        )
+        StopWindow(30.0, verbose=False)
     with pytest.raises(ValueError):
-        StopWindow(TENSOR, AGENTS, 0, dtype=torch.float32, device="cpu", verbose=False)
+        StopWindow(0, verbose=False)
     with pytest.raises(ValueError):
-        StopWindow(
-            TENSOR, AGENTS, -42, dtype=torch.float32, device="cpu", verbose=False
-        )
+        StopWindow(-42, verbose=False)
     with pytest.raises(ValueError):
-        StopWindow(
-            TENSOR, AGENTS, 2**15, dtype=torch.float32, device="cpu", verbose=False
-        )
+        StopWindow(2**15, verbose=False)
 
 
 def test_use_scenario():
@@ -94,14 +72,8 @@ def test_use_scenario():
     - agent 1 converges to an optimal vector from step 3;
     - agent 2 oscillates in the optimal space from step 2.
     """
-    window = StopWindow(
-        TENSOR,
-        AGENTS,
-        CONVERGENCE_THRESHOLD,
-        dtype=torch.float32,
-        device="cpu",
-        verbose=False,
-    )
+    window = StopWindow(CONVERGENCE_THRESHOLD, verbose=False)
+    window.reset(TENSOR, AGENTS)
 
     #  Initial state
     assert torch.equal(
@@ -113,7 +85,7 @@ def test_use_scenario():
     window.update(SCENARIO[0])
     assert window.must_continue()
     assert not window.has_bifurcated_spins()
-    assert torch.equal(window.get_bifurcated_spins(SCENARIO[0]), SCENARIO[0])
+    assert torch.equal(window.get_final_spins(SCENARIO[0]), SCENARIO[0])
     assert torch.equal(window.energies, torch.tensor([2.0, 0.0]))
     assert torch.equal(window.final_spins, torch.zeros((3, 2)))
     assert torch.equal(window.stability, torch.tensor([0, 0], dtype=torch.int16))
@@ -134,7 +106,7 @@ def test_use_scenario():
     window.update(SCENARIO[1])
     assert window.must_continue()
     assert not window.has_bifurcated_spins()
-    assert torch.equal(window.get_bifurcated_spins(SCENARIO[1]), SCENARIO[1])
+    assert torch.equal(window.get_final_spins(SCENARIO[1]), SCENARIO[1])
     assert torch.equal(window.energies, torch.tensor([0.0, -6.0]))
     assert torch.equal(window.final_spins, torch.zeros((3, 2)))
     assert torch.equal(window.stability, torch.tensor([0, 0], dtype=torch.int16))
@@ -155,7 +127,7 @@ def test_use_scenario():
     window.update(SCENARIO[2])
     assert window.must_continue()
     assert not window.has_bifurcated_spins()
-    assert torch.equal(window.get_bifurcated_spins(SCENARIO[2]), SCENARIO[2])
+    assert torch.equal(window.get_final_spins(SCENARIO[2]), SCENARIO[2])
     assert torch.equal(window.energies, torch.tensor([-6.0, -6.0]))
     assert torch.equal(window.final_spins, torch.zeros((3, 2)))
     assert torch.equal(window.stability, torch.tensor([0, 1], dtype=torch.int16))
@@ -176,7 +148,7 @@ def test_use_scenario():
     window.update(SCENARIO[3])
     assert window.must_continue()
     assert window.has_bifurcated_spins()
-    assert torch.equal(window.get_bifurcated_spins(SCENARIO[3]), SCENARIO[3])
+    assert torch.equal(window.get_final_spins(SCENARIO[3]), SCENARIO[3])
     assert torch.equal(window.energies, torch.tensor([-6.0, -6.0]))
     assert torch.equal(
         window.final_spins,
@@ -206,7 +178,7 @@ def test_use_scenario():
     assert not window.must_continue()
     assert window.has_bifurcated_spins()
     assert torch.equal(
-        window.get_bifurcated_spins(SCENARIO[4]),
+        window.get_final_spins(SCENARIO[4]),
         torch.tensor(
             [
                 [-1, -1],

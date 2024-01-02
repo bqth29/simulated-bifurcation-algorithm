@@ -128,13 +128,9 @@ class SimulatedBifurcationOptimizer:
 
     def __init_window(self, matrix: torch.Tensor, use_window: bool) -> None:
         self.window = StopWindow(
-            matrix,
-            self.agents,
-            self.convergence_threshold,
-            matrix.dtype,
-            matrix.device,
-            (self.verbose and use_window),
+            self.convergence_threshold, (self.verbose and use_window)
         )
+        self.window.reset(matrix, self.agents)
 
     def __init_symplectic_integrator(self, matrix: torch.Tensor) -> None:
         self.symplectic_integrator = SymplecticIntegrator(
@@ -294,6 +290,6 @@ class SimulatedBifurcationOptimizer:
         if use_window:
             if not self.window.has_bifurcated_spins():
                 warnings.warn(ConvergenceWarning(), stacklevel=2)
-            return self.window.get_bifurcated_spins(spins)
+            return self.window.get_final_spins(spins)
         else:
             return spins
