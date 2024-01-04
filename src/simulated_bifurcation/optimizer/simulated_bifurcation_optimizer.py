@@ -149,8 +149,8 @@ class SimulatedBifurcationOptimizer:
     def __check_stop(self, use_window: bool) -> None:
         if use_window and self.__do_sampling:
             stored_spins = self.window.get_stored_spins()
-            all_agents_converged = torch.any(torch.eq(stored_spins, 0)).item()
-            self.run = all_agents_converged
+            some_agents_not_converged = torch.any(torch.eq(stored_spins, 0)).item()
+            self.run = some_agents_not_converged
             if not self.run:
                 LOGGER.info("Optimizer stopped. Reason: all agents converged.")
                 return
