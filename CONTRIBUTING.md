@@ -4,7 +4,7 @@ Welcome to the Simulated Bifurcation (SB) algorithm repository! We appreciate yo
 
 ## Code of Conduct
 
-This project and all participants are subject to our [Code of Conduct] (https://github.com/bqth29/simulated-bifurcation-algorithm/blob/main/CODE_OF_CONDUCT.md). By participating, you are expected to abide by this code.
+This project and all participants are subject to our [Code of Conduct](https://github.com/bqth29/simulated-bifurcation-algorithm/blob/main/CODE_OF_CONDUCT.md). By participating, you are expected to abide by this code.
 
 ## Getting Started
 
