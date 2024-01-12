@@ -213,7 +213,9 @@ class SimulatedBifurcationOptimizer:
             if early_stopping and self.__do_sampling:
                 sampled_spins = self.symplectic_integrator.sample_spins()
                 not_converged_agents = self.convergence_checker.update(sampled_spins)
-                self.__remove_converged_agents(not_converged_agents)
+                # Only reshape the oscillators if some agents converged
+                if not torch.all(not_converged_agents).item():
+                    self.__remove_converged_agents(not_converged_agents)
 
             self.__check_stop(early_stopping)
 
