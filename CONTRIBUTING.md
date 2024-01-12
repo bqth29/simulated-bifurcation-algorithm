@@ -109,7 +109,7 @@ If possible, provide a code snippet or link to a repository that demonstrates th
 
 ## Share Knowledge or Discoveries
 
-If you would like to share any knowledge or work related to the Simulated Bifurcation algorithm with the community, please feel free to post any information you feel is relevant in the [Show and tell] section (https://github.com/bqth29/simulated-bifurcation-algorithm/discussions/categories/show-and-tell) of this repository's discussion page.
+If you would like to share any knowledge or work related to the Simulated Bifurcation algorithm with the community, please feel free to post any information you feel is relevant in the [Show and tell](https://github.com/bqth29/simulated-bifurcation-algorithm/discussions/categories/show-and-tell) section of this repository's discussion page.
 
 ## Licensing
 
