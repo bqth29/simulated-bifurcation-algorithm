@@ -13,6 +13,7 @@ models:
     optimization problems.
 
 """
+
 from .convergence_checker import ConvergenceChecker
 from .environment import get_env, reset_env, set_env
 from .simulated_bifurcation_engine import SimulatedBifurcationEngine

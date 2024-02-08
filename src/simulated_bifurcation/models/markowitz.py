@@ -7,7 +7,6 @@ from .abc_model import ABCModel
 
 
 class SequentialMarkowitz(ABCModel):
-
     """
     Implementation of the Markowitz model for the integer
     trading trajectory optimization problem.
@@ -154,7 +153,6 @@ class SequentialMarkowitz(ABCModel):
 
 
 class Markowitz(SequentialMarkowitz):
-
     """
     A representation of the Markowitz model for portfolio optimization.
     Portfolio only takes integer stocks.

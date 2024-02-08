@@ -4,7 +4,6 @@ import torch
 
 
 class SymplecticIntegrator:
-
     """
     Simulates the evolution of spins' momentum and position following
     the Hamiltonian quantum mechanics equations that drive the
