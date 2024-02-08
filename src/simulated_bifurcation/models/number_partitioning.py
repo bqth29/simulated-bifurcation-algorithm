@@ -7,7 +7,6 @@ from .abc_model import ABCModel
 
 
 class NumberPartitioning(ABCModel):
-
     """
     A solver that separates a set of numbers into two subsets, the
     respective sums of which are as close as possible.

@@ -27,7 +27,6 @@ class ConvergenceWarning(Warning):
 
 
 class SimulatedBifurcationOptimizer:
-
     """
     The Simulated Bifurcation (SB) algorithm relies on
     Hamiltonian/quantum mechanics to find local minima of

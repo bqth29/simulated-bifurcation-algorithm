@@ -18,7 +18,6 @@ QuadraticPolynomial:
 
 """
 
-
 from typing import Optional, TypeVar, Union
 
 import torch
@@ -36,7 +35,6 @@ SelfIsing = TypeVar("SelfIsing", bound="Ising")
 
 
 class Ising:
-
     """
     Internal implementation of the Ising model.
 
