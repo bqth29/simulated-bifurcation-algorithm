@@ -18,7 +18,7 @@ dependencies = [
 # optional dependencies
 docs = ["sphinx", "sphinx-rtd-theme", "numpydoc"]
 lint = [
-    "black",
+    "black==24.1.1",
     "flake8",
     "isort",
 ]

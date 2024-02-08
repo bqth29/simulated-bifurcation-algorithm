@@ -5,7 +5,6 @@ from tqdm import tqdm
 
 
 class StopWindow:
-
     """
     Optimization tool to monitor spins bifurcation and convergence
     for the Simulated Bifurcation (SB) algorithm.
