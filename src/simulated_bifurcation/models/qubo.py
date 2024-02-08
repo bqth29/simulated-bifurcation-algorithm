@@ -7,7 +7,6 @@ from .abc_model import ABCModel
 
 
 class QUBO(ABCModel):
-
     """
     Quadratic Unconstrained Binary Optimization
 

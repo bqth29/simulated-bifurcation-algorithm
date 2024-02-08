@@ -175,7 +175,6 @@ Create a QUBO instance and minimize it using a GPU to run the SB algorithm
 
 """
 
-
 from . import models
 from .core import Ising, QuadraticPolynomial
 from .optimizer import ConvergenceWarning, get_env, reset_env, set_env

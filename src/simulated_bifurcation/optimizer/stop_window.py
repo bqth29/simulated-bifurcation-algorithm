@@ -3,7 +3,6 @@ from tqdm import tqdm
 
 
 class StopWindow:
-
     """
     Optimization tool to monitor agents bifurcation and convergence for the Simulated
     Bifurcation (SB) algorithm. Allows an early stopping of the iterations and saves
@@ -157,9 +156,9 @@ class StopWindow:
         """
         converged_agents = torch.eq(self.stability, self.convergence_threshold - 1)
         not_converged_agents = torch.logical_not(converged_agents)
-        self.stored_spins[
-            :, self.shifted_agents_indices[converged_agents]
-        ] = sampled_spins[:, converged_agents]
+        self.stored_spins[:, self.shifted_agents_indices[converged_agents]] = (
+            sampled_spins[:, converged_agents]
+        )
         self.shifted_agents_indices = self.shifted_agents_indices[not_converged_agents]
         self.energies = self.energies[not_converged_agents]
         self.stability = self.stability[not_converged_agents]
