@@ -4,7 +4,6 @@ import torch
 
 
 class SimulatedBifurcationEngine(Enum):
-
     """
     Enum class that gathers the 4 variants of the Simulated Bifurcation
     algorithm:

@@ -167,16 +167,7 @@ def test_init_polynomial_map_with_inconsistent_dimension_raises_error():
 def test_init_polynomial_map_from_expression():
     x, y, z = symbols("x y z")
     expression = poly(
-        x**2
-        + 2 * y**2
-        + 3 * z**2
-        - 2 * x * y
-        - x * z
-        - 3 * y * z
-        - x
-        - 2 * y
-        + z
-        + 2
+        x**2 + 2 * y**2 + 3 * z**2 - 2 * x * y - x * z - 3 * y * z - x - 2 * y + z + 2
     )
     polynomial_map = PolynomialMap.from_expression(expression)
     assert_expected_polynomial_map(polynomial_map)
