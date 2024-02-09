@@ -7,7 +7,6 @@ from .abc_model import ABCModel
 
 
 class Ising(ABCModel):
-
     """
     Implementation of the Ising model.
 
