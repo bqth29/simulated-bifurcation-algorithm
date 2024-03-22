@@ -230,6 +230,7 @@ class PolynomialMap(Dict[int, torch.Tensor]):
     def from_expression(
         cls,
         expression: Poly,
+        *,
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
     ) -> Dict[int, torch.Tensor]:
