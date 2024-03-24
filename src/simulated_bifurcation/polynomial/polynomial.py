@@ -66,6 +66,8 @@ class Polynomial:
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
     ) -> None:
+        if dtype is None:
+            dtype = torch.get_default_dtype()
         if len(_input) == 1 and isinstance(_input[0], Poly):
             self.__polynomial_map = PolynomialMap.from_expression(
                 _input[0], dtype=dtype, device=device
