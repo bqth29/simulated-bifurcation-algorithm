@@ -2,6 +2,8 @@ from typing import Any, Tuple, Union
 
 import torch
 
+from ..check_dtype import check_dtype
+
 
 class SymplecticIntegrator:
     """
@@ -17,6 +19,7 @@ class SymplecticIntegrator:
         dtype: torch.dtype,
         device: Union[str, torch.device],
     ):
+        check_dtype(dtype)
         self.position = self.__init_oscillator(shape, dtype, device)
         self.momentum = self.__init_oscillator(shape, dtype, device)
         self.activation_function = activation_function

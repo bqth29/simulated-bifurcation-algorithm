@@ -7,6 +7,7 @@ import torch
 from numpy import minimum
 from tqdm import tqdm
 
+from ..check_dtype import check_dtype
 from .environment import ENVIRONMENT
 from .simulated_bifurcation_engine import SimulatedBifurcationEngine
 from .stop_window import StopWindow
@@ -93,6 +94,7 @@ class SimulatedBifurcationOptimizer:
         self.timeout = timeout if timeout is not None else float("inf")
 
     def __reset(self, matrix: torch.Tensor, use_window: bool) -> None:
+        check_dtype(matrix.dtype)
         self.__init_progress_bars()
         self.__init_symplectic_integrator(matrix)
         self.__init_window(matrix, use_window)

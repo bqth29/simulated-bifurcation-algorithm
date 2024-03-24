@@ -23,6 +23,7 @@ from typing import Optional, TypeVar, Union
 import torch
 from numpy import ndarray
 
+from ..check_dtype import check_dtype
 from ..optimizer import SimulatedBifurcationEngine, SimulatedBifurcationOptimizer
 
 # Workaround because `Self` type is only available in Python >= 3.11
@@ -91,6 +92,7 @@ class Ising:
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
     ) -> None:
+        dtype = check_dtype(dtype)
         self.dimension = J.shape[0]
         if isinstance(J, ndarray):
             J = torch.from_numpy(J)

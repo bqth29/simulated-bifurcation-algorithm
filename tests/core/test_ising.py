@@ -14,7 +14,7 @@ h = torch.tensor([1, 0, -1], dtype=torch.float32)
 
 
 def test_init_ising_model_from_tensors():
-    ising = Ising(J, h)
+    ising = Ising(J, h, dtype=torch.float32)
     assert torch.equal(ising.J, J)
     assert torch.equal(ising.h, h)
     assert ising.linear_term
@@ -23,7 +23,7 @@ def test_init_ising_model_from_tensors():
 
 
 def test_init_ising_model_from_arrays():
-    ising = Ising(J.numpy(), h.numpy())
+    ising = Ising(J.numpy(), h.numpy(), dtype=torch.float32)
     assert torch.equal(ising.J, J)
     assert torch.equal(ising.h, h)
     assert ising.linear_term
@@ -32,7 +32,7 @@ def test_init_ising_model_from_arrays():
 
 
 def test_ising_without_linear_term():
-    ising = Ising(J)
+    ising = Ising(J, dtype=torch.float32)
     assert torch.equal(ising.J, J)
     assert torch.equal(ising.h, torch.zeros(3))
     assert not ising.linear_term
@@ -41,7 +41,7 @@ def test_ising_without_linear_term():
 
 
 def test_init_ising_with_null_h_vector():
-    ising = Ising(J, torch.zeros(3))
+    ising = Ising(J, torch.zeros(3), dtype=torch.float32)
     assert torch.equal(ising.J, J)
     assert torch.equal(ising.h, torch.zeros(3))
     assert not ising.linear_term
@@ -50,7 +50,7 @@ def test_init_ising_with_null_h_vector():
 
 
 def test_clip_vector_to_tensor():
-    ising = Ising(J, h)
+    ising = Ising(J, h, dtype=torch.float32)
     attached = ising.clip_vector_to_tensor()
     assert torch.equal(
         attached,
@@ -75,7 +75,7 @@ def test_simulated_bifurcation_tensor():
         ],
         dtype=torch.float32,
     )
-    ising = Ising(original)
+    ising = Ising(original, dtype=torch.float32)
     expected_result = torch.tensor(
         [
             [0, 3, 5],
@@ -88,7 +88,7 @@ def test_simulated_bifurcation_tensor():
 
 
 def test_negative_ising():
-    ising = Ising(J, h)
+    ising = Ising(J, h, dtype=torch.float32)
     negative_ising = -ising
     assert torch.equal(negative_ising.J, -J)
     assert torch.equal(negative_ising.h, -h)

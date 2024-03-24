@@ -12,7 +12,7 @@ matrix = torch.tensor(
     dtype=torch.float32,
 )
 vector = torch.tensor([1, 2, -3], dtype=torch.float32)
-constant = 1
+constant = torch.tensor(1, dtype=torch.float32)
 
 x, y, z = symbols("x y z")
 expression = poly(
