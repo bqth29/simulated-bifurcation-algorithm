@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 from src.simulated_bifurcation import get_env, reset_env, set_env
