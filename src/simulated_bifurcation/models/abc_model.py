@@ -34,7 +34,8 @@ class ABCModel(ABC, QuadraticPolynomial):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
+        presolve: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return super().optimize(
             self.domain,
@@ -49,6 +50,7 @@ class ABCModel(ABC, QuadraticPolynomial):
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            presolve=presolve,
         )
 
     def minimize(
@@ -63,7 +65,8 @@ class ABCModel(ABC, QuadraticPolynomial):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
+        presolve: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.optimize(
             agents,
@@ -77,6 +80,7 @@ class ABCModel(ABC, QuadraticPolynomial):
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            presolve=presolve,
         )
 
     def maximize(
@@ -91,7 +95,8 @@ class ABCModel(ABC, QuadraticPolynomial):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
+        presolve: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.optimize(
             agents,
@@ -105,4 +110,5 @@ class ABCModel(ABC, QuadraticPolynomial):
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            presolve=presolve,
         )
