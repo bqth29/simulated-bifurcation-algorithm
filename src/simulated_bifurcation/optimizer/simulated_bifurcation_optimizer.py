@@ -127,11 +127,9 @@ class SimulatedBifurcationOptimizer:
 
     def __init_window(self, matrix: torch.Tensor, use_window: bool) -> None:
         self.window = StopWindow(
+            self.convergence_threshold,
             matrix,
             self.agents,
-            self.convergence_threshold,
-            matrix.dtype,
-            matrix.device,
             (self.verbose and use_window),
         )
 
@@ -149,7 +147,9 @@ class SimulatedBifurcationOptimizer:
 
     def __check_stop(self, use_window: bool) -> None:
         if use_window and self.__do_sampling:
-            self.run = self.window.must_continue()
+            stored_spins = self.window.get_stored_spins()
+            some_agents_not_converged = torch.any(torch.eq(stored_spins, 0)).item()
+            self.run = some_agents_not_converged
             if not self.run:
                 LOGGER.info("Optimizer stopped. Reason: all agents converged.")
                 return
@@ -207,12 +207,23 @@ class SimulatedBifurcationOptimizer:
             self.__step_update()
             if use_window and self.__do_sampling:
                 sampled_spins = self.symplectic_integrator.sample_spins()
-                self.window.update(sampled_spins)
+                not_converged_agents = self.window.update(sampled_spins)
+                # Only reshape the oscillators if some agents converged
+                if not torch.all(not_converged_agents).item():
+                    self.__remove_converged_agents(not_converged_agents)
 
             self.__check_stop(use_window)
 
         sampled_spins = self.symplectic_integrator.sample_spins()
         return sampled_spins
+
+    def __remove_converged_agents(self, not_converged_agents: torch.Tensor):
+        self.symplectic_integrator.momentum = self.symplectic_integrator.momentum[
+            :, not_converged_agents
+        ]
+        self.symplectic_integrator.position = self.symplectic_integrator.position[
+            :, not_converged_agents
+        ]
 
     def __heat(self, momentum_copy: torch.Tensor) -> None:
         torch.add(
@@ -291,8 +302,11 @@ class SimulatedBifurcationOptimizer:
         torch.Tensor
         """
         if use_window:
-            if not self.window.has_bifurcated_spins():
+            final_spins = self.window.get_stored_spins()
+            any_converged_agents = torch.any(torch.not_equal(final_spins, 0)).item()
+            if not any_converged_agents:
                 warnings.warn(ConvergenceWarning(), stacklevel=2)
-            return self.window.get_bifurcated_spins(spins)
+            final_spins[:, torch.all(torch.eq(final_spins, 0), dim=0)] = spins
+            return final_spins
         else:
             return spins
