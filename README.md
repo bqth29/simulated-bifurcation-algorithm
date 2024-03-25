@@ -235,7 +235,7 @@ The Simulated Bifurcation algorithm stops after a certain number of iterations, 
 At regular intervals, the energy of the agents is sampled and compared with its previous value to calculate their stability period. If an agent's stability period exceeds a convergence threshold, it is considered to have converged and its value is frozen. If all agents converge before the maximum number of iterations has been reached, the algorithm stops.
 
 - The sampling period and the convergence threshold are respectively set using the `sampling_period` and `convergence_threshold` parameters of the `minimize` and `maximize` functions.
-- To use early stopping in the SB algorithm, set the `use_window` parameter to `True`.
+- To use early stopping in the SB algorithm, set the `early_stopping` parameter to `True`.
 - If only some agents have converged when the maximum number of iterations is reached, the algorithm stops and only these agents are considered in the results.
 
 ```python
@@ -247,7 +247,7 @@ sb.minimize(
     matrix,
     sampling_period=30,
     convergence_threshold=50,
-    use_window=True,
+    early_stopping=True,
 )
 ```
 

@@ -7,9 +7,9 @@ import torch
 from numpy import minimum
 from tqdm import tqdm
 
+from .convergence_checker import ConvergenceChecker
 from .environment import ENVIRONMENT
 from .simulated_bifurcation_engine import SimulatedBifurcationEngine
-from .stop_window import StopWindow
 from .symplectic_integrator import SymplecticIntegrator
 
 LOGGER = logging.getLogger("simulated_bifurcation_optimizer")
@@ -45,13 +45,15 @@ class SimulatedBifurcationOptimizer:
       algorithm with a supplementary non-symplectic term to refine the model
 
     To stop the iterations of the symplectic integrator, a number of maximum
-    steps needs to be specified. However, a refined way to stop is also possible
-    using a window that checks that the spins have not changed among a set
-    number of previous steps. In practice, a every fixed number of steps
-    (called a sampling period) the current spins will be compared to the
-    previous ones. If they remain constant throughout a certain number of
-    consecutive samplings (called the convergence threshold), the spins are
-    considered to have bifurcated and the algorithm stops.
+    steps and/or a timeout need(s) to be specified. However, a refined way to stop
+    is also possible using a convergence checker that asserts that the energy
+    of the agents has not changed during a fixed number of steps. If so, the computation
+    stops earlier than expected. In practice, every fixed number of steps (called a
+    sampling period) the current spins will be compared to the previous
+    ones (energy-wise). If the energy remains constant throughout a certain number of
+    consecutive samplings (called the convergence threshold), the spins are considered
+    to have bifurcated andthe algorithm stops. These spaced samplings make it possible
+    to decorrelate the spins and make their stability more informative.
 
     Finally, it is possible to make several particle vectors at the same
     time (each one being called an agent). As the vectors are randomly
@@ -75,7 +77,7 @@ class SimulatedBifurcationOptimizer:
     ) -> None:
         # Optimizer setting
         self.engine = engine
-        self.window = None
+        self.convergence_checker = None
         self.symplectic_integrator = None
         self.heat_coefficient = ENVIRONMENT.heat_coefficient
         self.heated = engine.heated
@@ -92,10 +94,10 @@ class SimulatedBifurcationOptimizer:
         self.max_steps = max_steps if max_steps is not None else float("inf")
         self.timeout = timeout if timeout is not None else float("inf")
 
-    def __reset(self, matrix: torch.Tensor, use_window: bool) -> None:
+    def __reset(self, matrix: torch.Tensor, early_stopping: bool) -> None:
         self.__init_progress_bars()
         self.__init_symplectic_integrator(matrix)
-        self.__init_window(matrix, use_window)
+        self.__init_convergence_checker(matrix, early_stopping)
         self.__init_quadratic_scale_parameter(matrix)
         self.run = True
         self.step = 0
@@ -125,14 +127,14 @@ class SimulatedBifurcationOptimizer:
             0.5 * (matrix.shape[0] - 1) ** 0.5 / (torch.sqrt(torch.sum(matrix**2)))
         )
 
-    def __init_window(self, matrix: torch.Tensor, use_window: bool) -> None:
-        self.window = StopWindow(
+    def __init_convergence_checker(
+        self, matrix: torch.Tensor, early_stopping: bool
+    ) -> None:
+        self.convergence_checker = ConvergenceChecker(
+            self.convergence_threshold,
             matrix,
             self.agents,
-            self.convergence_threshold,
-            matrix.dtype,
-            matrix.device,
-            (self.verbose and use_window),
+            (self.verbose and early_stopping),
         )
 
     def __init_symplectic_integrator(self, matrix: torch.Tensor) -> None:
@@ -147,9 +149,11 @@ class SimulatedBifurcationOptimizer:
         self.step += 1
         self.iterations_progress.update()
 
-    def __check_stop(self, use_window: bool) -> None:
-        if use_window and self.__do_sampling:
-            self.run = self.window.must_continue()
+    def __check_stop(self, early_stopping: bool) -> None:
+        if early_stopping and self.__do_sampling:
+            stored_spins = self.convergence_checker.get_stored_spins()
+            all_agents_converged = torch.any(torch.eq(stored_spins, 0)).item()
+            self.run = all_agents_converged
             if not self.run:
                 LOGGER.info("Optimizer stopped. Reason: all agents converged.")
                 return
@@ -177,12 +181,12 @@ class SimulatedBifurcationOptimizer:
     def __close_progress_bars(self):
         self.iterations_progress.close()
         self.time_progress.close()
-        self.window.progress.close()
+        self.convergence_checker.progress.close()
 
     def __symplectic_update(
         self,
         matrix: torch.Tensor,
-        use_window: bool,
+        early_stopping: bool,
     ) -> torch.Tensor:
         self.start_time = time()
         while self.run:
@@ -205,14 +209,25 @@ class SimulatedBifurcationOptimizer:
                 self.__heat(momentum_copy)
 
             self.__step_update()
-            if use_window and self.__do_sampling:
+            if early_stopping and self.__do_sampling:
                 sampled_spins = self.symplectic_integrator.sample_spins()
-                self.window.update(sampled_spins)
+                not_converged_agents = self.convergence_checker.update(sampled_spins)
+                # Only reshape the oscillators if some agents converged
+                if not torch.all(not_converged_agents).item():
+                    self.__remove_converged_agents(not_converged_agents)
 
-            self.__check_stop(use_window)
+            self.__check_stop(early_stopping)
 
         sampled_spins = self.symplectic_integrator.sample_spins()
         return sampled_spins
+
+    def __remove_converged_agents(self, not_converged_agents: torch.Tensor):
+        self.symplectic_integrator.momentum = self.symplectic_integrator.momentum[
+            :, not_converged_agents
+        ]
+        self.symplectic_integrator.position = self.symplectic_integrator.position[
+            :, not_converged_agents
+        ]
 
     def __heat(self, momentum_copy: torch.Tensor) -> None:
         torch.add(
@@ -233,7 +248,9 @@ class SimulatedBifurcationOptimizer:
     def __pressure(self):
         return minimum(self.time_step * self.step * self.pressure_slope, 1.0)
 
-    def run_integrator(self, matrix: torch.Tensor, use_window: bool) -> torch.Tensor:
+    def run_integrator(
+        self, matrix: torch.Tensor, early_stopping: bool
+    ) -> torch.Tensor:
         """
         Runs the Simulated Bifurcation (SB) algorithm. Given an input matrix,
         the SB algorithm aims at finding the groud state of the Ising model
@@ -245,8 +262,8 @@ class SimulatedBifurcationOptimizer:
         ----------
         matrix : torch.Tensor
             The matrix that defines the Ising model to optimize.
-        use_window : bool
-            Whether to use a stop window or not to perform early-stopping.
+        early_stopping : bool
+            Whether to perform early-stopping or not.
 
         Returns
         -------
@@ -261,38 +278,43 @@ class SimulatedBifurcationOptimizer:
         if (
             self.max_steps == float("inf")
             and self.timeout == float("inf")
-            and not use_window
+            and not early_stopping
         ):
             raise ValueError("No stopping criterion provided.")
-        self.__reset(matrix, use_window)
-        spins = self.__symplectic_update(matrix, use_window)
+        self.__reset(matrix, early_stopping)
+        spins = self.__symplectic_update(matrix, early_stopping)
         self.__close_progress_bars()
-        return self.get_final_spins(spins, use_window)
+        return self.get_final_spins(spins, early_stopping)
 
-    def get_final_spins(self, spins: torch.Tensor, use_window: bool) -> torch.Tensor:
+    def get_final_spins(
+        self, spins: torch.Tensor, early_stopping: bool
+    ) -> torch.Tensor:
         """
         Returns the final spins retrieved at the end of the
         Simulated Bifurcation (SB) algorithm.
 
-        If the stop window was used, it returns the bifurcated agents if any,
+        If the early stopping was used, it returns the converged agents if any,
         otherwise the actual final spins are returned.
 
-        If the stop window was not used, the final spins are returned.
+        If the early stopping was not used, the final spins are returned.
 
         Parameters
         ----------
         spins : torch.Tensor
             The spins returned by the Simulated Bifurcation algorithm.
-        use_window : bool
-            Whether the stop window was used or not.
+        early_stopping : bool
+            Whether the early stopping was used or not.
 
         Returns
         -------
         torch.Tensor
         """
-        if use_window:
-            if not self.window.has_bifurcated_spins():
+        if early_stopping:
+            final_spins = self.convergence_checker.get_stored_spins()
+            any_converged_agents = torch.any(torch.not_equal(final_spins, 0)).item()
+            if not any_converged_agents:
                 warnings.warn(ConvergenceWarning(), stacklevel=2)
-            return self.window.get_bifurcated_spins(spins)
+            final_spins[:, torch.all(torch.eq(final_spins, 0), dim=0)] = spins
+            return final_spins
         else:
             return spins

@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath("../src"))
 project = "Simulated Bifurcation"
 copyright = "2023, Romain Ageron, Thomas Bouquet and Lorenzo Pugliese"
 author = "Romain Ageron, Thomas Bouquet and Lorenzo Pugliese"
-release = "2.0.1"
+release = "1.3.0.dev0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
