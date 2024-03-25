@@ -36,55 +36,55 @@ def test_build_polynomial_from_expression():
     with pytest.raises(
         QuadraticPolynomialError, match="Expected a degree 2 polynomial, got 1."
     ):
-        QuadraticPolynomial(poly(x + y + z))
+        QuadraticPolynomial(poly(x + y + z), dtype=torch.float32)
 
     with pytest.raises(
         QuadraticPolynomialError, match="Expected a degree 2 polynomial, got 3."
     ):
-        QuadraticPolynomial(poly(x**3))
+        QuadraticPolynomial(poly(x**3), dtype=torch.float32)
 
 
 def test_build_polynomial_from_tensor():
     polynomial = QuadraticPolynomial(quadratic, dtype=torch.float32)
     assert isinstance(polynomial, QuadraticPolynomial)
     assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(torch.zeros(3), polynomial[1])
-    assert torch.equal(torch.tensor(0), polynomial[0])
+    assert torch.equal(torch.zeros(3, dtype=torch.float32), polynomial[1])
+    assert torch.equal(torch.tensor(0, dtype=torch.float32), polynomial[0])
 
     polynomial = QuadraticPolynomial(quadratic, linear, dtype=torch.float32)
     assert isinstance(polynomial, QuadraticPolynomial)
     assert torch.equal(quadratic, polynomial[2])
     assert torch.equal(linear, polynomial[1])
-    assert torch.equal(torch.tensor(0), polynomial[0])
+    assert torch.equal(torch.tensor(0, dtype=torch.float32), polynomial[0])
 
     polynomial = QuadraticPolynomial(linear, quadratic, dtype=torch.float32)
     assert isinstance(polynomial, QuadraticPolynomial)
     assert torch.equal(quadratic, polynomial[2])
     assert torch.equal(linear, polynomial[1])
-    assert torch.equal(torch.tensor(0), polynomial[0])
+    assert torch.equal(torch.tensor(0, dtype=torch.float32), polynomial[0])
 
     polynomial = QuadraticPolynomial(quadratic, 2, dtype=torch.float32)
     assert isinstance(polynomial, QuadraticPolynomial)
     assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(torch.zeros(3), polynomial[1])
+    assert torch.equal(torch.zeros(3, dtype=torch.float32), polynomial[1])
     assert torch.equal(constant, polynomial[0])
 
     polynomial = QuadraticPolynomial(2, quadratic, dtype=torch.float32)
     assert isinstance(polynomial, QuadraticPolynomial)
     assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(torch.zeros(3), polynomial[1])
+    assert torch.equal(torch.zeros(3, dtype=torch.float32), polynomial[1])
     assert torch.equal(constant, polynomial[0])
 
     polynomial = QuadraticPolynomial(quadratic, constant, dtype=torch.float32)
     assert isinstance(polynomial, QuadraticPolynomial)
     assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(torch.zeros(3), polynomial[1])
+    assert torch.equal(torch.zeros(3, dtype=torch.float32), polynomial[1])
     assert torch.equal(constant, polynomial[0])
 
     polynomial = QuadraticPolynomial(constant, quadratic, dtype=torch.float32)
     assert isinstance(polynomial, QuadraticPolynomial)
     assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(torch.zeros(3), polynomial[1])
+    assert torch.equal(torch.zeros(3, dtype=torch.float32), polynomial[1])
     assert torch.equal(constant, polynomial[0])
 
     polynomial = QuadraticPolynomial(quadratic, linear, constant, dtype=torch.float32)
@@ -163,12 +163,12 @@ def test_build_polynomial_from_tensor():
         ValueError,
         match="Declaring twice the same degree is ambiguous. Got two tensors for degree 2.",
     ):
-        QuadraticPolynomial(quadratic, quadratic)
+        QuadraticPolynomial(quadratic, quadratic, dtype=torch.float32)
 
     with pytest.raises(
         QuadraticPolynomialError, match="Expected a degree 2 polynomial, got 1."
     ):
-        QuadraticPolynomial(linear)
+        QuadraticPolynomial(linear, dtype=torch.float32)
 
     with pytest.raises(
         QuadraticPolynomialError, match="Expected a degree 2 polynomial, got 3."
@@ -181,7 +181,7 @@ def test_build_polynomial_from_tensor():
         PolynomialMapTensorDimensionError,
         match="All dimensions of the tensor must be equal.",
     ):
-        QuadraticPolynomial(torch.zeros((3, 2)))
+        QuadraticPolynomial(torch.zeros((3, 2)), dtype=torch.float32)
 
 
 def test_build_polynomial_with_wrong_domain():
@@ -189,7 +189,7 @@ def test_build_polynomial_with_wrong_domain():
         TypeError,
         match="Expected tensors or arrays, got <class 'str'>.",
     ):
-        QuadraticPolynomial("Hello world!")
+        QuadraticPolynomial("Hello world!", dtype=torch.float32)
 
 
 matrix = torch.tensor(
@@ -420,10 +420,12 @@ def test_wrong_domain_to_ising():
 
 
 def test_wrong_domain_cnvert_spin():
-    ising = Ising(quadratic)
+    ising = Ising(quadratic, dtype=torch.float32)
     ising.computed_spins = torch.ones(3, 3)
     with pytest.raises(ValueError):
-        QuadraticPolynomial(quadratic).convert_spins(ising, domain="Hello world!")
+        QuadraticPolynomial(quadratic, dtype=torch.float32).convert_spins(
+            ising, domain="Hello world!"
+        )
 
 
 def test_evaluate_polynomial():

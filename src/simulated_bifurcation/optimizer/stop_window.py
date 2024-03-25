@@ -3,6 +3,8 @@ from typing import Tuple, Union
 import torch
 from tqdm import tqdm
 
+from ..check_dtype import check_dtype
+
 
 class StopWindow:
     """
@@ -20,6 +22,7 @@ class StopWindow:
         device: Union[str, torch.device],
         verbose: bool,
     ) -> None:
+        check_dtype(dtype)
         self.ising_tensor = ising_tensor
         self.n_spins = self.ising_tensor.shape[0]
         self.n_agents = n_agents

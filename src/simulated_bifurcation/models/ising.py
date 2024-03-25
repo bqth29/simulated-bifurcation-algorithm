@@ -25,6 +25,9 @@ class Ising(ABCModel):
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
     ) -> None:
-        super().__init__(-0.5 * J, h, dtype=dtype, device=device)
-        self.J = J
-        self.h = h
+        _tensors = (-0.5 * J,)
+        if h is not None:
+            _tensors += (h,)
+        super().__init__(*_tensors, dtype=dtype, device=device)
+        self.J = self[2]
+        self.h = self[1]

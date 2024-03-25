@@ -225,15 +225,16 @@ class QuadraticPolynomial(Polynomial):
             following regular expression: ^int[1-9][0-9]*$.
 
         """
+        dtype = torch.float64 if self.dtype == torch.float64 else torch.float32
         if domain == "spin":
-            return Ising(-2 * self[2], self[1], self.dtype, self.device)
+            return Ising(-2 * self[2], self[1], dtype=dtype, device=self.device)
         if domain == "binary":
             symmetrical_matrix = Ising.symmetrize(self[2])
             J = -0.5 * symmetrical_matrix
             h = 0.5 * self[1] + 0.5 * symmetrical_matrix @ torch.ones(
                 self.n_variables, dtype=self.dtype, device=self.device
             )
-            return Ising(J, h, self.dtype, self.device)
+            return Ising(J, h, dtype=dtype, device=self.device)
         if INTEGER_REGEX.match(domain) is None:
             raise DOMAIN_ERROR
         number_of_bits = int(domain[3:])
@@ -256,7 +257,7 @@ class QuadraticPolynomial(Polynomial):
             dtype=self.dtype,
             device=self.device,
         )
-        return Ising(J, h, self.dtype, self.device)
+        return Ising(J, h, dtype=dtype, device=self.device)
 
     def convert_spins(self, ising: Ising, domain: str) -> Optional[torch.Tensor]:
         """
@@ -296,16 +297,20 @@ class QuadraticPolynomial(Polynomial):
         if ising.computed_spins is None:
             return None
         if domain == "spin":
-            return ising.computed_spins
+            return ising.computed_spins.to(dtype=self.dtype, device=self.device)
         if domain == "binary":
-            return (ising.computed_spins + 1) / 2
+            return ((ising.computed_spins + 1) / 2).to(
+                dtype=self.dtype, device=self.device
+            )
         if INTEGER_REGEX.match(domain) is None:
             raise DOMAIN_ERROR
         number_of_bits = int(domain[3:])
         integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
             self.n_variables, number_of_bits, device=self.device
         )
-        return 0.5 * integer_to_binary_matrix.t() @ (ising.computed_spins + 1)
+        return (0.5 * integer_to_binary_matrix.t() @ (ising.computed_spins + 1)).to(
+            dtype=self.dtype, device=self.device
+        )
 
     def optimize(
         self,
