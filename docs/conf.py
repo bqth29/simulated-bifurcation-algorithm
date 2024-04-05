@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath("../src"))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "Simulated Bifurcation"
-copyright = "2023, Romain Ageron, Thomas Bouquet and Lorenzo Pugliese"
+copyright = "2024, Romain Ageron, Thomas Bouquet and Lorenzo Pugliese"
 author = "Romain Ageron, Thomas Bouquet and Lorenzo Pugliese"
 release = "2.0.1"
 
@@ -23,6 +23,14 @@ extensions = [
     "sphinx.ext.autodoc",
     "numpydoc",
     "sphinx_rtd_theme",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.doctest",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.todo",
+    "sphinx.ext.intersphinx",
+    "myst_parser",
 ]
 
 templates_path = ["_templates"]
@@ -32,5 +40,26 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 html_static_path = ["_static"]
+
+myst_enable_extensions = ["amsmath", "colon_fence", "dollarmath", "attrs_inline"]
+myst_heading_anchors = 6
+
+
+html_theme_options = {
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/bqth29/simulated-bifurcation-algorithm",
+            "icon": "fab fa-github-square",
+        }
+    ],
+    # the following 3 lines enable edit button
+    "source_repository": "https://github.com/bqth29/simulated-bifurcation-algorithm/",
+    "source_branch": "main",
+    "source_directory": "docs/",
+}
+
+html_title = "Simulated Bifurcation"
+html_short_title = "Simulated Bifurcation"

@@ -1,5 +1,4 @@
-Advanced usage
-==============
+# Advanced usages
 
 The Simulated Bifurcation algorithm has a set of hyperparameters corresponding to physical
 constants derived from quantum theory, which have been fine-tuned (Goto *et al.*)
@@ -12,6 +11,8 @@ theory is highly recommended).
 - Kanao, T., & Goto, H. (2022). Simulated bifurcation assisted by thermal fluctuation. *Communications Physics, 5* (1), 153.
 - Goto, H., Endo, K., Suzuki, M., Sakai, Y., Kanao, T., Hamakawa, Y., ... & Tatsumura, K. (2021). High-performance combinatorial optimization based on classical mechanics. *Science Advances, 7* (6), eabe7953.
 
+```{eval-rst}
 .. autofunction:: simulated_bifurcation.set_env
 .. autofunction:: simulated_bifurcation.get_env
 .. autofunction:: simulated_bifurcation.reset_env
+```
