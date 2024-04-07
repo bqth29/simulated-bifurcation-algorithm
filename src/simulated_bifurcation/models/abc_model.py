@@ -37,7 +37,7 @@ class ABCModel(ABC, QuadraticPolynomial):
         timeout: Optional[float] = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return super().optimize(
-            self.domain,
+            domain=self.domain,
             agents=agents,
             max_steps=max_steps,
             best_only=best_only,

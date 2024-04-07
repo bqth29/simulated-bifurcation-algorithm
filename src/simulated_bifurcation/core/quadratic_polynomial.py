@@ -309,8 +309,8 @@ class QuadraticPolynomial(Polynomial):
 
     def optimize(
         self,
-        domain: str,
         *,
+        domain: str,
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
@@ -426,8 +426,8 @@ class QuadraticPolynomial(Polynomial):
 
     def minimize(
         self,
-        domain: str,
         *,
+        domain: str,
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
@@ -530,8 +530,8 @@ class QuadraticPolynomial(Polynomial):
 
     def maximize(
         self,
-        domain: str,
         *,
+        domain: str,
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
