@@ -2,7 +2,7 @@
 
 This package provides an implementation of all four versions of the Simulated Bifurcation algorithm (bSB, dSB, HbSB or HdSB) enhanced by supplementary features that allow the user, for instance, to define advanced stop criteria and harness the parallelization of the algorithm by running a multi-agent optimization CPU or GPU.
 
-Three [optimization functions](#available-functions) (`optimize`, `maximize` and `minimize`) that all share the same pool of parameters are available. These parameters are meant to set the different extra-features of the algorithm and to allow a more personalized experience. They are gathered in the following table and their usage and specific role in the optimizer are described thoughout this page.
+Three optimization functions (`optimize`, `maximize` and `minimize`) that all share the same pool of parameters are available. These parameters are meant to set the different extra-features of the algorithm and to allow a more personalized experience. They are gathered in the following table and their usage and specific role in the optimizer are described thoughout this page.
 
 > - The mandatory parameters are written in **bold**
 > - Except for `polynomial` which is positional and must be defined as the first parameter, all other parameters are keyword-only and their order does not matter
@@ -11,14 +11,14 @@ Three [optimization functions](#available-functions) (`optimize`, `maximize` and
 
 | Parameter                                       | Type                    | Default value   | Usage                                                                                                                                                                                  |
 | ----------------------------------------------- | ----------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [**`polynomial`**](#model-definition)           | `PolynomialLike`        |                 | Quadratic model to optimize.                                                                                                                                                           |
+| [**`polynomial`**](#quadratic-model-definition) | `PolynomialLike`        |                 | Quadratic model to optimize.                                                                                                                                                           |
 | [`agents`](#parallelization-multi-agent-search) | `int`                   | `128`           | Number of oscillators to evolve in parallel                                                                                                                                            |
 | [`ballistic`](#sb-algorithm-versions)           | `bool`                  | `True`          | Whether to use the ballistic version of the SB algorithm (bSB) or the discrete version (dSB).                                                                                          |
 | [`best_only`](#outputs)                         | `bool`                  | `True`          | Whether to only return the best agent and its associated objective function value, or all agents at once.                                                                              |
 | [`convergence_threshold`](#early-stopping)      | `int`                   | `50`            | Number of consecutive samplings after which an agent is considered to have converged if its Ising energy has not changed. Its value is read only if `use_window` is set to `True`.     |
 | [`device`](#gpu-computation)                    | `str` or `torch.device` | `None`          | Device on which to run the optimization (CPU or GPU).                                                                                                                                  |
-| [**`domain`**](#model-definition)               | `str`                   |                 | Domain on which the optimization is carried out (spin, binary or integer values).                                                                                                      |
-| [`dtype`](#model-definition)                    | `torch.dtype`           | `torch.float32` | Computation dtype.                                                                                                                                                                     |
+| [**`domain`**](#optimization-domain)            | `str`                   |                 | Domain on which the optimization is carried out (spin, binary or integer values).                                                                                                      |
+| [`dtype`](#quadratic-model-definition)          | `torch.dtype`           | `torch.float32` | Computation dtype.                                                                                                                                                                     |
 | [`heated`](#sb-algorithm-versions)              | `bool`                  | `False`         | Whether to use the heated version of the SB algorithm or not.                                                                                                                          |
 | [`max_steps`](#number-of-iterations)            | `int`                   | `10000`         | Maximum number of iterations of the optimizer (one iteration is one step in the symplectic Euler scheme). If reached, the computation is stopped and the current results are returned. |
 | [`sampling_period`](#early-stopping)            | `int`                   | `50`            | Number of iterations between two successive oscillator samplings to verify early stopping conditions. Its value is read only if `use_window` is set to `True`.                         |
@@ -26,9 +26,7 @@ Three [optimization functions](#available-functions) (`optimize`, `maximize` and
 | [`use_window`](#early-stopping)                 | `bool`                  | `True`          | Whether to use early-stopping or not.                                                                                                                                                  |
 | [`verbose`](#display-the-evolution-status)      | `bool`                  | `True`          | Whether to display the evolution status of the optimizer with progress bars or not.                                                                                                    |
 
-## Model definition
-
-### Quadratic model
+## Quadratic model definition
 
 The quadratic model to optimize can be defined in a standalone mode with the `build_model` function of the package as presented in the [Quadratic Models](quadratic_models.md) page. Creating a model this way is useful if you intend to use it for other purposes like evaluating input data or defining a custom model dtype.
 
@@ -48,7 +46,7 @@ However, if you want to minimize a model "*in one go*" without having to reuse i
 
 > The optimization model is passed as the only positional argument(s) of the optimization method.
 
-### Optimization domain
+## Optimization domain
 
 Once the model is defined, the optimization domain must be set. It corresponds to the space of values that is searched by the Simulated Bifurcation algorithm to find the optimal values of decision variables. There are three possible types of domains on which the optimization can be carried out: spin (-1 and 1), binary (0 and 1) and integer.
 
@@ -186,13 +184,18 @@ Note that each progress bar is displayed only if the associated stopping criteri
 
 ## Outputs
 
-## Available functions
+Two tensors are returned by the optimization function: the optimized agents (with values in the optimization domain) and their evaluation by the input polynomial.
 
-```{eval-rst}
-.. autofunction:: simulated_bifurcation.optimize
-.. autofunction:: simulated_bifurcation.minimize
-.. autofunction:: simulated_bifurcation.maximize
-```
+> The returned agents' dtype is the same as the model's dtype.
+
+Users may also want to only get the best computed agent and its associated evalutation so this is configurable when calling the optimization function. The notion of *best* agents means the agent with the highest evaluation for a maximization or with the lowest evaluation for a minimization.
+
+> Whether or not to return only the best agent is set using the `best_only` parameter:
+>
+> ```python
+> sb.minimize(polynomial, domain="spin", best_only=True) # Only return the best agent and its evaluation
+> sb.minimize(polynomial, domain="spin", best_only=False) # Return all agents and their evaluations
+> ```
 
 ## Warnings
 
