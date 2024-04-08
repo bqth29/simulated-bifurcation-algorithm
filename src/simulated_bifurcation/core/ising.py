@@ -88,9 +88,14 @@ class Ising:
         self,
         J: Union[torch.Tensor, ndarray],
         h: Union[torch.Tensor, ndarray, None] = None,
-        dtype: Optional[torch.dtype] = None,
+        dtype: Optional[torch.dtype] = torch.float32,
         device: Optional[Union[str, torch.device]] = None,
     ) -> None:
+        if dtype not in [torch.float32, torch.float64]:
+            raise ValueError(
+                "Only torch.float32 and torch.float64 are supported for Simulated Bifurcation"
+                f" computations but got {dtype}."
+            )
         self.dimension = J.shape[0]
         if isinstance(J, ndarray):
             J = torch.from_numpy(J)

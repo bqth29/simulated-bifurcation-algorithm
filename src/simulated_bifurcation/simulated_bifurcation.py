@@ -159,7 +159,7 @@ def build_model(
 def optimize(
     *polynomial: PolynomialLike,
     domain: str = "spin",
-    dtype: Optional[torch.dtype] = None,
+    dtype: Optional[torch.dtype] = torch.float32,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
     max_steps: int = 10_000,
@@ -430,6 +430,8 @@ def optimize(
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
         timeout=timeout,
+        dtype=dtype,
+        device=device,
     )
     return result, evaluation
 
@@ -437,7 +439,7 @@ def optimize(
 def minimize(
     *polynomial: PolynomialLike,
     domain: str = "spin",
-    dtype: Optional[torch.dtype] = None,
+    dtype: Optional[torch.dtype] = torch.float32,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
     max_steps: int = 10_000,
@@ -700,7 +702,7 @@ def minimize(
 def maximize(
     *polynomial: PolynomialLike,
     domain: str = "spin",
-    dtype: Optional[torch.dtype] = None,
+    dtype: Optional[torch.dtype] = torch.float32,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
     max_steps: int = 10_000,

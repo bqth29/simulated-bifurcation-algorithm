@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import torch
 
@@ -34,7 +34,9 @@ class ABCModel(ABC, QuadraticPolynomial):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
+        dtype: torch.dtype = torch.float32,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return super().optimize(
             self.domain,
@@ -49,6 +51,8 @@ class ABCModel(ABC, QuadraticPolynomial):
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            dtype=dtype,
+            device=device,
         )
 
     def minimize(
@@ -63,7 +67,9 @@ class ABCModel(ABC, QuadraticPolynomial):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
+        dtype: torch.dtype = torch.float32,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.optimize(
             agents,
@@ -77,6 +83,8 @@ class ABCModel(ABC, QuadraticPolynomial):
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            dtype=dtype,
+            device=device,
         )
 
     def maximize(
@@ -91,7 +99,9 @@ class ABCModel(ABC, QuadraticPolynomial):
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
+        dtype: torch.dtype = torch.float32,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.optimize(
             agents,
@@ -105,4 +115,6 @@ class ABCModel(ABC, QuadraticPolynomial):
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            dtype=dtype,
+            device=device,
         )

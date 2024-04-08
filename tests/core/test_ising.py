@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from src.simulated_bifurcation.core import Ising
@@ -95,3 +96,11 @@ def test_negative_ising():
     assert negative_ising.linear_term
     assert len(negative_ising) == 3
     assert negative_ising.dimension == 3
+
+
+def test_non_float_ising():
+    with pytest.raises(
+        ValueError,
+        match="Only torch.float32 and torch.float64 are supported for Simulated Bifurcation computations but got torch.int8.",
+    ):
+        Ising(J, dtype=torch.int8)
