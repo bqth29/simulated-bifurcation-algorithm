@@ -1,38 +1,83 @@
 # Simulated Bifurcation Optimizer
 
-This package provides an implementation of the Simulated Bifurcation algorithm enhanced by features...
+This package provides an implementation of all four versions of the Simulated Bifurcation algorithm (bSB, dSB, HbSB or HdSB) enhanced by supplementary features that allow the user, for instance, to define advanced stop criteria and harness the parallelization of the algorithm by running a multi-agent optimization CPU or GPU.
 
-It provides three optimization functions (`optimize`, `maximize` and `minimize`) that all share the same pool of parameters
-
-> For the parameters relative to the quantum physics theory, see [Advanced Usages](advanced_usages.md).
-
-These parameters are gathered and the following table and their usage and specific role in the optimizer are described thoughout this page.
+Three [optimization functions](#available-functions) (`optimize`, `maximize` and `minimize`) that all share the same pool of parameters are available. These parameters are meant to set the different extra-features of the algorithm and to allow a more personalized experience. They are gathered in the following table and their usage and specific role in the optimizer are described thoughout this page.
 
 > - The mandatory parameters are written in **bold**
 > - Except for `polynomial` which is positional and must be defined as the first parameter, all other parameters are keyword-only and their order does not matter
+> - `optimize` has an extra `minimize` boolean parameter (default `True`)
+> - The parameters are for optimization features only, for parameters related to quantum physics theory, see [Advanced Usage](advanced_usage.md)
 
-| Parameter                                       | Type                    | Default value | Usage                                                                                                                                                                                 |
-| ----------------------------------------------- | ----------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [**`polynomial`**](#model-definition)           | `PolynomialLike`        |               | Quadratic model to optimize.                                                                                                                                                          |
-| [`agents`](#parallelization-multi-agent-search) | `int`                   | `128`         | Model                                                                                                                                                                                 |
-| [`ballistic`](#sb-algorithm-versions)           | `bool`                  | `True`        | Whether to use the ballistic version of the SB algorithm (bSB) or the discrete version (dSB).                                                                                         |
-| [`best_only`](#outputs)                         | `bool`                  | `True`        | Whether to only return the best agent and its associated objective function value, or all agents at once.                                                                             |
-| [`convergence_threshold`](#early-stopping)      | `int`                   | `50`          | Model                                                                                                                                                                                 |
-| [`device`](#gpu-computation)                    | `str` or `torch.device` | `None`        | Device on which to run the optimization (CPU or GPU).                                                                                                                                 |
-| [**`domain`**](#model-definition)               | `str`                   |               | Domain on which the optimization is carried out (spin, binary or integer values).                                                                                                     |
-| [`dtype`](#model-definition)                    | `torch.dtype`           | `None`        | Model                                                                                                                                                                                 |
-| [`heated`](#sb-algorithm-versions)              | `bool`                  | `False`       | Whether to use the heated version of the SB algorithm or not.                                                                                                                         |
-| [`max_steps`](#number-of-iterations)            | `int`                   | `10000`       | Maximum number of iterations of the optimizer (one iteration is one step in the symplectic Eule scheme). If reached, the computation is stopped and the current results are returned. |
-| [`sampling_period`](#early-stopping)            | `int`                   | `50`          | Model                                                                                                                                                                                 |
-| [`timeout`](#computation-timeout)               | `int`                   | `None`        | Maximum computation time of the optimizer in seconds. If reached, the computation is stopped and the current results are returned.                                                    |
-| [`use_window`](#early-stopping)                 | `bool`                  | `True`        | Model                                                                                                                                                                                 |
-| [`verbose`](#display-the-evolution-status)      | `bool`                  | `True`        | Whether to display the evolution status of the optimizer with progress bars or not.                                                                                                   |
+| Parameter                                       | Type                    | Default value   | Usage                                                                                                                                                                                  |
+| ----------------------------------------------- | ----------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [**`polynomial`**](#model-definition)           | `PolynomialLike`        |                 | Quadratic model to optimize.                                                                                                                                                           |
+| [`agents`](#parallelization-multi-agent-search) | `int`                   | `128`           | Number of oscillators to evolve in parallel                                                                                                                                            |
+| [`ballistic`](#sb-algorithm-versions)           | `bool`                  | `True`          | Whether to use the ballistic version of the SB algorithm (bSB) or the discrete version (dSB).                                                                                          |
+| [`best_only`](#outputs)                         | `bool`                  | `True`          | Whether to only return the best agent and its associated objective function value, or all agents at once.                                                                              |
+| [`convergence_threshold`](#early-stopping)      | `int`                   | `50`            | Number of consecutive samplings after which an agent is considered to have converged if its Ising energy has not changed. Its value is read only if `use_window` is set to `True`.     |
+| [`device`](#gpu-computation)                    | `str` or `torch.device` | `None`          | Device on which to run the optimization (CPU or GPU).                                                                                                                                  |
+| [**`domain`**](#model-definition)               | `str`                   |                 | Domain on which the optimization is carried out (spin, binary or integer values).                                                                                                      |
+| [`dtype`](#model-definition)                    | `torch.dtype`           | `torch.float32` | Computation dtype.                                                                                                                                                                     |
+| [`heated`](#sb-algorithm-versions)              | `bool`                  | `False`         | Whether to use the heated version of the SB algorithm or not.                                                                                                                          |
+| [`max_steps`](#number-of-iterations)            | `int`                   | `10000`         | Maximum number of iterations of the optimizer (one iteration is one step in the symplectic Euler scheme). If reached, the computation is stopped and the current results are returned. |
+| [`sampling_period`](#early-stopping)            | `int`                   | `50`            | Number of iterations between two successive oscillator samplings to verify early stopping conditions. Its value is read only if `use_window` is set to `True`.                         |
+| [`timeout`](#computation-timeout)               | `int`                   | `None`          | Maximum computation time of the optimizer in seconds. If reached, the computation is stopped and the current results are returned.                                                     |
+| [`use_window`](#early-stopping)                 | `bool`                  | `True`          | Whether to use early-stopping or not.                                                                                                                                                  |
+| [`verbose`](#display-the-evolution-status)      | `bool`                  | `True`          | Whether to display the evolution status of the optimizer with progress bars or not.                                                                                                    |
 
 ## Model definition
 
 ### Quadratic model
 
+The quadratic model to optimize can be defined in a standalone mode with the `build_model` function of the package as presented in the [Quadratic Models](quadratic_models.md) page. Creating a model this way is useful if you intend to use it for other purposes like evaluating input data or defining a custom model dtype.
+
+When a model is created with the `build_model` function, you can optimize it using one of the three optimization methods (`optimize`, `maximize` and `minimize`) of the `QuadraticPolynomial` class. These methods have the same name and are equivalent to the three optimization (static) functions described in this page. The only difference is that the methods of the `QuadraticPolynomial` class have no positional argument `polynomial`.
+
+> Not paying attention to the difference between the model dtype and the computation dtype which is discussed [further on this page](#computation-dtype), it is equivalent to use:
+> ```python
+> sb.minimize(polynomial, **kwargs)
+> ```
+> and
+> ```python
+> sb.build_model(polynomial).minimize(**kwargs)
+> ```
+> Note that the same holds for `maximize` and `optimize`.
+
+However, if you want to minimize a model "*in one go*" without having to reuse it afterwards, you can define it directly in the optimization function (`optimize`, `maximize` or `minimize`). The model can be defined using [tensors](quadratic_models.md#using-tensors) or a [SymPy expression](quadratic_models.md#using-a-sympy-expression) as explained in the same [Quadratic Models](quadratic_models.md) page.
+
+> The optimization model is passed as the only positional argument(s) of the optimization method.
+
 ### Optimization domain
+
+Once the model is defined, the optimization domain must be set. It corresponds to the space of values that is searched by the Simulated Bifurcation algorithm to find the optimal values of decision variables. There are three possible types of domains on which the optimization can be carried out: spin (-1 and 1), binary (0 and 1) and integer.
+
+> The optimization domain is set using the `domain` parameter. For spin and binary optimization, the domain must respectively be `"spin"` or `"binary"`. For integer optimization, the domain must start with `"int"` followed by a positive integer which indicates the number of bits to represent the integer values. More formally, it must match the regular expression `^int[1-9][0-9]*$`. For instance, `"int2"` represents all the integer that can be incoded on 2 bits, i.e. 0, 1, 2 and 3. Similarly, `"int10"` represents all the integer that can be incoded on 10 bits, i.e. all integers between 0 and 1023.
+>
+> ```python
+> sb.minimize(polynomial, domain="spin") # Optimization on {-1, 1}
+> sb.minimize(polynomial, domain="binary") # Optimization on {0, 1}
+> sb.minimize(polynomial, domain="int3") # Optimization on {0, 1, 2, 3, 4, 5, 6, 7}
+> ```
+
+## Computation dtype
+
+It is possible to configure the computation dtype of the algorithm. On the one hand using a dtype with a less bits can improve the algorithm performances speed-wise and on the other hand, a dtype with a heavier bit representation ay be more accurate. The Simulated Bifurcation is based on numerical values betwwen -1 and 1 thus, only `torch.float32` and `torch.float64` are currently available. Because some key PyTorch methods used in the Simulated Bifurcation backend are not available for `torch.float16`, this dtype cannot be used to run the computations.
+
+Note that the computation dtype is only used for backend computations. The optimization model, if define in a standalone mode, can have a different dtype (see how to build an optimization model in the [Quadratic Models](quadratic_models.md) page). However, when calling the SB algorithm directly with one of the three `optimize`, `maximize` and `minimize` functions, the computation dtype is also used as the model' dtype.
+
+> The computation dtype is set using the `dtype` parameter:
+>
+> ```python
+> sb.minimize(polynomial, dtype=torch.float32, **kwargs)
+> ```
+
+If you want to run the SB algorithm using the `torch.float32` dtype and want to create an integer model at the same time, for instance using the `torch.float8` dtype, the model should be created first and the optimization method called from this model in a second time:
+
+```python
+model = sb.build_model(polynomial, dtype=torch.int8) # The dtype parameter refers to the model's dtype
+model.minimize(dtype=torch.float32, **kwargs) # The dtype parameter refers to the computation dtype
+```
 
 ## Parallelization (multi-agent search)
 
@@ -141,7 +186,7 @@ Note that each progress bar is displayed only if the associated stopping criteri
 
 ## Outputs
 
-## Available routines
+## Available functions
 
 ```{eval-rst}
 .. autofunction:: simulated_bifurcation.optimize

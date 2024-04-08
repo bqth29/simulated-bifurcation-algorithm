@@ -1,4 +1,4 @@
-# Advanced usages
+# Advanced Usage
 
 The Simulated Bifurcation algorithm has a set of hyperparameters corresponding to physical constants derived from quantum theory, which have been fine-tuned (Goto *et al.*[^1][^2][^3]) to give the best results most of the time. Nevertheless, the relevance of specific hyperparameters may vary depending on the properties of the instances. For this purpose, if is possible to manually configure these hyperparameters (reading the Simulated Bifurcation theory is highly recommended).
 
