@@ -35,5 +35,5 @@ sphinxcontrib-serializinghtml==1.1.5
 sympy==1.12
 tomli==2.0.1
 torch==2.0.1
-tqdm==4.66.1
+tqdm==4.66.3
 typing_extensions==4.7.1
