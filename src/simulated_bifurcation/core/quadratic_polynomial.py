@@ -21,13 +21,14 @@ Ising:
 """
 
 import re
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import torch
 
 from ..polynomial import Polynomial, PolynomialLike
 from .ising import Ising
+from .variable import Variable
 
 INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
 DOMAIN_ERROR = ValueError(
@@ -225,38 +226,46 @@ class QuadraticPolynomial(Polynomial):
             following regular expression: ^int[1-9][0-9]*$.
 
         """
-        if domain == "spin":
-            return Ising(-2 * self[2], self[1], self.dtype, self.device)
-        if domain == "binary":
-            symmetrical_matrix = Ising.symmetrize(self[2])
-            J = -0.5 * symmetrical_matrix
-            h = 0.5 * self[1] + 0.5 * symmetrical_matrix @ torch.ones(
-                self.n_variables, dtype=self.dtype, device=self.device
-            )
-            return Ising(J, h, self.dtype, self.device)
-        if INTEGER_REGEX.match(domain) is None:
-            raise DOMAIN_ERROR
-        number_of_bits = int(domain[3:])
-        symmetrical_matrix = Ising.symmetrize(self[2])
-        integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
-            self.n_variables, number_of_bits, device=self.device
+        variables = [Variable.from_str(domain) for _ in range(self.n_variables)]
+        spin_identity_vector = QuadraticPolynomial.__spin_identity_vector(
+            variables=variables, dtype=self.dtype, device=self.device
+        )
+        spin_weighted_integer_to_binary_matrix = (
+            spin_identity_vector + 1
+        ) * QuadraticPolynomial.__integer_to_binary_matrix(
+            variables=variables, dtype=self.dtype, device=self.device
         )
         J = (
             -0.5
-            * integer_to_binary_matrix
-            @ symmetrical_matrix
-            @ integer_to_binary_matrix.t()
+            * spin_weighted_integer_to_binary_matrix.t()
+            @ (self[2] + self[2].t())
+            / 2
+            @ spin_weighted_integer_to_binary_matrix
         )
-        h = 0.5 * integer_to_binary_matrix @ self[
-            1
-        ] + 0.5 * integer_to_binary_matrix @ self[
-            2
-        ] @ integer_to_binary_matrix.t() @ torch.ones(
-            (self.n_variables * number_of_bits),
-            dtype=self.dtype,
-            device=self.device,
+        h = (
+            0.5 * spin_weighted_integer_to_binary_matrix.t() @ self[1].reshape(-1, 1)
+            + 0.5
+            * spin_weighted_integer_to_binary_matrix.t()
+            @ ((self[2] + self[2].t()) / 2)
+            @ spin_weighted_integer_to_binary_matrix
+            @ torch.ones(
+                spin_weighted_integer_to_binary_matrix.shape[1],
+                1,
+                dtype=self.dtype,
+                device=self.device,
+            )
+            - spin_weighted_integer_to_binary_matrix.t()
+            @ ((self[2] + self[2].t()) / 2)
+            @ spin_identity_vector
         )
-        return Ising(J, h, self.dtype, self.device)
+        return Ising(
+            J,
+            h.reshape(
+                -1,
+            ),
+            self.dtype,
+            self.device,
+        )
 
     def convert_spins(self, ising: Ising, domain: str) -> Optional[torch.Tensor]:
         """
@@ -293,19 +302,25 @@ class QuadraticPolynomial(Polynomial):
             a positive integer, or more formally, any string matching the
             following regular expression: ^int[1-9][0-9]*$.
         """
-        if ising.computed_spins is None:
-            return None
-        if domain == "spin":
-            return ising.computed_spins
-        if domain == "binary":
-            return (ising.computed_spins + 1) / 2
-        if INTEGER_REGEX.match(domain) is None:
-            raise DOMAIN_ERROR
-        number_of_bits = int(domain[3:])
-        integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
-            self.n_variables, number_of_bits, device=self.device
+        variables = [Variable.from_str(domain) for _ in range(self.n_variables)]
+        spin_identity_vector = QuadraticPolynomial.__spin_identity_vector(
+            variables=variables, dtype=self.dtype, device=self.device
         )
-        return 0.5 * integer_to_binary_matrix.t() @ (ising.computed_spins + 1)
+        spin_weighted_integer_to_binary_matrix = (
+            spin_identity_vector + 1
+        ) * QuadraticPolynomial.__integer_to_binary_matrix(
+            variables=variables, dtype=self.dtype, device=self.device
+        )
+        return (
+            None
+            if ising.computed_spins is None
+            else (
+                0.5
+                * spin_weighted_integer_to_binary_matrix
+                @ (ising.computed_spins + 1)
+                - spin_identity_vector
+            )
+        )
 
     def optimize(
         self,
@@ -632,28 +647,26 @@ class QuadraticPolynomial(Polynomial):
         )
 
     @staticmethod
-    def __integer_to_binary_matrix(
-        dimension: int, number_of_bits: int, device: Union[str, torch.device]
+    def __spin_identity_vector(
+        variables: List[Variable], dtype: torch.dtype, device: Union[str, torch.device]
     ) -> torch.Tensor:
-        """
-        Generates a matrix to convert a binary quadratic multivariate polynomial
-        to an n-bits integer polynomial.
+        vector = torch.zeros(len(variables), dtype=dtype, device=device)
+        for ind, variable in enumerate(variables):
+            vector[ind] = int(variable.is_spin)
+        return vector.reshape(-1, 1)
 
-        Parameters
-        ----------
-        dimension : int
-            Dimension of the polynomial.
-        number_of_bits : int
-            Number of bits to encode the integer values.
-        device : str | torch.device
-            Device on which to perform the computations.
-
-        Returns
-        -------
-        Tensor
-        """
-        matrix = torch.zeros((dimension * number_of_bits, dimension), device=device)
-        for row in range(dimension):
-            for col in range(number_of_bits):
-                matrix[row * number_of_bits + col][row] = 2.0**col
+    @staticmethod
+    def __integer_to_binary_matrix(
+        variables: List[Variable], dtype: torch.dtype, device: Union[str, torch.device]
+    ) -> torch.Tensor:
+        original_dimension = len(variables)
+        new_dimension = np.sum([variable.encoding_bits for variable in variables])
+        matrix = torch.zeros(
+            original_dimension, new_dimension, dtype=dtype, device=device
+        )
+        column_offset = 0
+        for row, variable in enumerate(variables):
+            for col in range(variable.encoding_bits):
+                matrix[row][column_offset + col] = 2**col
+            column_offset += variable.encoding_bits
         return matrix
