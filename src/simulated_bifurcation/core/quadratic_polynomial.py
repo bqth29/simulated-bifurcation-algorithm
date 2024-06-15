@@ -220,6 +220,9 @@ class QuadraticPolynomial(Polynomial):
               2^n - 1 inclusive. "int..." represents any string starting with
               "int" and followed by a positive integer n, e.g. "int3", "int42".
 
+            If the variables have different domains, a list of string with the
+            same length as the number of variables can be provided instead.
+
         Returns
         -------
         Ising
@@ -229,10 +232,14 @@ class QuadraticPolynomial(Polynomial):
         Raises
         ------
         ValueError
-            If `domain` is not one of {"spin", "binary", "int..."}, where
-            "int..." designates any string starting with "int" and followed by
-            a positive integer, or more formally, any string matching the
-            following regular expression: ^int[1-9][0-9]*$.
+            If `domain` (or any domain in case a list is passed) is not one
+            of {"spin", "binary", "int..."}, where "int..." designates any
+            string starting with "int" and followed by a positive integer,
+            or more formally, any string matching the regular expression
+            `^int[1-9][0-9]*$`.
+        ValueError
+            If `domain` is used as a list of optimizatio domains with a
+            length different from the number of variables.
 
         """
         variables = self.__get_variables(domain=domain)
@@ -301,6 +308,9 @@ class QuadraticPolynomial(Polynomial):
               2^n - 1 inclusive. "int..." represents any string starting with
               "int" and followed by a positive integer n, e.g. "int3", "int42".
 
+            If the variables have different domains, a list of string with the
+            same length as the number of variables can be provided instead.
+
         Returns
         -------
         Tensor
@@ -308,10 +318,14 @@ class QuadraticPolynomial(Polynomial):
         Raises
         ------
         ValueError
-            If `domain` is not one of {"spin", "binary", "int..."}, where
-            "int..." designates any string starting with "int" and followed by
-            a positive integer, or more formally, any string matching the
-            following regular expression: ^int[1-9][0-9]*$.
+            If `domain` (or any domain in case a list is passed) is not one
+            of {"spin", "binary", "int..."}, where "int..." designates any
+            string starting with "int" and followed by a positive integer,
+            or more formally, any string matching the regular expression
+            `^int[1-9][0-9]*$`.
+        ValueError
+            If `domain` is used as a list of optimizatio domains with a
+            length different from the number of variables.
         """
         variables = self.__get_variables(domain=domain)
         spin_identity_vector = QuadraticPolynomial.__spin_identity_vector(

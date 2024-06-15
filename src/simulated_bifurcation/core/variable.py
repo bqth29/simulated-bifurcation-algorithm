@@ -41,7 +41,7 @@ class Variable:
     @staticmethod
     def from_str(domain: str):
         """
-        Instantiates a Variable from a domain type name
+        Instantiates a Variable from a domain type name.
 
         Parameters
         ----------
