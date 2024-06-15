@@ -251,37 +251,24 @@ class QuadraticPolynomial(Polynomial):
         ) * QuadraticPolynomial.__integer_to_binary_matrix(
             variables=variables, dtype=self.dtype, device=self.device
         )
+        symmetric_quadratic_tensor = (self[2] + self[2].t()) / 2
+        left_integer_to_binary_conversion = (
+            spin_weighted_integer_to_binary_matrix.t() @ symmetric_quadratic_tensor
+        )
         J = (
             -0.5
-            * spin_weighted_integer_to_binary_matrix.t()
-            @ (self[2] + self[2].t())
-            / 2
+            * left_integer_to_binary_conversion
             @ spin_weighted_integer_to_binary_matrix
         )
         h = (
             0.5 * spin_weighted_integer_to_binary_matrix.t() @ self[1].reshape(-1, 1)
-            + 0.5
-            * spin_weighted_integer_to_binary_matrix.t()
-            @ ((self[2] + self[2].t()) / 2)
-            @ spin_weighted_integer_to_binary_matrix
-            @ torch.ones(
-                spin_weighted_integer_to_binary_matrix.shape[1],
-                1,
-                dtype=self.dtype,
-                device=self.device,
-            )
-            - spin_weighted_integer_to_binary_matrix.t()
-            @ ((self[2] + self[2].t()) / 2)
-            @ spin_identity_vector
+            - J.sum(axis=1).reshape(-1, 1)
+            - left_integer_to_binary_conversion @ spin_identity_vector
+        ).reshape(
+            -1,
         )
-        return Ising(
-            J,
-            h.reshape(
-                -1,
-            ),
-            self.dtype,
-            self.device,
-        )
+        torch.diag(J)[...] = 0
+        return Ising(J, h, self.dtype, self.device)
 
     def convert_spins(
         self, ising: Ising, domain: Union[str, List[str]]
