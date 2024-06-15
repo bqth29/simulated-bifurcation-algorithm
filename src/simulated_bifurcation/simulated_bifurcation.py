@@ -285,7 +285,7 @@ def optimize(
         or more formally, any string matching the regular expression
         `^int[1-9][0-9]*$`.
     ValueError
-        If `domain` is used as a list of optimizatio domains with a
+        If `domain` is used as a list of optimization domains with a
         length different from the number of variables.
 
     Warns
@@ -565,7 +565,7 @@ def minimize(
         or more formally, any string matching the regular expression
         `^int[1-9][0-9]*$`.
     ValueError
-        If `domain` is used as a list of optimizatio domains with a
+        If `domain` is used as a list of optimization domains with a
         length different from the number of variables.
 
     Warns
@@ -834,7 +834,7 @@ def maximize(
         or more formally, any string matching the regular expression
         `^int[1-9][0-9]*$`.
     ValueError
-        If `domain` is used as a list of optimizatio domains with a
+        If `domain` is used as a list of optimization domains with a
         length different from the number of variables.
 
     Warns
