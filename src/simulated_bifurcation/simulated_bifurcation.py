@@ -28,7 +28,7 @@ models:
 
 """
 
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 
@@ -158,7 +158,7 @@ def build_model(
 
 def optimize(
     *polynomial: PolynomialLike,
-    domain: str = "spin",
+    domain: Union[str, List[str]] = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
@@ -436,7 +436,7 @@ def optimize(
 
 def minimize(
     *polynomial: PolynomialLike,
-    domain: str = "spin",
+    domain: Union[str, List[str]] = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
@@ -699,7 +699,7 @@ def minimize(
 
 def maximize(
     *polynomial: PolynomialLike,
-    domain: str = "spin",
+    domain: Union[str, List[str]] = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,

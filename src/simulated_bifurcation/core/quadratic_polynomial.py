@@ -190,7 +190,16 @@ class QuadraticPolynomial(Polynomial):
         evaluation = torch.squeeze(quadratic_term, -1) + affine_term
         return evaluation
 
-    def to_ising(self, domain: str) -> Ising:
+    def __get_variables(self, domain: Union[str, List[str]]) -> List[Variable]:
+        if isinstance(domain, str):
+            return [Variable.from_str(domain) for _ in range(self.n_variables)]
+        if len(domain) != self.n_variables:
+            raise ValueError(
+                f"Expected {self.n_variables} domains to be provided, got {len(domain)}."
+            )
+        return [Variable.from_str(variable_domain) for variable_domain in domain]
+
+    def to_ising(self, domain: Union[str, List[str]]) -> Ising:
         """
         Generate an equivalent Ising model of the problem.
         The notion of equivalence means that finding the ground
@@ -226,7 +235,7 @@ class QuadraticPolynomial(Polynomial):
             following regular expression: ^int[1-9][0-9]*$.
 
         """
-        variables = [Variable.from_str(domain) for _ in range(self.n_variables)]
+        variables = self.__get_variables(domain=domain)
         spin_identity_vector = QuadraticPolynomial.__spin_identity_vector(
             variables=variables, dtype=self.dtype, device=self.device
         )
@@ -267,7 +276,9 @@ class QuadraticPolynomial(Polynomial):
             self.device,
         )
 
-    def convert_spins(self, ising: Ising, domain: str) -> Optional[torch.Tensor]:
+    def convert_spins(
+        self, ising: Ising, domain: Union[str, List[str]]
+    ) -> Optional[torch.Tensor]:
         """
         Retrieves information from the optimized equivalent Ising model.
         Returns the best found vector if `ising.ground_state` is not `None`.
@@ -302,7 +313,7 @@ class QuadraticPolynomial(Polynomial):
             a positive integer, or more formally, any string matching the
             following regular expression: ^int[1-9][0-9]*$.
         """
-        variables = [Variable.from_str(domain) for _ in range(self.n_variables)]
+        variables = self.__get_variables(domain=domain)
         spin_identity_vector = QuadraticPolynomial.__spin_identity_vector(
             variables=variables, dtype=self.dtype, device=self.device
         )
@@ -324,7 +335,7 @@ class QuadraticPolynomial(Polynomial):
 
     def optimize(
         self,
-        domain: str,
+        domain: Union[str, List[str]],
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
@@ -441,7 +452,7 @@ class QuadraticPolynomial(Polynomial):
 
     def minimize(
         self,
-        domain: str,
+        domain: Union[str, List[str]],
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
@@ -545,7 +556,7 @@ class QuadraticPolynomial(Polynomial):
 
     def maximize(
         self,
-        domain: str,
+        domain: Union[str, List[str]],
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
