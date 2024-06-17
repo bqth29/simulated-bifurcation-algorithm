@@ -419,7 +419,7 @@ def test_wrong_domain_to_ising():
         QuadraticPolynomial(quadratic).to_ising(domain="int2.5")
 
 
-def test_wrong_domain_cnvert_spin():
+def test_wrong_domain_convert_spin():
     ising = Ising(quadratic)
     ising.computed_spins = torch.ones(3, 3)
     with pytest.raises(ValueError):
