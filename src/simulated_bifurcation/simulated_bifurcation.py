@@ -168,7 +168,7 @@ def optimize(
     heated: bool = False,
     minimize: bool = True,
     verbose: bool = True,
-    use_window: bool = True,
+    early_stopping: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
@@ -242,17 +242,17 @@ def optimize(
     verbose : bool, default=True, keyword-only
         Whether to display a progress bar to monitor the progress of the
         algorithm.
-    use_window : bool, default=True, keyword-only
-        Whether to use the window as a stopping criterion. An agent is said
-        to have converged if its energy has not changed over the
-        last `convergence_threshold` energy samplings
+    early_stopping : bool, default=True, keyword-only
+        Whether to use early stopping or not, making agents' convergence a
+        stopping criterion. An agent is said to have converged if its energy
+        has not changed over the last `convergence_threshold` energy samplings
         (done every `sampling_period` steps).
     sampling_period : int, default=50, keyword-only
-        Number of iterations between two consecutive energy samplings by
-        the window.
+        Number of iterations between two consecutive spins samplings used for
+        early stopping.
     convergence_threshold : int, default=50, keyword-only
         Number of consecutive identical energy samplings considered as a
-        proof of convergence by the window.
+        proof of convergence of an agent.
     timeout : float | None, default=None, keyword-only
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
@@ -284,8 +284,8 @@ def optimize(
 
     Warns
     -----
-    Use of Stop Window
-        If `use_window` is True and no agent has reached the convergence
+    Use of early stopping
+        If `early_stopping` is True and no agent has reached the convergence
         criterion defined by `sampling_period` and `convergence_threshold`
         within `max_steps` iterations, a warning is logged in the console.
         This is just an indication however; the returned vectors may still be
@@ -426,7 +426,7 @@ def optimize(
         heated=heated,
         minimize=minimize,
         verbose=verbose,
-        use_window=use_window,
+        early_stopping=early_stopping,
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
         timeout=timeout,
@@ -445,7 +445,7 @@ def minimize(
     ballistic: bool = False,
     heated: bool = False,
     verbose: bool = True,
-    use_window: bool = True,
+    early_stopping: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
@@ -516,17 +516,17 @@ def minimize(
     verbose : bool, default=True, keyword-only
         Whether to display a progress bar to monitor the progress of the
         algorithm.
-    use_window : bool, default=True, keyword-only
-        Whether to use the window as a stopping criterion. An agent is said
-        to have converged if its energy has not changed over the
-        last `convergence_threshold` energy samplings
+    early_stopping : bool, default=True, keyword-only
+        Whether to use early stopping or not, making agents' convergence a
+        stopping criterion. An agent is said to have converged if its energy
+        has not changed over the last `convergence_threshold` energy samplings
         (done every `sampling_period` steps).
     sampling_period : int, default=50, keyword-only
-        Number of iterations between two consecutive energy samplings by
-        the window.
+        Number of iterations between two consecutive spins samplings used for
+        early stopping.
     convergence_threshold : int, default=50, keyword-only
         Number of consecutive identical energy samplings considered as a
-        proof of convergence by the window.
+        proof of convergence of an agent.
     timeout : float | None, default=None, keyword-only
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
@@ -558,8 +558,8 @@ def minimize(
 
     Warns
     -----
-    Use of Stop Window
-        If `use_window` is True and no agent has reached the convergence
+    Use of early stopping
+        If `early_stopping` is True and no agent has reached the convergence
         criterion defined by `sampling_period` and `convergence_threshold`
         within `max_steps` iterations, a warning is logged in the console.
         This is just an indication however; the returned vectors may still be
@@ -690,7 +690,7 @@ def minimize(
         heated=heated,
         minimize=True,
         verbose=verbose,
-        use_window=use_window,
+        early_stopping=early_stopping,
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
         timeout=timeout,
@@ -708,7 +708,7 @@ def maximize(
     ballistic: bool = False,
     heated: bool = False,
     verbose: bool = True,
-    use_window: bool = True,
+    early_stopping: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
@@ -779,17 +779,17 @@ def maximize(
     verbose : bool, default=True, keyword-only
         Whether to display a progress bar to monitor the progress of the
         algorithm.
-    use_window : bool, default=True, keyword-only
-        Whether to use the window as a stopping criterion. An agent is said
-        to have converged if its energy has not changed over the
-        last `convergence_threshold` energy samplings
+    early_stopping : bool, default=True, keyword-only
+        Whether to use early stopping or not, making agents' convergence a
+        stopping criterion. An agent is said to have converged if its energy
+        has not changed over the last `convergence_threshold` energy samplings
         (done every `sampling_period` steps).
     sampling_period : int, default=50, keyword-only
-        Number of iterations between two consecutive energy samplings by
-        the window.
+        Number of iterations between two consecutive spins samplings used for
+        early stopping.
     convergence_threshold : int, default=50, keyword-only
         Number of consecutive identical energy samplings considered as a
-        proof of convergence by the window.
+        proof of convergence of an agent.
     timeout : float | None, default=None, keyword-only
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
@@ -821,8 +821,8 @@ def maximize(
 
     Warns
     -----
-    Use of Stop Window
-        If `use_window` is True and no agent has reached the convergence
+    Use of early stopping
+        If `early_stopping` is True and no agent has reached the convergence
         criterion defined by `sampling_period` and `convergence_threshold`
         within `max_steps` iterations, a warning is logged in the console.
         This is just an indication however; the returned vectors may still be
@@ -953,7 +953,7 @@ def maximize(
         heated=heated,
         minimize=False,
         verbose=verbose,
-        use_window=use_window,
+        early_stopping=early_stopping,
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
         timeout=timeout,
