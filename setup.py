@@ -9,7 +9,7 @@ package_version = "1.3.0.dev0"
 
 
 dependencies = [
-    "numpy",
+    "numpy<2",
     "sympy",
     "torch>=2.0.1",
     "tqdm",
