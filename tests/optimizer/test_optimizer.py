@@ -170,7 +170,7 @@ def test_timeout():
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = Ising(J, h)
     optimizer = SimulatedBifurcationOptimizer(
-        128, 100000, 3.0, SimulatedBifurcationEngine.HbSB, True, 50, 50
+        128, None, 3.0, SimulatedBifurcationEngine.HbSB, True, 50, 50
     )
     optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
     assert optimizer.simulation_time > 3.0
