@@ -22,11 +22,11 @@ def test_optimizer():
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = Ising(J, h)
     ising.minimize(
-        20,
-        10000,
-        False,
-        False,
-        False,
+        agents=20,
+        max_steps=10000,
+        ballistic=False,
+        heated=False,
+        verbose=False,
         use_window=False,
         sampling_period=50,
         convergence_threshold=50,
@@ -48,11 +48,11 @@ def test_optimizer_without_bifurcation():
     ising = Ising(J, h)
     with pytest.warns(ConvergenceWarning):
         ising.minimize(
-            5,
-            10,
-            False,
-            False,
-            False,
+            agents=5,
+            max_steps=10,
+            ballistic=False,
+            heated=False,
+            verbose=False,
             use_window=True,
             sampling_period=50,
             convergence_threshold=50,
@@ -83,11 +83,11 @@ def test_optimizer_with_window():
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = Ising(J, h)
     ising.minimize(
-        20,
-        30000,
-        False,
-        False,
-        False,
+        agents=20,
+        max_steps=30000,
+        ballistic=False,
+        heated=False,
+        verbose=False,
         use_window=True,
         sampling_period=20,
         convergence_threshold=20,
@@ -108,11 +108,11 @@ def test_optimizer_with_heating():
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = Ising(J, h)
     ising.minimize(
-        20,
-        10000,
-        False,
-        True,
-        False,
+        agents=20,
+        max_steps=10000,
+        ballistic=False,
+        heated=True,
+        verbose=False,
         use_window=False,
         sampling_period=50,
         convergence_threshold=50,
