@@ -28,7 +28,7 @@ models:
 
 """
 
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 
@@ -158,7 +158,7 @@ def build_model(
 
 def optimize(
     *polynomial: PolynomialLike,
-    domain: str = "spin",
+    domain: Union[str, List[str]] = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
@@ -210,6 +210,8 @@ def optimize(
           2^n - 1 inclusive. "int..." represents any string starting with
           "int" and followed by a positive integer n, e.g. "int3", "int42".
 
+        If the variables have different domains, a list of string with the
+        same length as the number of variables can be provided instead.
     dtype : torch.dtype, default=torch.float32, keyword-only
         Data-type used for running the computations in the SB algorithm.
     device : str | torch.device, default="cpu", keyword-only
@@ -277,10 +279,14 @@ def optimize(
     Raises
     ------
     ValueError
-        If `domain` is not one of {"spin", "binary", "int..."}, where
-        "int..." designates any string starting with "int" and followed by
-        a positive integer, or more formally, any string matching the
-        following regular expression: ^int[1-9][0-9]*$.
+        If `domain` (or any domain in case a list is passed) is not one
+        of {"spin", "binary", "int..."}, where "int..." designates any
+        string starting with "int" and followed by a positive integer,
+        or more formally, any string matching the regular expression
+        `^int[1-9][0-9]*$`.
+    ValueError
+        If `domain` is used as a list of optimization domains with a
+        length different from the number of variables.
 
     Warns
     -----
@@ -436,7 +442,7 @@ def optimize(
 
 def minimize(
     *polynomial: PolynomialLike,
-    domain: str = "spin",
+    domain: Union[str, List[str]] = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
@@ -487,6 +493,8 @@ def minimize(
           2^n - 1 inclusive. "int..." represents any string starting with
           "int" and followed by a positive integer n, e.g. "int3", "int42".
 
+        If the variables have different domains, a list of string with the
+        same length as the number of variables can be provided instead.
     dtype : torch.dtype, default=torch.float32, keyword-only
         Data-type used for running the computations in the SB algorithm.
     device : str | torch.device, default="cpu", keyword-only
@@ -551,10 +559,14 @@ def minimize(
     Raises
     ------
     ValueError
-        If `domain` is not one of {"spin", "binary", "int..."}, where
-        "int..." designates any string starting with "int" and followed by
-        a positive integer, or more formally, any string matching the
-        following regular expression: ^int[1-9][0-9]*$.
+        If `domain` (or any domain in case a list is passed) is not one
+        of {"spin", "binary", "int..."}, where "int..." designates any
+        string starting with "int" and followed by a positive integer,
+        or more formally, any string matching the regular expression
+        `^int[1-9][0-9]*$`.
+    ValueError
+        If `domain` is used as a list of optimization domains with a
+        length different from the number of variables.
 
     Warns
     -----
@@ -699,7 +711,7 @@ def minimize(
 
 def maximize(
     *polynomial: PolynomialLike,
-    domain: str = "spin",
+    domain: Union[str, List[str]] = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
@@ -750,6 +762,8 @@ def maximize(
           2^n - 1 inclusive. "int..." represents any string starting with
           "int" and followed by a positive integer n, e.g. "int3", "int42".
 
+        If the variables have different domains, a list of string with the
+        same length as the number of variables can be provided instead.
     dtype : torch.dtype, default=torch.float32, keyword-only
         Data-type used for running the computations in the SB algorithm.
     device : str | torch.device, default="cpu", keyword-only
@@ -814,10 +828,14 @@ def maximize(
     Raises
     ------
     ValueError
-        If `domain` is not one of {"spin", "binary", "int..."}, where
-        "int..." designates any string starting with "int" and followed by
-        a positive integer, or more formally, any string matching the
-        following regular expression: ^int[1-9][0-9]*$.
+        If `domain` (or any domain in case a list is passed) is not one
+        of {"spin", "binary", "int..."}, where "int..." designates any
+        string starting with "int" and followed by a positive integer,
+        or more formally, any string matching the regular expression
+        `^int[1-9][0-9]*$`.
+    ValueError
+        If `domain` is used as a list of optimization domains with a
+        length different from the number of variables.
 
     Warns
     -----
