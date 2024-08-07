@@ -66,7 +66,9 @@ class StopWindow:
         return torch.zeros(self.n_agents, device=self.device, dtype=dtype)
 
     def __init_energies(self) -> None:
-        self.energies = torch.tensor([float("inf") for _ in range(self.n_agents)],device=self.device)
+        self.energies = torch.tensor(
+            [float("inf") for _ in range(self.n_agents)], device=self.device
+        )
 
     def __init_tensors(self) -> None:
         self.stability = self.__init_tensor(torch.int16)
