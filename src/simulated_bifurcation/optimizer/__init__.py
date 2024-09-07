@@ -15,6 +15,8 @@ models:
 """
 
 from .environment import get_env, reset_env, set_env
+from .postprocessing import Postprocessing
+from .preprocessing import Preprocessing
 from .simulated_bifurcation_engine import SimulatedBifurcationEngine
 from .simulated_bifurcation_optimizer import (
     ConvergenceWarning,
