@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import torch
 
@@ -19,7 +19,7 @@ class ABCModel(ABC, QuadraticPolynomial):
 
     """
 
-    domain: str
+    domain: Union[str, List[str]]
 
     def optimize(
         self,
