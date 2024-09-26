@@ -62,7 +62,7 @@ Once the model is defined, the optimization domain must be set. It corresponds t
 
 It is possible to configure the computation dtype of the algorithm. On the one hand using a dtype with a less bits can improve the algorithm performances speed-wise and on the other hand, a dtype with a heavier bit representation ay be more accurate. The Simulated Bifurcation is based on numerical values betwwen -1 and 1 thus, only `torch.float32` and `torch.float64` are currently available. Because some key PyTorch methods used in the Simulated Bifurcation backend are not available for `torch.float16`, this dtype cannot be used to run the computations.
 
-Note that the computation dtype is only used for backend computations. The optimization model, if define in a standalone mode, can have a different dtype (see how to build an optimization model in the [Quadratic Models](quadratic_models.md) page). However, when calling the SB algorithm directly with one of the three `optimize`, `maximize` and `minimize` functions, the computation dtype is also used as the model' dtype.
+Note that the computation dtype is only used for backend computations. The optimization model, if defined in a standalone mode, can have a different dtype (see how to build an optimization model in the [Quadratic Models](quadratic_models.md) page). However, when calling the SB algorithm directly with one of the three `optimize`, `maximize` and `minimize` functions, the computation dtype is also used as the model' dtype.
 
 > The computation dtype is set using the `dtype` parameter:
 >
