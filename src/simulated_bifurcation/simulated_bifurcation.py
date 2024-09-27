@@ -28,15 +28,15 @@ models:
 
 """
 
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import torch
 
-from .core import PolynomialLike, QuadraticPolynomial
+from .core import QuadraticPolynomial
 
 
 def build_model(
-    *polynomial: PolynomialLike,
+    *polynomial: Any,
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
 ) -> QuadraticPolynomial:
@@ -50,7 +50,7 @@ def build_model(
 
     Parameters
     ----------
-    polynomial : PolynomialLike
+    polynomial : Any
         Source data of the multivariate quadratic polynomial to build. It can
         be a SymPy polynomial expression or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
@@ -157,7 +157,7 @@ def build_model(
 
 
 def optimize(
-    *polynomial: PolynomialLike,
+    *polynomial: Any,
     domain: str = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
@@ -189,7 +189,7 @@ def optimize(
 
     Parameters
     ----------
-    polynomial : PolynomialLike
+    polynomial : Any
         Source data of the multivariate quadratic polynomial to optimize. It can
         be a SymPy polynomial expression or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
@@ -435,7 +435,7 @@ def optimize(
 
 
 def minimize(
-    *polynomial: PolynomialLike,
+    *polynomial: Any,
     domain: str = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
@@ -466,7 +466,7 @@ def minimize(
 
     Parameters
     ----------
-    polynomial : PolynomialLike
+    polynomial : Any
         Source data of the multivariate quadratic polynomial to optimize. It can
         be a SymPy polynomial expression or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
@@ -698,7 +698,7 @@ def minimize(
 
 
 def maximize(
-    *polynomial: PolynomialLike,
+    *polynomial: Any,
     domain: str = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
@@ -729,7 +729,7 @@ def maximize(
 
     Parameters
     ----------
-    polynomial : PolynomialLike
+    polynomial : Any
         Source data of the multivariate quadratic polynomial to optimize. It can
         be a SymPy polynomial expression or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to

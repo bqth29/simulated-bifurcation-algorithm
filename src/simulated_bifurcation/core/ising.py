@@ -29,7 +29,7 @@ from ..optimizer import SimulatedBifurcationEngine, SimulatedBifurcationOptimize
 SelfIsing = TypeVar("SelfIsing", bound="Ising")
 
 
-class Ising:
+class Ising(object):
     """
     Internal implementation of the Ising model.
 

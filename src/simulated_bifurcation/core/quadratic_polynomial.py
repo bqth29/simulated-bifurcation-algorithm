@@ -21,12 +21,12 @@ Ising:
 """
 
 import re
-from typing import Optional, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
+from sympy import Poly, Symbol, poly, symbols
 
-from ..polynomial import Polynomial, PolynomialLike
 from .ising import Ising
 
 INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
@@ -39,12 +39,7 @@ DOMAIN_ERROR = ValueError(
 )
 
 
-class QuadraticPolynomialError(ValueError):
-    def __init__(self, degree: int) -> None:
-        super().__init__(f"Expected a degree 2 polynomial, got {degree}.")
-
-
-class QuadraticPolynomial(Polynomial):
+class QuadraticPolynomial(object):
     """
     Internal implementation of a multivariate quadratic polynomial.
 
@@ -158,34 +153,197 @@ class QuadraticPolynomial(Polynomial):
 
     def __init__(
         self,
-        *polynomial_like: PolynomialLike,
+        *polynomial_data: Union[
+            Sequence[Union[torch.Tensor, np.ndarray, float, int]], Poly
+        ],
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
-    ) -> None:
-        super().__init__(*polynomial_like, dtype=dtype, device=device)
+        gens: Optional[Sequence[Symbol]] = None,
+    ):
+        if dtype is None:
+            dtype = torch.get_default_dtype()
+        device = torch.get_default_device() if device is None else torch.device(device)
+
+        self._dtype = dtype
+        self._device = device
         self.sb_result = None
-        if self.degree != 2:
-            raise QuadraticPolynomialError(self.degree)
+
+        if len(polynomial_data) == 1 and isinstance(polynomial_data[0], Poly):
+            if not polynomial_data[0].is_quadratic:
+                raise ValueError(
+                    f"Expected a quadratic polynomial but got a total degree of {polynomial_data[0].total_degree()}."
+                )
+            self._poly = polynomial_data[0]
+            self._quadratic_coefficients, self._linear_coefficients, self._bias = (
+                self.quadratic_poly_to_coeff_tensors(polynomial_data[0], dtype, device)
+            )
+        else:
+            n_gens = None if gens is None else len(gens)
+            self._quadratic_coefficients = None
+            self._linear_coefficients = None
+            self._bias = None
+            for tensor_like in polynomial_data:
+                if isinstance(tensor_like, np.ndarray):
+                    tensor_like = torch.from_numpy(tensor_like)
+                elif isinstance(tensor_like, (int, float)):
+                    tensor_like = torch.tensor(tensor_like, dtype=dtype, device=device)
+                if isinstance(tensor_like, torch.Tensor):
+                    if tensor_like.ndim == 0:
+                        if self._bias is None:
+                            self._bias = tensor_like
+                        else:
+                            raise ValueError("Cannot provide two biases.")
+                    elif tensor_like.ndim == 1:
+                        if n_gens is None:
+                            n_gens = tensor_like.shape[0]
+                        elif n_gens != tensor_like.shape[0]:
+                            raise ValueError(
+                                f"Unconsistant shape among provided tensors. Expected {n_gens} but got {tensor_like.shape[0]}."
+                            )
+                        if self._linear_coefficients is None:
+                            self._linear_coefficients = tensor_like.to(
+                                dtype=dtype, device=device
+                            )
+                        else:
+                            raise ValueError(
+                                "Cannot provide two linear coefficients tensors."
+                            )
+                    elif tensor_like.ndim == 2:
+                        rows, cols = tensor_like.shape
+                        if rows != cols:
+                            raise ValueError(
+                                "Quadratic coefficients tensor is not symmetrical."
+                            )
+                        if n_gens is None:
+                            n_gens = rows
+                        elif n_gens != tensor_like.shape[0]:
+                            raise ValueError(
+                                f"Unconsistant shape among provided tensors. Expected {n_gens} but got {rows}."
+                            )
+                        if self._quadratic_coefficients is None:
+                            self._quadratic_coefficients = tensor_like.to(
+                                dtype=dtype, device=device
+                            )
+                        else:
+                            raise ValueError(
+                                "Cannot provide two quadratic coefficients tensors."
+                            )
+                    else:
+                        raise ValueError(
+                            f"Expected a tensor with at most 2 dimension, got {tensor_like.ndim}."
+                        )
+                else:
+                    raise ValueError(
+                        f"Unsupported coefficient tensor type: {type(tensor_like)}. Expected a torch.Tensor or a numpy.ndarray."
+                    )
+            if self._quadratic_coefficients is None:
+                self._quadratic_coefficients = torch.zeros(
+                    n_gens, n_gens, dtype=dtype, device=device
+                )
+            if self._linear_coefficients is None:
+                self._linear_coefficients = torch.zeros(
+                    n_gens, dtype=dtype, device=device
+                )
+            if self._bias is None:
+                self._bias = torch.tensor(0.0, dtype=dtype, device=device)
+            self._poly = self.coeff_tensors_to_quadratic_poly(
+                self._quadratic_coefficients,
+                self._linear_coefficients,
+                self._bias,
+                (
+                    symbols(" ".join([f"x_{ind}" for ind in range(n_gens)]))
+                    if gens is None
+                    else gens
+                ),
+            )
+
+        self._n_gens = len(self._poly.gens)
+
+    def __getitem__(self, key: int) -> torch.Tensor:
+        if key == 0:
+            return self._bias
+        if key == 1:
+            return self._linear_coefficients
+        if key == 2:
+            return self._quadratic_coefficients
+        raise ValueError(f"Unexpected key {key}. Expected 0, 1 or 2.")
+
+    @staticmethod
+    def coeff_tensors_to_quadratic_poly(
+        quadratic_coefficients: torch.Tensor,  # (M, M) tensor
+        linear_coefficients: torch.Tensor,  # (M,) vector
+        bias: torch.Tensor,  # single value tensor
+        gens: Sequence[Symbol],
+    ) -> Poly:
+        """[desc]
+
+        Parameters
+        ----------
+        quadratic_coefficients : torch.Tensor
+            _description_
+
+        Returns
+        -------
+        Poly
+            _description_
+        """
+        return poly(
+            sum(
+                quadratic_coefficients[row, col].item() * gens[row] * gens[col]
+                for row, col in torch.nonzero(quadratic_coefficients, as_tuple=False)
+            )
+            + sum(
+                linear_coefficients[ind].item() * gens[ind]
+                for ind in torch.nonzero(linear_coefficients, as_tuple=False)
+            )
+            + bias.item()
+        )
+
+    @staticmethod
+    def quadratic_poly_to_coeff_tensors(
+        quadratic_poly: Poly,
+        dtype: torch.dtype,
+        device: torch.device = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        n_gens = len(quadratic_poly.gens)
+        quadratic_coefficients = torch.zeros(n_gens, n_gens, dtype=dtype, device=device)
+        linear_coefficients = torch.zeros(n_gens, dtype=dtype, device=device)
+        bias = torch.tensor(0.0, dtype=dtype, device=device)
+        for monom, coeff in quadratic_poly.terms():
+            coeff = float(coeff)
+            if sum(monom) == 0:
+                bias = torch.tensor(coeff, dtype=dtype, device=device)
+            elif sum(monom) == 1:
+                linear_coefficients[monom.index(1)] = coeff
+            else:
+                if 2 in monom:
+                    row = monom.index(2)
+                    col = row
+                else:
+                    row = monom.index(1)
+                    col = monom.index(1, row + 1)
+                quadratic_coefficients[row, col] = coeff
+        return quadratic_coefficients, linear_coefficients, bias
 
     def __call__(self, value: Union[torch.Tensor, np.ndarray]) -> torch.Tensor:
         if not isinstance(value, torch.Tensor):
             try:
-                value = torch.tensor(value, dtype=self.dtype, device=self.device)
+                value = torch.tensor(value, dtype=self._dtype, device=self._device)
             except Exception as err:
                 raise TypeError("Input value cannot be cast to Tensor.") from err
 
-        if value.shape[-1] != self.n_variables:
+        if value.shape[-1] != self._n_gens:
             raise ValueError(
                 f"Size of the input along the last axis should be "
-                f"{self.n_variables}, it is {value.shape[-1]}."
+                f"{self._n_gens}, it is {value.shape[-1]}."
             )
 
         quadratic_term = torch.nn.functional.bilinear(
             value,
             value,
-            torch.unsqueeze(self[2], 0),
+            torch.unsqueeze(self._quadratic_coefficients, 0),
         )
-        affine_term = value @ self[1] + self[0]
+        affine_term = value @ self._linear_coefficients + self._bias
         evaluation = torch.squeeze(quadratic_term, -1) + affine_term
         return evaluation
 
@@ -226,20 +384,25 @@ class QuadraticPolynomial(Polynomial):
 
         """
         if domain == "spin":
-            return Ising(-2 * self[2], self[1], self.dtype, self.device)
-        if domain == "binary":
-            symmetrical_matrix = Ising.symmetrize(self[2])
-            J = -0.5 * symmetrical_matrix
-            h = 0.5 * self[1] + 0.5 * symmetrical_matrix @ torch.ones(
-                self.n_variables, dtype=self.dtype, device=self.device
+            return Ising(
+                -2 * self._quadratic_coefficients,
+                self._linear_coefficients,
+                self._dtype,
+                self._device,
             )
-            return Ising(J, h, self.dtype, self.device)
+        if domain == "binary":
+            symmetrical_matrix = Ising.symmetrize(self._quadratic_coefficients)
+            J = -0.5 * symmetrical_matrix
+            h = 0.5 * self._linear_coefficients + 0.5 * symmetrical_matrix @ torch.ones(
+                self._n_gens, dtype=self._dtype, device=self._device
+            )
+            return Ising(J, h, self._dtype, self._device)
         if INTEGER_REGEX.match(domain) is None:
             raise DOMAIN_ERROR
         number_of_bits = int(domain[3:])
-        symmetrical_matrix = Ising.symmetrize(self[2])
+        symmetrical_matrix = Ising.symmetrize(self._quadratic_coefficients)
         integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
-            self.n_variables, number_of_bits, device=self.device
+            self._n_gens, number_of_bits, device=self._device
         )
         J = (
             -0.5
@@ -252,11 +415,11 @@ class QuadraticPolynomial(Polynomial):
         ] + 0.5 * integer_to_binary_matrix @ self[
             2
         ] @ integer_to_binary_matrix.t() @ torch.ones(
-            (self.n_variables * number_of_bits),
-            dtype=self.dtype,
-            device=self.device,
+            (self._n_gens * number_of_bits),
+            dtype=self._dtype,
+            device=self._device,
         )
-        return Ising(J, h, self.dtype, self.device)
+        return Ising(J, h, self._dtype, self._device)
 
     def convert_spins(self, ising: Ising, domain: str) -> Optional[torch.Tensor]:
         """
@@ -303,7 +466,7 @@ class QuadraticPolynomial(Polynomial):
             raise DOMAIN_ERROR
         number_of_bits = int(domain[3:])
         integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
-            self.n_variables, number_of_bits, device=self.device
+            self._n_gens, number_of_bits, device=self._device
         )
         return 0.5 * integer_to_binary_matrix.t() @ (ising.computed_spins + 1)
 
@@ -416,7 +579,7 @@ class QuadraticPolynomial(Polynomial):
             timeout=timeout,
         )
         self.sb_result = self.convert_spins(ising_equivalent, domain)
-        result = self.sb_result.t().to(dtype=self.dtype)
+        result = self.sb_result.t().to(dtype=self._dtype)
         evaluation = self(result)
         if best_only:
             i_best = torch.argmin(evaluation) if minimize else torch.argmax(evaluation)

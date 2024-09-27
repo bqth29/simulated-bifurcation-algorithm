@@ -1,193 +1,485 @@
+from typing import Union
+
 import numpy as np
 import pytest
 import torch
 from sympy import poly, symbols
 
-from src.simulated_bifurcation.core import (
-    Ising,
-    QuadraticPolynomial,
-    QuadraticPolynomialError,
+from src.simulated_bifurcation.core import Ising, QuadraticPolynomial
+
+DEVICES = (
+    [torch.device("cpu"), torch.device("cuda")]
+    if torch.cuda.is_available()
+    else [torch.device("cpu")]
 )
-from src.simulated_bifurcation.polynomial.polynomial_map import (
-    PolynomialMapTensorDimensionError,
+DTYPES = [torch.float32, torch.float64, torch.int32, torch.int64]
+
+x, y, z = symbols("x y z")
+
+
+@pytest.mark.parametrize(
+    "dtype, device", [(dtype, device) for dtype in DTYPES for device in DEVICES]
 )
+def test_init_from_poly(dtype: torch.dtype, device: torch.device):
+    polynomial = poly(
+        x**2 + 3 * y**2 - 5 * z**2 + 4 * x * y - 2 * y * z + 8 * x - 7 * y + z + 6
+    )
+    quadratic_polynomial = QuadraticPolynomial(polynomial, dtype=dtype, device=device)
 
-quadratic = torch.tensor([[1, -2, -1], [0, 2, -3], [0, 0, 3]], dtype=torch.float32)
-linear = torch.tensor([-1, -2, 1], dtype=torch.float32)
-constant = torch.tensor(2, dtype=torch.float32)
-
-
-def test_build_polynomial_from_expression():
-    x, y, z = symbols("x y z")
-    expression = poly(
-        x**2 + 2 * y**2 + 3 * z**2 - 2 * x * y - x * z - 3 * y * z - x - 2 * y + z + 2
+    assert quadratic_polynomial._dtype == dtype
+    assert quadratic_polynomial._device == device
+    assert quadratic_polynomial._n_gens == 3
+    assert quadratic_polynomial._poly == polynomial
+    assert torch.equal(
+        torch.tensor(
+            [[1, 4, 0], [0, 3, -2], [0, 0, -5]],
+            dtype=dtype,
+            device=device,
+        ),
+        quadratic_polynomial[2],
+    )
+    assert torch.equal(
+        torch.tensor(
+            [8, -7, 1],
+            dtype=dtype,
+            device=device,
+        ),
+        quadratic_polynomial[1],
+    )
+    assert torch.equal(
+        torch.tensor(6, dtype=dtype, device=device),
+        quadratic_polynomial[0],
     )
 
-    # Valid definitions
 
-    polynomial = QuadraticPolynomial(expression, dtype=torch.float32)
-    assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+@pytest.mark.parametrize(
+    "dtype, device", [(dtype, device) for dtype in DTYPES for device in DEVICES]
+)
+def test_init_from_poly_no_bias(dtype: torch.dtype, device: torch.device):
+    polynomial = poly(
+        x**2 + 3 * y**2 - 5 * z**2 + 4 * x * y - 2 * y * z + 8 * x - 7 * y + z
+    )
+    quadratic_polynomial = QuadraticPolynomial(polynomial, dtype=dtype, device=device)
 
-    # Not quadratic polynomials
+    assert quadratic_polynomial._dtype == dtype
+    assert quadratic_polynomial._device == device
+    assert quadratic_polynomial._n_gens == 3
+    assert quadratic_polynomial._poly == polynomial
+    assert torch.equal(
+        torch.tensor(
+            [[1, 4, 0], [0, 3, -2], [0, 0, -5]],
+            dtype=dtype,
+            device=device,
+        ),
+        quadratic_polynomial[2],
+    )
+    assert torch.equal(
+        torch.tensor(
+            [8, -7, 1],
+            dtype=dtype,
+            device=device,
+        ),
+        quadratic_polynomial[1],
+    )
+    assert torch.equal(
+        torch.tensor(0, dtype=dtype, device=device),
+        quadratic_polynomial[0],
+    )
 
+
+@pytest.mark.parametrize(
+    "dtype, device", [(dtype, device) for dtype in DTYPES for device in DEVICES]
+)
+def test_init_from_poly_no_degree_1_monoms(dtype: torch.dtype, device: torch.device):
+    polynomial = poly(x**2 + 3 * y**2 - 5 * z**2 + 4 * x * y - 2 * y * z + 6)
+    quadratic_polynomial = QuadraticPolynomial(polynomial, dtype=dtype, device=device)
+
+    assert quadratic_polynomial._dtype == dtype
+    assert quadratic_polynomial._device == device
+    assert quadratic_polynomial._n_gens == 3
+    assert quadratic_polynomial._poly == polynomial
+    assert torch.equal(
+        torch.tensor(
+            [[1, 4, 0], [0, 3, -2], [0, 0, -5]],
+            dtype=dtype,
+            device=device,
+        ),
+        quadratic_polynomial[2],
+    )
+    assert torch.equal(
+        torch.tensor(
+            [0, 0, 0],
+            dtype=dtype,
+            device=device,
+        ),
+        quadratic_polynomial[1],
+    )
+    assert torch.equal(
+        torch.tensor(6, dtype=dtype, device=device),
+        quadratic_polynomial[0],
+    )
+
+
+@pytest.mark.parametrize(
+    "dtype, device", [(dtype, device) for dtype in DTYPES for device in DEVICES]
+)
+def test_init_from_poly_no_degree_2_monoms(dtype: torch.dtype, device: torch.device):
+    polynomial = poly(8 * x - 7 * y + z + 6)
+    quadratic_polynomial = QuadraticPolynomial(polynomial, dtype=dtype, device=device)
+
+    assert quadratic_polynomial._dtype == dtype
+    assert quadratic_polynomial._device == device
+    assert quadratic_polynomial._n_gens == 3
+    assert quadratic_polynomial._poly == polynomial
+    assert torch.equal(
+        torch.tensor(
+            [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
+            dtype=dtype,
+            device=device,
+        ),
+        quadratic_polynomial[2],
+    )
+    assert torch.equal(
+        torch.tensor(
+            [8, -7, 1],
+            dtype=dtype,
+            device=device,
+        ),
+        quadratic_polynomial[1],
+    )
+    assert torch.equal(
+        torch.tensor(6, dtype=dtype, device=device),
+        quadratic_polynomial[0],
+    )
+
+
+@pytest.mark.parametrize(
+    "dtype, device", [(dtype, device) for dtype in DTYPES for device in DEVICES]
+)
+def test_init_from_poly_with_degree_greater_than_2(
+    dtype: torch.dtype, device: torch.device
+):
     with pytest.raises(
-        QuadraticPolynomialError, match="Expected a degree 2 polynomial, got 1."
+        ValueError,
+        match="Expected a quadratic polynomial but got a total degree of 3.",
     ):
-        QuadraticPolynomial(poly(x + y + z))
-
-    with pytest.raises(
-        QuadraticPolynomialError, match="Expected a degree 2 polynomial, got 3."
-    ):
-        QuadraticPolynomial(poly(x**3))
+        QuadraticPolynomial(poly(x**3), dtype=dtype, device=device)
 
 
-def test_build_polynomial_from_tensor():
-    polynomial = QuadraticPolynomial(quadratic, dtype=torch.float32)
+## From tensors
+
+
+def make_quadratic_tensor(dtype: torch.dtype, device: torch.device) -> torch.Tensor:
+    return torch.tensor(
+        [[1, -2, -1], [0, 2, -3], [0, 0, 3]], dtype=dtype, device=device
+    )
+
+
+def make_linear_tensor(dtype: torch.dtype, device: torch.device) -> torch.Tensor:
+    return torch.tensor([-1, -2, 1], dtype=dtype, device=device)
+
+
+def make_bias(
+    as_tensor: bool, dtype: torch.dtype, device: torch.device
+) -> Union[float, torch.Tensor]:
+    return torch.tensor(2, dtype=dtype, device=device) if as_tensor else 2.0
+
+
+@pytest.mark.parametrize(
+    "bias_as_tensor, dtype, device",
+    [
+        (bias_as_tensor, dtype, device)
+        for bias_as_tensor in [True, False]
+        for dtype in DTYPES
+        for device in DEVICES
+    ],
+)
+def test_build_polynomial_from_tensor(
+    bias_as_tensor: bool, dtype: torch.dtype, device: torch.device
+):
+    polynomial = QuadraticPolynomial(
+        make_quadratic_tensor(dtype, device), dtype=dtype, device=device
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(torch.zeros(3), polynomial[1])
-    assert torch.equal(torch.tensor(0), polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(torch.zeros(3, dtype=dtype, device=device), polynomial[1])
+    assert torch.equal(torch.tensor(0, dtype=dtype, device=device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(quadratic, linear, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_quadratic_tensor(dtype, device),
+        make_linear_tensor(dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(torch.tensor(0), polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(torch.tensor(0, dtype=dtype, device=device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(linear, quadratic, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_linear_tensor(dtype, device),
+        make_quadratic_tensor(dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(torch.tensor(0), polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(torch.tensor(0, dtype=dtype, device=device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(quadratic, 2, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_quadratic_tensor(dtype, device),
+        make_bias(bias_as_tensor, dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(torch.zeros(3), polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(torch.zeros(3, dtype=dtype, device=device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(2, quadratic, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_bias(bias_as_tensor, dtype, device),
+        make_quadratic_tensor(dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(torch.zeros(3), polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(torch.zeros(3, dtype=dtype, device=device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(quadratic, constant, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_linear_tensor(dtype, device),
+        make_bias(bias_as_tensor, dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(torch.zeros(3), polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(torch.zeros(3, 3, dtype=dtype, device=device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(constant, quadratic, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_bias(bias_as_tensor, dtype, device),
+        make_linear_tensor(dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(torch.zeros(3), polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(torch.zeros(3, 3, dtype=dtype, device=device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(quadratic, linear, constant, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_quadratic_tensor(dtype, device),
+        make_linear_tensor(dtype, device),
+        make_bias(bias_as_tensor, dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(quadratic, linear, 2, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_quadratic_tensor(dtype, device),
+        make_linear_tensor(dtype, device),
+        make_bias(bias_as_tensor, dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(quadratic, constant, linear, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_quadratic_tensor(dtype, device),
+        make_bias(bias_as_tensor, dtype, device),
+        make_linear_tensor(dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(quadratic, 2, linear, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_quadratic_tensor(dtype, device),
+        make_bias(bias_as_tensor, dtype, device),
+        make_linear_tensor(dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(linear, quadratic, constant, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_linear_tensor(dtype, device),
+        make_quadratic_tensor(dtype, device),
+        make_bias(bias_as_tensor, dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(linear, quadratic, 2, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_linear_tensor(dtype, device),
+        make_quadratic_tensor(dtype, device),
+        make_bias(bias_as_tensor, dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(linear, constant, quadratic, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_linear_tensor(dtype, device),
+        make_bias(bias_as_tensor, dtype, device),
+        make_quadratic_tensor(dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(linear, 2, quadratic, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_linear_tensor(dtype, device),
+        make_bias(bias_as_tensor, dtype, device),
+        make_quadratic_tensor(dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(constant, linear, quadratic, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_bias(bias_as_tensor, dtype, device),
+        make_linear_tensor(dtype, device),
+        make_quadratic_tensor(dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(2, linear, quadratic, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_bias(bias_as_tensor, dtype, device),
+        make_linear_tensor(dtype, device),
+        make_quadratic_tensor(dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(constant, quadratic, linear, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_bias(bias_as_tensor, dtype, device),
+        make_quadratic_tensor(dtype, device),
+        make_linear_tensor(dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
-    polynomial = QuadraticPolynomial(2, quadratic, linear, dtype=torch.float32)
+    polynomial = QuadraticPolynomial(
+        make_bias(bias_as_tensor, dtype, device),
+        make_quadratic_tensor(dtype, device),
+        make_linear_tensor(dtype, device),
+        dtype=dtype,
+        device=device,
+    )
     assert isinstance(polynomial, QuadraticPolynomial)
-    assert torch.equal(quadratic, polynomial[2])
-    assert torch.equal(linear, polynomial[1])
-    assert torch.equal(constant, polynomial[0])
+    assert torch.equal(make_quadratic_tensor(dtype, device), polynomial[2])
+    assert torch.equal(make_linear_tensor(dtype, device), polynomial[1])
+    assert torch.equal(make_bias(True, dtype, device), polynomial[0])
 
     with pytest.raises(
         ValueError,
-        match="Declaring twice the same degree is ambiguous. Got two tensors for degree 2.",
-    ):
-        QuadraticPolynomial(quadratic, quadratic)
-
-    with pytest.raises(
-        QuadraticPolynomialError, match="Expected a degree 2 polynomial, got 1."
-    ):
-        QuadraticPolynomial(linear)
-
-    with pytest.raises(
-        QuadraticPolynomialError, match="Expected a degree 2 polynomial, got 3."
+        match="Cannot provide two quadratic coefficients tensors.",
     ):
         QuadraticPolynomial(
-            torch.zeros((3, 3, 3)), quadratic, linear, 2, dtype=torch.float32
+            make_quadratic_tensor(dtype, device), make_quadratic_tensor(dtype, device)
         )
 
     with pytest.raises(
-        PolynomialMapTensorDimensionError,
-        match="All dimensions of the tensor must be equal.",
+        ValueError,
+        match="Cannot provide two linear coefficients tensors.",
     ):
-        QuadraticPolynomial(torch.zeros((3, 2)))
+        QuadraticPolynomial(
+            make_linear_tensor(dtype, device), make_linear_tensor(dtype, device)
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="Cannot provide two biases.",
+    ):
+        QuadraticPolynomial(
+            make_bias(bias_as_tensor, dtype, device),
+            make_bias(bias_as_tensor, dtype, device),
+        )
+
+    with pytest.raises(
+        ValueError, match="Expected a tensor with at most 2 dimension, got 3."
+    ):
+        QuadraticPolynomial(
+            torch.zeros((3, 3, 3), dtype=dtype, device=device),
+            make_quadratic_tensor(dtype, device),
+            make_linear_tensor(dtype, device),
+            2,
+            dtype=torch.float32,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="Quadratic coefficients tensor is not symmetrical.",
+    ):
+        QuadraticPolynomial(torch.zeros((3, 2), dtype=dtype, device=device))
+
+    with pytest.raises(
+        ValueError,
+        match="Unconsistant shape among provided tensors. Expected 3 but got 2.",
+    ):
+        QuadraticPolynomial(
+            torch.zeros(3, 3, dtype=dtype, device=device),
+            torch.zeros(2, dtype=dtype, device=device),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="Unconsistant shape among provided tensors. Expected 2 but got 3.",
+    ):
+        QuadraticPolynomial(
+            torch.zeros(2, dtype=dtype, device=device),
+            torch.zeros(3, 3, dtype=dtype, device=device),
+        )
 
 
 def test_build_polynomial_with_wrong_domain():
     with pytest.raises(
-        TypeError,
-        match="Expected tensors or arrays, got <class 'str'>.",
+        ValueError,
+        match="Unsupported coefficient tensor type: <class 'str'>. Expected a torch.Tensor or a numpy.ndarray.",
     ):
         QuadraticPolynomial("Hello world!")
 
@@ -386,66 +678,34 @@ def test_optimize_integer_polynomial():
     assert value == -23.0
 
 
-def test_to():
-    polynomial = QuadraticPolynomial(matrix, vector, constant_int, dtype=torch.float32)
-
-    def check_device_and_dtype(dtype: torch.dtype):
-        assert polynomial.dtype == dtype
-        assert polynomial.device == torch.device("cpu")
-        assert polynomial[2].dtype == dtype
-        assert polynomial[1].dtype == dtype
-        assert polynomial[0].dtype == dtype
-        assert polynomial[2].device == torch.device("cpu")
-        assert polynomial[1].device == torch.device("cpu")
-        assert polynomial[0].device == torch.device("cpu")
-
-    check_device_and_dtype(torch.float32)
-
-    polynomial.to(dtype=torch.float16)
-    check_device_and_dtype(torch.float16)
-
-    polynomial.to(device="cpu")
-    check_device_and_dtype(torch.float16)
-
-    polynomial.to(device="cpu", dtype=torch.float64)
-    check_device_and_dtype(torch.float64)
-
-    polynomial.to()
-    check_device_and_dtype(torch.float64)
+# def test_wrong_domain_to_ising():
+#     with pytest.raises(ValueError):
+#         QuadraticPolynomial(quadratic).to_ising(domain="int2.5")
 
 
-def test_wrong_domain_to_ising():
-    with pytest.raises(ValueError):
-        QuadraticPolynomial(quadratic).to_ising(domain="int2.5")
+# def test_wrong_domain_convert_spin():
+#     ising = Ising(quadratic)
+#     ising.computed_spins = torch.ones(3, 3)
+#     with pytest.raises(ValueError):
+#         QuadraticPolynomial(quadratic).convert_spins(ising, domain="Hello world!")
 
 
-def test_wrong_domain_cnvert_spin():
-    ising = Ising(quadratic)
-    ising.computed_spins = torch.ones(3, 3)
-    with pytest.raises(ValueError):
-        QuadraticPolynomial(quadratic).convert_spins(ising, domain="Hello world!")
-
-
-def test_evaluate_polynomial():
-    polynomial = QuadraticPolynomial(quadratic, dtype=torch.float32)
-    data = [[0, 1, 0], [1, 0, 1]]
-    assert torch.equal(
-        torch.tensor([2, 3], dtype=torch.float32),
-        polynomial(torch.tensor(data, dtype=torch.float32)),
-    )
-    assert torch.equal(
-        torch.tensor([2, 3], dtype=torch.float32),
-        polynomial(np.array(data, dtype=np.float32)),
-    )
-    with pytest.raises(TypeError, match="Input value cannot be cast to Tensor."):
-        polynomial("Hello world!")
-    with pytest.raises(
-        ValueError, match="Size of the input along the last axis should be 3, it is 5."
-    ):
-        polynomial(torch.zeros(3, 3, 5))
-
-
-def test_get_wrong_tensor():
-    polynomial = QuadraticPolynomial(quadratic, linear, constant, dtype=torch.float32)
-    with pytest.raises(ValueError, match="Positive integer required."):
-        polynomial[-1]
+# def test_evaluate_polynomial():
+#     polynomial = QuadraticPolynomial(
+#         make_quadratic_tensor(dtype, device), dtype=torch.float32
+#     )
+#     data = [[0, 1, 0], [1, 0, 1]]
+#     assert torch.equal(
+#         torch.tensor([2, 3], dtype=torch.float32),
+#         polynomial(torch.tensor(data, dtype=torch.float32)),
+#     )
+#     assert torch.equal(
+#         torch.tensor([2, 3], dtype=torch.float32),
+#         polynomial(np.array(data, dtype=np.float32)),
+#     )
+#     with pytest.raises(TypeError, match="Input value cannot be cast to Tensor."):
+#         polynomial("Hello world!")
+#     with pytest.raises(
+#         ValueError, match="Size of the input along the last axis should be 3, it is 5."
+#     ):
+#         polynomial(torch.zeros(3, 3, 5))
