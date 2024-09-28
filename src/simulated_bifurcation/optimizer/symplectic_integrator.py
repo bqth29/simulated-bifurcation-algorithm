@@ -1,4 +1,4 @@
-from typing import Any, Tuple, Union
+from typing import Callable, Tuple
 
 import torch
 
@@ -13,9 +13,9 @@ class SymplecticIntegrator:
     def __init__(
         self,
         shape: Tuple[int, int],
-        activation_function: Any,
+        activation_function: Callable[[torch.Tensor], torch.Tensor],
         dtype: torch.dtype,
-        device: Union[str, torch.device],
+        device: torch.device,
     ):
         self.position = self.__init_oscillator(shape, dtype, device)
         self.momentum = self.__init_oscillator(shape, dtype, device)
@@ -23,7 +23,7 @@ class SymplecticIntegrator:
 
     @staticmethod
     def __init_oscillator(
-        shape: Tuple[int, int], dtype: torch.dtype, device: Union[str, torch.device]
+        shape: Tuple[int, int], dtype: torch.dtype, device: torch.device
     ):
         return 2 * torch.rand(size=shape, device=device, dtype=dtype) - 1
 
