@@ -116,17 +116,19 @@ class Ising(object):
                 f"Expected J to be square, but got {rows} rows and {cols} columns."
             )
 
+        self._J = J.to(dtype=self._dtype, device=self._device)
         self._dimension = rows
 
         if h is None:
-            h = torch.zeros(self._dimension, dtype=self._dtype, device=self._device)
+            self._h = torch.zeros(
+                self._dimension, dtype=self._dtype, device=self._device
+            )
         elif h.shape != (self._dimension,):
             raise ValueError(
                 f"Expected the shape of h to be {self._dimension}, but got {tuple(h.shape)}."
             )
-
-        self._J = J.to(dtype=self._dtype, device=self._device)
-        self._h = h.to(dtype=self._dtype, device=self._device)
+        else:
+            self._h = h.to(dtype=self._dtype, device=self._device)
 
         self._has_linear_term = not torch.equal(
             self._h,
