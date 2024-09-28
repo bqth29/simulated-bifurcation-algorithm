@@ -28,15 +28,17 @@ models:
 
 """
 
-from typing import Any, Optional, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import torch
+from numpy import ndarray
+from sympy import Poly
 
 from .core import QuadraticPolynomial
 
 
 def build_model(
-    *polynomial: Any,
+    *polynomial_data: Union[Poly, Sequence[Union[torch.Tensor, ndarray, float, int]]],
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
 ) -> QuadraticPolynomial:
@@ -50,15 +52,15 @@ def build_model(
 
     Parameters
     ----------
-    polynomial : Any
-        Source data of the multivariate quadratic polynomial to build. It can
-        be a SymPy polynomial expression or tensors/arrays of coefficients.
+    polynomial_data : sympy.Poly | Sequence[TensorLike]
+        Source data of the multivariate quadratic polynomial to optimize. It can
+        be a SymPy Poly or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
         the coefficients is the number of dimensions of the tensor/array,
-        and all dimensions must be equal. The quadratic tensor must be square
-        and symmetric and is mandatory. The linear tensor must be 1-dimensional
-        and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional. Tensors can be passed in an arbitrary order.
+        and all dimensions must be equal. The quadratic tensor must be square and
+        2-dimensional. The linear tensor must be 1-dimensional and the constant term
+        can either be a float/int or a 0-dimensional tensor. All are optional.
+        Tensors can be passed in an arbitrary order.
 
     Keyword-Only Parameters
     -----------------------
@@ -78,9 +80,6 @@ def build_model(
     --------
     minimize, maximize, optimize :
         Shorthands for polynomial creation and optimization.
-    polynomial :
-        Module providing some polynomial types as well as an abstract
-        polynomial class `QuadraticPolynomial`.
     models :
         Module containing the implementation of several common
         combinatorial optimization problems.
@@ -153,11 +152,11 @@ def build_model(
       tensor(123., device='cuda:0')
 
     """
-    return QuadraticPolynomial(*polynomial, dtype=dtype, device=device)
+    return QuadraticPolynomial(*polynomial_data, dtype=dtype, device=device)
 
 
 def optimize(
-    *polynomial: Any,
+    *polynomial_data: Union[Poly, Sequence[Union[torch.Tensor, ndarray, float, int]]],
     domain: str = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
@@ -189,15 +188,15 @@ def optimize(
 
     Parameters
     ----------
-    polynomial : Any
+    polynomial_data : sympy.Poly | Sequence[TensorLike]
         Source data of the multivariate quadratic polynomial to optimize. It can
-        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        be a SymPy Poly or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
         the coefficients is the number of dimensions of the tensor/array,
-        and all dimensions must be equal. The quadratic tensor must be square
-        and symmetric and is mandatory. The linear tensor must be 1-dimensional
-        and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional. Tensors can be passed in an arbitrary order.
+        and all dimensions must be equal. The quadratic tensor must be square and
+        2-dimensional. The linear tensor must be 1-dimensional and the constant term
+        can either be a float/int or a 0-dimensional tensor. All are optional.
+        Tensors can be passed in an arbitrary order.
     domain : {"spin", "binary", "int..."}, default="spin", keyword-only
         Domain over which the optimization is done.
 
@@ -413,7 +412,7 @@ def optimize(
 
     """
     model = build_model(
-        *polynomial,
+        *polynomial_data,
         dtype=dtype,
         device=device,
     )
@@ -435,7 +434,7 @@ def optimize(
 
 
 def minimize(
-    *polynomial: Any,
+    *polynomial_data: Union[Poly, Sequence[Union[torch.Tensor, ndarray, float, int]]],
     domain: str = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
@@ -466,15 +465,15 @@ def minimize(
 
     Parameters
     ----------
-    polynomial : Any
+    polynomial_data : sympy.Poly | Sequence[TensorLike]
         Source data of the multivariate quadratic polynomial to optimize. It can
-        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        be a SymPy Poly or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
         the coefficients is the number of dimensions of the tensor/array,
-        and all dimensions must be equal. The quadratic tensor must be square
-        and symmetric and is mandatory. The linear tensor must be 1-dimensional
-        and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional. Tensors can be passed in an arbitrary order.
+        and all dimensions must be equal. The quadratic tensor must be square and
+        2-dimensional. The linear tensor must be 1-dimensional and the constant term
+        can either be a float/int or a 0-dimensional tensor. All are optional.
+        Tensors can be passed in an arbitrary order.
     domain : {"spin", "binary", "int..."}, default="spin", keyword-only
         Domain over which the optimization is done.
 
@@ -679,7 +678,7 @@ def minimize(
 
     """
     return optimize(
-        *polynomial,
+        *polynomial_data,
         domain=domain,
         dtype=dtype,
         device=device,
@@ -698,7 +697,7 @@ def minimize(
 
 
 def maximize(
-    *polynomial: Any,
+    *polynomial_data: Union[Poly, Sequence[Union[torch.Tensor, ndarray, float, int]]],
     domain: str = "spin",
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
@@ -729,15 +728,15 @@ def maximize(
 
     Parameters
     ----------
-    polynomial : Any
+    polynomial_data : sympy.Poly | Sequence[TensorLike]
         Source data of the multivariate quadratic polynomial to optimize. It can
-        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        be a SymPy Poly or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
         the coefficients is the number of dimensions of the tensor/array,
-        and all dimensions must be equal. The quadratic tensor must be square
-        and symmetric and is mandatory. The linear tensor must be 1-dimensional
-        and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional. Tensors can be passed in an arbitrary order.
+        and all dimensions must be equal. The quadratic tensor must be square and
+        2-dimensional. The linear tensor must be 1-dimensional and the constant term
+        can either be a float/int or a 0-dimensional tensor. All are optional.
+        Tensors can be passed in an arbitrary order.
     domain : {"spin", "binary", "int..."}, default="spin", keyword-only
         Domain over which the optimization is done.
 
@@ -942,7 +941,7 @@ def maximize(
 
     """
     return optimize(
-        *polynomial,
+        *polynomial_data,
         domain=domain,
         dtype=dtype,
         device=device,

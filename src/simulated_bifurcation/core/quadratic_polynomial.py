@@ -65,15 +65,15 @@ class QuadraticPolynomial(object):
 
     Parameters
     ----------
-    polynomial : PolynomialLike
+    polynomial_data : sympy.Poly | Sequence[TensorLike]
         Source data of the multivariate quadratic polynomial to optimize. It can
-        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        be a SymPy Poly or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
         the coefficients is the number of dimensions of the tensor/array,
-        and all dimensions must be equal. The quadratic tensor must be square
-        and symmetric and is mandatory. The linear tensor must be 1-dimensional
-        and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional. Tensors can be passed in an arbitrary order.
+        and all dimensions must be equal. The quadratic tensor must be square and
+        2-dimensional. The linear tensor must be 1-dimensional and the constant term
+        can either be a float/int or a 0-dimensional tensor. All are optional.
+        Tensors can be passed in an arbitrary order.
 
     Keyword-Only Parameters
     -----------------------
@@ -90,7 +90,7 @@ class QuadraticPolynomial(object):
       ...                   [0, 3]])
       >>> poly = QuadraticPolynomial(Q)
 
-    (Option 2) Instantiate a polynomial from a SymPy expression
+    (Option 2) Instantiate a polynomial from a SymPy poly
 
       >>> x, y = sympy.symbols("x y")
       >>> expression = sympy.poly(x**2 - 2 * x * y + 3 * y**2)
@@ -154,11 +154,10 @@ class QuadraticPolynomial(object):
     def __init__(
         self,
         *polynomial_data: Union[
-            Sequence[Union[torch.Tensor, np.ndarray, float, int]], Poly
+            Poly, Sequence[Union[torch.Tensor, np.ndarray, float, int]]
         ],
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
-        gens: Optional[Sequence[Symbol]] = None,
     ):
         if dtype is None:
             dtype = torch.get_default_dtype()
@@ -195,7 +194,7 @@ class QuadraticPolynomial(object):
                         col = monom.index(1, row + 1)
                     self._quadratic_coefficients[row, col] = coeff
         else:
-            n_gens = None if gens is None else len(gens)
+            n_gens = None
             self._quadratic_coefficients = None
             self._linear_coefficients = None
             self._bias = None
@@ -251,8 +250,7 @@ class QuadraticPolynomial(object):
                 )
             if self._bias is None:
                 self._bias = torch.tensor(0.0, dtype=dtype, device=device)
-            if gens is None:
-                gens = symbols(" ".join([f"x_{ind}" for ind in range(n_gens)]))
+            gens = symbols(" ".join([f"x_{ind}" for ind in range(n_gens)]))
             self._poly = poly(
                 sum(
                     self._quadratic_coefficients[row, col].item()
@@ -295,18 +293,47 @@ class QuadraticPolynomial(object):
 
     @property
     def poly(self) -> Poly:
+        """Poly representation of the quadratic polynomial.
+        If the quadratic polynomial was instanciated from tensors, the gens
+        of the Poly were automatically created and labeled x_0, ..., x_n.
+
+        Returns
+        -------
+        Poly
+        """
         return self._poly
 
     @property
     def quadratic(self) -> torch.Tensor:
+        """Quadratic coefficients tensor of the quadratic polynomial.
+
+        Returns
+        -------
+        torch.Tensor
+            2-dimension square tensor.
+        """
         return self._quadratic_coefficients
 
     @property
     def linear(self) -> torch.Tensor:
+        """Linear coefficients tensor of the quadratic polynomial.
+
+        Returns
+        -------
+        torch.Tensor
+            1-dimension tensor.
+        """
         return self._linear_coefficients
 
     @property
     def bias(self) -> torch.Tensor:
+        """Bias of the quadratic polynomial.
+
+        Returns
+        -------
+        torch.Tensor
+            0-dimension tensor.
+        """
         return self._bias
 
     def to_ising(self, domain: str) -> Ising:
