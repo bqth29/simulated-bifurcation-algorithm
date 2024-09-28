@@ -336,7 +336,12 @@ class QuadraticPolynomial(object):
         """
         return self._bias
 
-    def to_ising(self, domain: str) -> Ising:
+    def to_ising(
+        self,
+        domain: str,
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[torch.device] = None,
+    ) -> Ising:
         """
         Generate an equivalent Ising model of the problem.
         The notion of equivalence means that finding the ground
@@ -356,6 +361,15 @@ class QuadraticPolynomial(object):
               are n-bits non-negative integers, that is integers between 0 and
               2^n - 1 inclusive. "int..." represents any string starting with
               "int" and followed by a positive integer n, e.g. "int3", "int42".
+        dtype: torch.dtype, optional
+            Data-type used for storing the coefficients of the Ising model.
+            If provided, expected to be one of `torch.float32` or `torch.float64`.
+            If `None`, the dtype of the QuadraticPolynomial will be used, except
+            if this dtype is none of `torch.float32` or `torch.float64`, in which case
+            `torch.float32` will be used by default..
+        device: str | torch.device, optional
+            Device on which the instance is located.
+            If `None`, the device of the QuadraticPolynomial will be used.
 
         Returns
         -------
@@ -372,12 +386,22 @@ class QuadraticPolynomial(object):
             following regular expression: ^int[1-9][0-9]*$.
 
         """
+        dtype = (
+            dtype
+            if dtype is not None
+            else (
+                self._dtype
+                if self._dtype in [torch.float32, torch.float64]
+                else torch.float32
+            )
+        )
+        device = self._device if device is None else torch.device(device)
         if domain == "spin":
             return Ising(
                 -2 * self._quadratic_coefficients,
                 self._linear_coefficients,
-                self._dtype,
-                self._device,
+                dtype,
+                device,
             )
         if domain == "binary":
             symmetrical_matrix = (
@@ -387,7 +411,7 @@ class QuadraticPolynomial(object):
             h = 0.5 * self._linear_coefficients + 0.5 * symmetrical_matrix @ torch.ones(
                 self._n_gens, dtype=self._dtype, device=self._device
             )
-            return Ising(J, h, self._dtype, self._device)
+            return Ising(J, h, dtype, device)
         if INTEGER_REGEX.match(domain) is None:
             raise DOMAIN_ERROR
         number_of_bits = int(domain[3:])
@@ -395,7 +419,7 @@ class QuadraticPolynomial(object):
             self._quadratic_coefficients + self._quadratic_coefficients.t()
         ) / 2.0
         integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
-            self._n_gens, number_of_bits, device=self._device
+            self._n_gens, number_of_bits, dtype=self._dtype, device=self._device
         )
         J = (
             -0.5
@@ -415,7 +439,7 @@ class QuadraticPolynomial(object):
                 device=self._device,
             )
         )
-        return Ising(J, h, self._dtype, self._device)
+        return Ising(J, h, dtype, device)
 
     def convert_spins(
         self, optimized_spins: torch.Tensor, domain: str
@@ -427,9 +451,8 @@ class QuadraticPolynomial(object):
 
         Parameters
         ----------
-        ising : IsingCore
-            Equivalent Ising model to optimized with the Simulated
-            Bifurcation algorithm.
+        optimized_spins : torch.Tensor
+            Spin tensor optimized with the Simulated Bifurcation algorithm.
         domain : str
             Domain over which the optimization is done.
 
@@ -454,6 +477,7 @@ class QuadraticPolynomial(object):
             a positive integer, or more formally, any string matching the
             following regular expression: ^int[1-9][0-9]*$.
         """
+        optimized_spins = optimized_spins.to(dtype=self._dtype, device=self._device)
         if domain == "spin":
             return optimized_spins
         if domain == "binary":
@@ -462,12 +486,13 @@ class QuadraticPolynomial(object):
             raise DOMAIN_ERROR
         number_of_bits = int(domain[3:])
         integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
-            self._n_gens, number_of_bits, device=self._device
+            self._n_gens, number_of_bits, dtype=self._dtype, device=self._device
         )
         return 0.5 * integer_to_binary_matrix.t() @ (optimized_spins + 1)
 
     def optimize(
         self,
+        *,
         domain: str,
         agents: int = 128,
         max_steps: int = 10000,
@@ -476,11 +501,12 @@ class QuadraticPolynomial(object):
         heated: bool = False,
         minimize: bool = True,
         verbose: bool = True,
-        *,
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local extremum of the model by optimizing
@@ -522,6 +548,17 @@ class QuadraticPolynomial(object):
         Parameters
         ----------
         *
+        domain : str
+            Domain over which the optimization is done.
+
+            - "spin" : Optimize the polynomial over vectors whose entries are
+              in {-1, 1}.
+            - "binary" : Optimize the polynomial over vectors whose entries are
+              in {0, 1}.
+            - "int..." : Optimize the polynomial over vectors whose entries
+              are n-bits non-negative integers, that is integers between 0 and
+              2^n - 1 inclusive. "int..." represents any string starting with
+              "int" and followed by a positive integer n, e.g. "int3", "int42".
         convergence_threshold : int, optional
             number of consecutive identical spin sampling considered as a proof
             of convergence (default is 50)
@@ -554,15 +591,25 @@ class QuadraticPolynomial(object):
         minimize : bool, optional
             if `True` the optimization direction is minimization, otherwise it
             is maximization (default is True)
+        dtype: torch.dtype, optional
+            Data-type used for storing the coefficients of the Ising model and the
+            Simulated Bifurcation algorithm computations.
+            If provided, expected to be one of `torch.float32` or `torch.float64`.
+            If `None`, the dtype of the QuadraticPolynomial will be used, except
+            if this dtype is none of `torch.float32` or `torch.float64`, in which case
+            `torch.float32` will be used by default..
+        device: str | torch.device, optional
+            Device on which the computations are located.
+            If `None`, the device of the QuadraticPolynomial will be used.
 
         Returns
         -------
         Tensor
         """
         if minimize:
-            ising_equivalent = self.to_ising(domain)
+            ising_equivalent = self.to_ising(domain, dtype=dtype, device=device)
         else:
-            ising_equivalent = -self.to_ising(domain)
+            ising_equivalent = -self.to_ising(domain, dtype=dtype, device=device)
         optimized_spins = ising_equivalent.minimize(
             agents=agents,
             max_steps=max_steps,
@@ -574,8 +621,10 @@ class QuadraticPolynomial(object):
             convergence_threshold=convergence_threshold,
             timeout=timeout,
         )
-        self.sb_result = self.convert_spins(optimized_spins, domain)
-        result = self.sb_result.t().to(dtype=self._dtype)
+        self.sb_result = self.convert_spins(optimized_spins, domain).to(
+            dtype=self._dtype, device=self._device
+        )
+        result = self.sb_result.t()
         evaluation = self(result)
         if best_only:
             i_best = torch.argmin(evaluation) if minimize else torch.argmax(evaluation)
@@ -585,6 +634,7 @@ class QuadraticPolynomial(object):
 
     def minimize(
         self,
+        *,
         domain: str,
         agents: int = 128,
         max_steps: int = 10000,
@@ -592,11 +642,12 @@ class QuadraticPolynomial(object):
         ballistic: bool = False,
         heated: bool = False,
         verbose: bool = True,
-        *,
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local minimum of the model by optimizing
@@ -638,6 +689,17 @@ class QuadraticPolynomial(object):
         Parameters
         ----------
         *
+        domain : str
+            Domain over which the optimization is done.
+
+            - "spin" : Optimize the polynomial over vectors whose entries are
+              in {-1, 1}.
+            - "binary" : Optimize the polynomial over vectors whose entries are
+              in {0, 1}.
+            - "int..." : Optimize the polynomial over vectors whose entries
+              are n-bits non-negative integers, that is integers between 0 and
+              2^n - 1 inclusive. "int..." represents any string starting with
+              "int" and followed by a positive integer n, e.g. "int3", "int42".
         convergence_threshold : int, optional
             number of consecutive identical spin sampling considered as a proof
             of convergence (default is 50)
@@ -667,28 +729,41 @@ class QuadraticPolynomial(object):
             if `True` only the best found solution to the optimization problem
             is returned, otherwise all the solutions found by the simulated
             bifurcation algorithm.
+        dtype: torch.dtype, optional
+            Data-type used for storing the coefficients of the Ising model and the
+            Simulated Bifurcation algorithm computations.
+            If provided, expected to be one of `torch.float32` or `torch.float64`.
+            If `None`, the dtype of the QuadraticPolynomial will be used, except
+            if this dtype is none of `torch.float32` or `torch.float64`, in which case
+            `torch.float32` will be used by default..
+        device: str | torch.device, optional
+            Device on which the computations are located.
+            If `None`, the device of the QuadraticPolynomial will be used.
 
         Returns
         -------
         Tensor
         """
         return self.optimize(
-            domain,
-            agents,
-            max_steps,
-            best_only,
-            ballistic,
-            heated,
-            True,
-            verbose,
+            domain=domain,
+            agents=agents,
+            max_steps=max_steps,
+            best_only=best_only,
+            ballistic=ballistic,
+            heated=heated,
+            minimize=True,
+            verbose=verbose,
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            dtype=dtype,
+            device=device,
         )
 
     def maximize(
         self,
+        *,
         domain: str,
         agents: int = 128,
         max_steps: int = 10000,
@@ -696,11 +771,12 @@ class QuadraticPolynomial(object):
         ballistic: bool = False,
         heated: bool = False,
         verbose: bool = True,
-        *,
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local maximum of the model by optimizing
@@ -741,6 +817,18 @@ class QuadraticPolynomial(object):
 
         Parameters
         ----------
+        *
+        domain : str
+            Domain over which the optimization is done.
+
+            - "spin" : Optimize the polynomial over vectors whose entries are
+              in {-1, 1}.
+            - "binary" : Optimize the polynomial over vectors whose entries are
+              in {0, 1}.
+            - "int..." : Optimize the polynomial over vectors whose entries
+              are n-bits non-negative integers, that is integers between 0 and
+              2^n - 1 inclusive. "int..." represents any string starting with
+              "int" and followed by a positive integer n, e.g. "int3", "int42".
         convergence_threshold : int, optional
             number of consecutive identical spin sampling considered as a proof
             of convergence (default is 50)
@@ -770,29 +858,41 @@ class QuadraticPolynomial(object):
             if `True` only the best found solution to the optimization problem
             is returned, otherwise all the solutions found by the simulated
             bifurcation algorithm.
+        dtype: torch.dtype, optional
+            Data-type used for storing the coefficients of the Ising model and the
+            Simulated Bifurcation algorithm computations.
+            If provided, expected to be one of `torch.float32` or `torch.float64`.
+            If `None`, the dtype of the QuadraticPolynomial will be used, except
+            if this dtype is none of `torch.float32` or `torch.float64`, in which case
+            `torch.float32` will be used by default..
+        device: str | torch.device, optional
+            Device on which the computations are located.
+            If `None`, the device of the QuadraticPolynomial will be used.
 
         Returns
         -------
         Tensor
         """
         return self.optimize(
-            domain,
-            agents,
-            max_steps,
-            best_only,
-            ballistic,
-            heated,
-            False,
-            verbose,
+            domain=domain,
+            agents=agents,
+            max_steps=max_steps,
+            best_only=best_only,
+            ballistic=ballistic,
+            heated=heated,
+            minimize=False,
+            verbose=verbose,
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            dtype=dtype,
+            device=device,
         )
 
     @staticmethod
     def __integer_to_binary_matrix(
-        dimension: int, number_of_bits: int, device: Union[str, torch.device]
+        dimension: int, number_of_bits: int, dtype: torch.dtype, device: torch.device
     ) -> torch.Tensor:
         """
         Generates a matrix to convert a binary quadratic multivariate polynomial
@@ -811,7 +911,9 @@ class QuadraticPolynomial(object):
         -------
         Tensor
         """
-        matrix = torch.zeros((dimension * number_of_bits, dimension), device=device)
+        matrix = torch.zeros(
+            (dimension * number_of_bits, dimension), dtype=dtype, device=device
+        )
         for row in range(dimension):
             for col in range(number_of_bits):
                 matrix[row * number_of_bits + col][row] = 2.0**col

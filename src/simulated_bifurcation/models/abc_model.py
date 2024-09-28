@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import torch
 
@@ -23,6 +23,7 @@ class ABCModel(ABC, QuadraticPolynomial):
 
     def optimize(
         self,
+        *,
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
@@ -30,79 +31,90 @@ class ABCModel(ABC, QuadraticPolynomial):
         heated: bool = False,
         minimize: bool = True,
         verbose: bool = True,
-        *,
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return super().optimize(
-            self.domain,
-            agents,
-            max_steps,
-            best_only,
-            ballistic,
-            heated,
-            minimize,
-            verbose,
+            domain=self.domain,
+            agents=agents,
+            max_steps=max_steps,
+            best_only=best_only,
+            ballistic=ballistic,
+            heated=heated,
+            minimize=minimize,
+            verbose=verbose,
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            dtype=dtype,
+            device=device,
         )
 
     def minimize(
         self,
+        *,
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
         ballistic: bool = False,
         heated: bool = False,
         verbose: bool = True,
-        *,
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.optimize(
-            agents,
-            max_steps,
-            best_only,
-            ballistic,
-            heated,
-            True,
-            verbose,
+            agents=agents,
+            max_steps=max_steps,
+            best_only=best_only,
+            ballistic=ballistic,
+            heated=heated,
+            minimize=True,
+            verbose=verbose,
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            dtype=dtype,
+            device=device,
         )
 
     def maximize(
         self,
+        *,
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
         ballistic: bool = False,
         heated: bool = False,
         verbose: bool = True,
-        *,
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.optimize(
-            agents,
-            max_steps,
-            best_only,
-            ballistic,
-            heated,
-            False,
-            verbose,
+            agents=agents,
+            max_steps=max_steps,
+            best_only=best_only,
+            ballistic=ballistic,
+            heated=heated,
+            minimize=False,
+            verbose=verbose,
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            dtype=dtype,
+            device=device,
         )
