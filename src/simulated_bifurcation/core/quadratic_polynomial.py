@@ -310,7 +310,7 @@ class QuadraticPolynomial(object):
         Returns
         -------
         torch.Tensor
-            2-dimension square tensor.
+            2-dimensional square tensor.
         """
         return self._quadratic_coefficients
 
@@ -321,7 +321,7 @@ class QuadraticPolynomial(object):
         Returns
         -------
         torch.Tensor
-            1-dimension tensor.
+            1-dimensional tensor.
         """
         return self._linear_coefficients
 
@@ -332,7 +332,7 @@ class QuadraticPolynomial(object):
         Returns
         -------
         torch.Tensor
-            0-dimension tensor.
+            0-dimensional tensor.
         """
         return self._bias
 
