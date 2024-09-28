@@ -38,7 +38,7 @@ class Ising(object):
     vector `h`, the following quantity - called Ising energy - is minimal
     (`s` is then called a ground state):
     `-0.5 * ΣΣ J(i,j)s(i)s(j) + Σ h(i)s(i)`
-    or `-0.5 x.T J x + h.T x in matrix notation.
+    or `-0.5 x.T J x + h.T x` in matrix notation.
 
     Parameters
     ----------
@@ -91,56 +91,82 @@ class Ising(object):
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
     ) -> None:
-        self.dimension = J.shape[0]
+        self._dtype = torch.float32 if dtype is None else dtype
+        self._device = (
+            torch.get_default_device() if device is None else torch.device(device)
+        )
+
+        if self._dtype not in [torch.float32, torch.float64]:
+            raise ValueError(
+                f"Simulated Bifurcation optimization can only be carried out with torch.float32 or torch.float64 dtypes, but got {dtype}."
+            )
+
         if isinstance(J, ndarray):
             J = torch.from_numpy(J)
         if isinstance(h, ndarray):
             h = torch.from_numpy(h)
-        self.__init_from_tensor(J, h, dtype, device)
-        self.computed_spins = None
 
-    def __len__(self) -> int:
-        return self.dimension
+        if J.ndim != 2:
+            raise ValueError(
+                f"Expected J to be 2-dimensional, but got {J.ndim} dimensions."
+            )
+        rows, cols = J.shape
+        if rows != cols:
+            raise ValueError(
+                f"Expected J to be square, but got {rows} rows and {cols} columns."
+            )
+
+        self._dimension = rows
+
+        if h is None:
+            h = torch.zeros(self._dimension, dtype=self._dtype, device=self._device)
+        elif h.shape != (self._dimension,):
+            raise ValueError(
+                f"Expected the shape of h to be {self._dimension}, but got {tuple(h.shape)}."
+            )
+
+        self._J = J.to(dtype=self._dtype, device=self._device)
+        self._h = h.to(dtype=self._dtype, device=self._device)
+
+        self._has_linear_term = not torch.equal(
+            self._h,
+            torch.zeros(self._dimension, dtype=self._dtype, device=self._device),
+        )
 
     def __neg__(self) -> SelfIsing:
-        return self.__class__(-self.J, -self.h, self.dtype, self.device)
+        return self.__class__(-self._J, -self._h, self._dtype, self._device)
 
-    def __init_from_tensor(
-        self,
-        J: torch.Tensor,
-        h: Optional[torch.Tensor],
-        dtype: torch.dtype,
-        device: Union[str, torch.device],
-    ) -> None:
-        null_vector = torch.zeros(self.dimension, dtype=dtype, device=device)
-        self.J = J.to(device=device, dtype=dtype)
-        if h is None:
-            self.h = null_vector
-            self.linear_term = False
-        else:
-            self.h = h.to(device=device, dtype=dtype)
-            self.linear_term = not torch.equal(self.h, null_vector)
-
-    def clip_vector_to_tensor(self) -> torch.Tensor:
+    def as_simulated_bifurcation_tensor(self) -> torch.Tensor:
         """
-        Gather `self.J` and `self.h` into a single matrix.
+        Turn the instance into a tensor compatible with the SB algorithm.
+
+        The SB algorithm runs on Ising models with no linear term, and
+        whose matrix is symmetric and has only zeros on its diagonal.
+
+        `self.J` is symmetrized and its diagonal get filled by zeros.
+
+        If the Ising model has linear terms, `self.J` and `self.h` are
+        gathered into a single tensor.
 
         The output matrix describes an equivalent Ising model in dimension
         `self.dimension + 1` with no linear term.
 
         Returns
         -------
-        tensor: Tensor
-            Matrix describing the new Ising model.
+        sb_tensor : Tensor
+            Equivalent tensor compatible with the SB algorithm.
 
         Notes
         -----
         The output matrix is defined as the following block matrix.
-
+        ```
             (            |    )
-            (   self.J   | -h )
+            (     J*     | -h )
             (____________|____)
             (    -h.T    |  0 )
+        ```
+
+        where `J* = (self.J + self.J.T) / 2.0` with a null diagonal.
 
         This matrix describes another Ising model `other` with no linear
         term in dimension `self.dimension + 1`, with the same minimal
@@ -152,104 +178,34 @@ class Ising(object):
         s ↦ {(s, 1), (-s, -1)}
 
         """
-        tensor = torch.zeros(
-            (self.dimension + 1, self.dimension + 1),
-            dtype=self.dtype,
-            device=self.device,
-        )
-        tensor[: self.dimension, : self.dimension] = self.J
-        tensor[: self.dimension, self.dimension] = -self.h
-        tensor[self.dimension, : self.dimension] = -self.h
-        return tensor
-
-    @staticmethod
-    def remove_diagonal_(tensor: torch.Tensor) -> None:
-        """
-        Fill the diagonal of `tensor` with zeros.
-
-        Parameters
-        ----------
-        tensor : Tensor
-            Tensor whose diagonal is filled with zeros.
-
-        Returns
-        -------
-        None
-            The input is modified in place.
-
-        """
-        torch.diagonal(tensor)[...] = 0
-
-    @staticmethod
-    def symmetrize(tensor: torch.Tensor) -> torch.Tensor:
-        """
-        Return the symmetric tensor defining the same quadratic form.
-
-        Parameters
-        ----------
-        tensor : Tensor
-            Tensor defining the quadratic form.
-
-        Returns
-        -------
-        Tensor
-            Symmetric tensor defining the same quadratic form as `tensor`.
-
-        """
-        return (tensor + tensor.t()) / 2.0
-
-    def as_simulated_bifurcation_tensor(self) -> torch.Tensor:
-        """
-        Turn the instance into a tensor compatible with the SB algorithm.
-
-        The SB algorithm runs on Ising models with no linear term, and
-        whose matrix is symmetric and has only zeros on its diagonal.
-
-        Returns
-        -------
-        sb_tensor : Tensor
-            Equivalent tensor compatible with the SB algorithm.
-
-        """
-        tensor = self.symmetrize(self.J)
-        self.remove_diagonal_(tensor)
-        if self.linear_term:
-            sb_tensor = self.clip_vector_to_tensor()
+        symmetrical_J = (self._J + self._J.t()) / 2.0  # symmetrize J
+        torch.diagonal(symmetrical_J)[...] = 0.0  # remove diagonal
+        if self._has_linear_term:
+            sb_tensor = torch.zeros(
+                (self._dimension + 1, self._dimension + 1),
+                dtype=self._dtype,
+                device=self._device,
+            )
+            sb_tensor[: self._dimension, : self._dimension] = symmetrical_J
+            sb_tensor[: self._dimension, self._dimension] = -self._h
+            sb_tensor[self._dimension, : self._dimension] = -self._h
+            return sb_tensor
         else:
-            sb_tensor = tensor
-        return sb_tensor
-
-    @property
-    def dtype(self) -> torch.dtype:
-        """
-        torch.dtype:
-            Data-type of the coefficients of the Ising model.
-
-        """
-        return self.J.dtype
-
-    @property
-    def device(self) -> torch.device:
-        """
-        torch.device:
-            Device on which the Ising model is located.
-
-        """
-        return self.J.device
+            return symmetrical_J
 
     def minimize(
         self,
+        *,
         agents: int = 128,
         max_steps: int = 10000,
         ballistic: bool = False,
         heated: bool = False,
         verbose: bool = True,
-        *,
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
-    ) -> None:
+    ) -> torch.Tensor:
         """
         Minimize the energy of the Ising model using the Simulated Bifurcation
         algorithm.
@@ -291,9 +247,8 @@ class Ising(object):
 
         Returns
         -------
-        None
-            The spins of all agents returned by the SB algorithm are stored
-            in the `computed_spins` attribute.
+        torch.Tensor
+            The spins of all agents returned by the SB algorithm.
 
         Other Parameters
         ----------------
@@ -402,7 +357,7 @@ class Ising(object):
         )
         tensor = self.as_simulated_bifurcation_tensor()
         spins = optimizer.run_integrator(tensor, use_window)
-        if self.linear_term:
-            self.computed_spins = spins[-1] * spins[:-1]
+        if self._has_linear_term:
+            return spins[-1] * spins[:-1]
         else:
-            self.computed_spins = spins
+            return spins

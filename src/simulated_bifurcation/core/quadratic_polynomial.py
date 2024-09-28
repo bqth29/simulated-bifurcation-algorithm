@@ -380,7 +380,9 @@ class QuadraticPolynomial(object):
                 self._device,
             )
         if domain == "binary":
-            symmetrical_matrix = Ising.symmetrize(self._quadratic_coefficients)
+            symmetrical_matrix = (
+                self._quadratic_coefficients + self._quadratic_coefficients.t()
+            ) / 2.0
             J = -0.5 * symmetrical_matrix
             h = 0.5 * self._linear_coefficients + 0.5 * symmetrical_matrix @ torch.ones(
                 self._n_gens, dtype=self._dtype, device=self._device
@@ -389,7 +391,9 @@ class QuadraticPolynomial(object):
         if INTEGER_REGEX.match(domain) is None:
             raise DOMAIN_ERROR
         number_of_bits = int(domain[3:])
-        symmetrical_matrix = Ising.symmetrize(self._quadratic_coefficients)
+        symmetrical_matrix = (
+            self._quadratic_coefficients + self._quadratic_coefficients.t()
+        ) / 2.0
         integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
             self._n_gens, number_of_bits, device=self._device
         )
@@ -413,7 +417,9 @@ class QuadraticPolynomial(object):
         )
         return Ising(J, h, self._dtype, self._device)
 
-    def convert_spins(self, ising: Ising, domain: str) -> Optional[torch.Tensor]:
+    def convert_spins(
+        self, optimized_spins: torch.Tensor, domain: str
+    ) -> Optional[torch.Tensor]:
         """
         Retrieves information from the optimized equivalent Ising model.
         Returns the best found vector if `ising.ground_state` is not `None`.
@@ -448,19 +454,17 @@ class QuadraticPolynomial(object):
             a positive integer, or more formally, any string matching the
             following regular expression: ^int[1-9][0-9]*$.
         """
-        if ising.computed_spins is None:
-            return None
         if domain == "spin":
-            return ising.computed_spins
+            return optimized_spins
         if domain == "binary":
-            return (ising.computed_spins + 1) / 2
+            return (optimized_spins + 1) / 2
         if INTEGER_REGEX.match(domain) is None:
             raise DOMAIN_ERROR
         number_of_bits = int(domain[3:])
         integer_to_binary_matrix = QuadraticPolynomial.__integer_to_binary_matrix(
             self._n_gens, number_of_bits, device=self._device
         )
-        return 0.5 * integer_to_binary_matrix.t() @ (ising.computed_spins + 1)
+        return 0.5 * integer_to_binary_matrix.t() @ (optimized_spins + 1)
 
     def optimize(
         self,
@@ -559,18 +563,18 @@ class QuadraticPolynomial(object):
             ising_equivalent = self.to_ising(domain)
         else:
             ising_equivalent = -self.to_ising(domain)
-        ising_equivalent.minimize(
-            agents,
-            max_steps,
-            ballistic,
-            heated,
-            verbose,
+        optimized_spins = ising_equivalent.minimize(
+            agents=agents,
+            max_steps=max_steps,
+            ballistic=ballistic,
+            heated=heated,
+            verbose=verbose,
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
         )
-        self.sb_result = self.convert_spins(ising_equivalent, domain)
+        self.sb_result = self.convert_spins(optimized_spins, domain)
         result = self.sb_result.t().to(dtype=self._dtype)
         evaluation = self(result)
         if best_only:
