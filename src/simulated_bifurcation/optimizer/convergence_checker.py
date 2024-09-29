@@ -2,7 +2,7 @@ import torch
 from tqdm import tqdm
 
 
-class ConvergenceChecker:
+class ConvergenceChecker(object):
     """
     Optimization tool to monitor agents bifurcation and convergence for the Simulated
     Bifurcation (SB) algorithm. Allows an early stopping of the iterations and saves
