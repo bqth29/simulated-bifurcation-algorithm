@@ -23,4 +23,4 @@ class QUBO(ABCModel):
         device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         super().__init__(Q, dtype=dtype, device=device)
-        self.Q = self[2]
+        self.Q = self._quadratic_coefficients

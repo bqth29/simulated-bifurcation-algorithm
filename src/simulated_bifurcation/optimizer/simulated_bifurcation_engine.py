@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Callable
 
 import torch
 
@@ -19,7 +20,9 @@ class SimulatedBifurcationEngine(Enum):
     HbSB = torch.nn.Identity(), True
     HdSB = torch.sign, True
 
-    def __init__(self, activation_function, heated: bool) -> None:
+    def __init__(
+        self, activation_function: Callable[[torch.Tensor], torch.Tensor], heated: bool
+    ) -> None:
         self.activation_function = activation_function
         self.heated = heated
 

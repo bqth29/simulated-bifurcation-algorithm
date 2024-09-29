@@ -1,9 +1,6 @@
 import torch
 
-from src.simulated_bifurcation.optimizer import (
-    SimulatedBifurcationEngine,
-    SymplecticIntegrator,
-)
+from src.simulated_bifurcation.optimizer import SymplecticIntegrator
 
 
 def test_init_ballistic_symplectic_integrator():
