@@ -432,7 +432,6 @@ def optimize(
         convergence_threshold=convergence_threshold,
         timeout=timeout,
         dtype=dtype,
-        device=device,
     )
     return result, evaluation
 

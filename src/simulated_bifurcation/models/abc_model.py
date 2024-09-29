@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import torch
 
@@ -36,7 +36,6 @@ class ABCModel(ABC, QuadraticPolynomial):
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
         dtype: Optional[torch.dtype] = None,
-        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return super().optimize(
             domain=self.domain,
@@ -52,7 +51,6 @@ class ABCModel(ABC, QuadraticPolynomial):
             convergence_threshold=convergence_threshold,
             timeout=timeout,
             dtype=dtype,
-            device=device,
         )
 
     def minimize(
@@ -69,7 +67,6 @@ class ABCModel(ABC, QuadraticPolynomial):
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
         dtype: Optional[torch.dtype] = None,
-        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.optimize(
             agents=agents,
@@ -84,7 +81,6 @@ class ABCModel(ABC, QuadraticPolynomial):
             convergence_threshold=convergence_threshold,
             timeout=timeout,
             dtype=dtype,
-            device=device,
         )
 
     def maximize(
@@ -101,7 +97,6 @@ class ABCModel(ABC, QuadraticPolynomial):
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
         dtype: Optional[torch.dtype] = None,
-        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.optimize(
             agents=agents,
@@ -116,5 +111,4 @@ class ABCModel(ABC, QuadraticPolynomial):
             convergence_threshold=convergence_threshold,
             timeout=timeout,
             dtype=dtype,
-            device=device,
         )
