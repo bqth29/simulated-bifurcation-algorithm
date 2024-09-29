@@ -109,10 +109,15 @@ The Simulated Bifurcation algorithm stops after a certain number of iterations o
 computation timeout is reached. However, this implementation comes with the possibility to perform
 early stopping and save computation time by defining convergence conditions. 
 
-At regular intervals, the state of the spins is sampled and compared with its previous value to calculate
-their stability period. If an agent's stability period exceeds a convergence threshold, it is considered
-to have converged and its value is frozen. If all agents converge before the maximum number of iterations
-has been reached, the algorithm stops.
+At regular intervals (this interval being called a sampling period), the agents (spin vectors) are
+sampled and compared with their previous state by comparing their Ising energy. If the energy is the
+same, the stability period of the agent is increased. If an agent's stability period exceeds a
+convergence threshold, it is considered to have converged and its state is frozen. If all agents converge
+before the maximum number of iterations has been reached, the algorithm then stops earlier.
+
+The purpose of sampling the spins at regular intervals is to decorrelate them and make their stability more
+informative about their convergence (because the evolution of the spins is *slow* it is expected that
+most of the spins will not change from a time step to the following).
 
 Notes
 ~~~~~
