@@ -4,19 +4,14 @@ import torch
 
 from src.simulated_bifurcation.core import Ising
 
+from ..test_utils import DEVICES, FLOAT_DTYPES, INT_DTYPES
+
 J = [
     [1, 2, 3],
     [4, 5, 6],
     [7, 8, 9],
 ]
 h = [1, 0, -1]
-
-DTYPES = [torch.float32, torch.float64]
-DEVICES = (
-    [torch.device("cpu"), torch.device("cuda")]
-    if torch.cuda.is_available()
-    else [torch.device("cpu")]
-)
 
 
 @pytest.mark.parametrize(
@@ -25,7 +20,7 @@ DEVICES = (
         (use_tensor, use_linear_term, dtype, device)
         for use_tensor in [True, False]
         for use_linear_term in [True, False]
-        for dtype in [*DTYPES, None]
+        for dtype in [*FLOAT_DTYPES, None]
         for device in [*DEVICES, None]
     ],
 )
@@ -53,11 +48,7 @@ def test_init_ising(
 
 @pytest.mark.parametrize(
     "dtype, device",
-    [
-        (dtype, device)
-        for dtype in [torch.float16, torch.int8, torch.int16, torch.int32, torch.int64]
-        for device in DEVICES
-    ],
+    [(dtype, device) for dtype in INT_DTYPES for device in DEVICES],
 )
 def test_init_ising_with_wrong_dtype(dtype: torch.dtype, device: torch.device):
     with pytest.raises(
@@ -97,7 +88,7 @@ def test_init_ising_with_inconsistant_h_shape():
     [
         (use_linear_term, dtype, device)
         for use_linear_term in [True, False]
-        for dtype in DTYPES
+        for dtype in FLOAT_DTYPES
         for device in DEVICES
     ],
 )
@@ -130,7 +121,7 @@ def test_as_simulated_bifurcation_tensor(
     [
         (use_linear_term, dtype, device)
         for use_linear_term in [True, False]
-        for dtype in DTYPES
+        for dtype in FLOAT_DTYPES
         for device in DEVICES
     ],
 )
