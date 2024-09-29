@@ -344,7 +344,6 @@ class QuadraticPolynomial(object):
         self,
         domain: str,
         dtype: Optional[torch.dtype] = None,
-        device: Optional[torch.device] = None,
     ) -> Ising:
         """
         Generate an equivalent Ising model of the problem.
@@ -371,9 +370,6 @@ class QuadraticPolynomial(object):
             If `None`, the dtype of the QuadraticPolynomial will be used, except
             if this dtype is none of `torch.float32` or `torch.float64`, in which case
             `torch.float32` will be used by default..
-        device: str | torch.device, optional
-            Device on which the instance is located.
-            If `None`, the device of the QuadraticPolynomial will be used.
 
         Returns
         -------
@@ -399,13 +395,12 @@ class QuadraticPolynomial(object):
                 else torch.float32
             )
         )
-        device = self._device if device is None else torch.device(device)
         if domain == "spin":
             return Ising(
                 -2 * self._quadratic_coefficients,
                 self._linear_coefficients,
                 dtype,
-                device,
+                self._device,
             )
         if domain == "binary":
             symmetrical_matrix = (
@@ -415,7 +410,7 @@ class QuadraticPolynomial(object):
             h = 0.5 * self._linear_coefficients + 0.5 * symmetrical_matrix @ torch.ones(
                 self._n_gens, dtype=self._dtype, device=self._device
             )
-            return Ising(J, h, dtype, device)
+            return Ising(J, h, dtype, self._device)
         if INTEGER_REGEX.match(domain) is None:
             raise DOMAIN_ERROR
         number_of_bits = int(domain[3:])
@@ -443,7 +438,7 @@ class QuadraticPolynomial(object):
                 device=self._device,
             )
         )
-        return Ising(J, h, dtype, device)
+        return Ising(J, h, dtype, self._device)
 
     def convert_spins(
         self, optimized_spins: torch.Tensor, domain: str
@@ -510,7 +505,6 @@ class QuadraticPolynomial(object):
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
         dtype: Optional[torch.dtype] = None,
-        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local extremum of the model by optimizing
@@ -596,24 +590,21 @@ class QuadraticPolynomial(object):
             if `True` the optimization direction is minimization, otherwise it
             is maximization (default is True)
         dtype: torch.dtype, optional
-            Data-type used for storing the coefficients of the Ising model and the
-            Simulated Bifurcation algorithm computations.
+            Data-type used for storing the coefficients of the Ising model and
+            running the Simulated Bifurcation algorithm computations.
             If provided, expected to be one of `torch.float32` or `torch.float64`.
             If `None`, the dtype of the QuadraticPolynomial will be used, except
             if this dtype is none of `torch.float32` or `torch.float64`, in which case
-            `torch.float32` will be used by default..
-        device: str | torch.device, optional
-            Device on which the computations are located.
-            If `None`, the device of the QuadraticPolynomial will be used.
+            `torch.float32` will be used by default.
 
         Returns
         -------
         Tensor
         """
         if minimize:
-            ising_equivalent = self.to_ising(domain, dtype=dtype, device=device)
+            ising_equivalent = self.to_ising(domain, dtype=dtype)
         else:
-            ising_equivalent = -self.to_ising(domain, dtype=dtype, device=device)
+            ising_equivalent = -self.to_ising(domain, dtype=dtype)
         optimized_spins = ising_equivalent.minimize(
             agents=agents,
             max_steps=max_steps,
@@ -651,7 +642,6 @@ class QuadraticPolynomial(object):
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
         dtype: Optional[torch.dtype] = None,
-        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local minimum of the model by optimizing
@@ -734,15 +724,12 @@ class QuadraticPolynomial(object):
             is returned, otherwise all the solutions found by the simulated
             bifurcation algorithm.
         dtype: torch.dtype, optional
-            Data-type used for storing the coefficients of the Ising model and the
-            Simulated Bifurcation algorithm computations.
+            Data-type used for storing the coefficients of the Ising model and
+            running the Simulated Bifurcation algorithm computations.
             If provided, expected to be one of `torch.float32` or `torch.float64`.
             If `None`, the dtype of the QuadraticPolynomial will be used, except
             if this dtype is none of `torch.float32` or `torch.float64`, in which case
-            `torch.float32` will be used by default..
-        device: str | torch.device, optional
-            Device on which the computations are located.
-            If `None`, the device of the QuadraticPolynomial will be used.
+            `torch.float32` will be used by default.
 
         Returns
         -------
@@ -762,7 +749,6 @@ class QuadraticPolynomial(object):
             convergence_threshold=convergence_threshold,
             timeout=timeout,
             dtype=dtype,
-            device=device,
         )
 
     def maximize(
@@ -780,7 +766,6 @@ class QuadraticPolynomial(object):
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
         dtype: Optional[torch.dtype] = None,
-        device: Optional[Union[str, torch.device]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local maximum of the model by optimizing
@@ -863,15 +848,12 @@ class QuadraticPolynomial(object):
             is returned, otherwise all the solutions found by the simulated
             bifurcation algorithm.
         dtype: torch.dtype, optional
-            Data-type used for storing the coefficients of the Ising model and the
-            Simulated Bifurcation algorithm computations.
+            Data-type used for storing the coefficients of the Ising model and
+            running the Simulated Bifurcation algorithm computations.
             If provided, expected to be one of `torch.float32` or `torch.float64`.
             If `None`, the dtype of the QuadraticPolynomial will be used, except
             if this dtype is none of `torch.float32` or `torch.float64`, in which case
-            `torch.float32` will be used by default..
-        device: str | torch.device, optional
-            Device on which the computations are located.
-            If `None`, the device of the QuadraticPolynomial will be used.
+            `torch.float32` will be used by default.
 
         Returns
         -------
@@ -891,7 +873,6 @@ class QuadraticPolynomial(object):
             convergence_threshold=convergence_threshold,
             timeout=timeout,
             dtype=dtype,
-            device=device,
         )
 
     @staticmethod
