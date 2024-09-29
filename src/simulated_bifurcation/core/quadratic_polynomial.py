@@ -25,7 +25,7 @@ from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
-from sympy import Poly, Symbol, poly, symbols
+from sympy import Poly, poly, symbols
 
 from .ising import Ising
 
@@ -159,12 +159,10 @@ class QuadraticPolynomial(object):
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
     ):
-        if dtype is None:
-            dtype = torch.get_default_dtype()
-        device = torch.get_default_device() if device is None else torch.device(device)
-
-        self._dtype = dtype
-        self._device = device
+        self._dtype = torch.get_default_dtype() if dtype is None else dtype
+        self._device = (
+            torch.get_default_device() if device is None else torch.device(device)
+        )
         self.sb_result = None
 
         if len(polynomial_data) == 1 and isinstance(polynomial_data[0], Poly):
@@ -175,14 +173,18 @@ class QuadraticPolynomial(object):
             self._poly = polynomial_data[0]
             n_gens = len(self._poly.gens)
             self._quadratic_coefficients = torch.zeros(
-                n_gens, n_gens, dtype=dtype, device=device
+                n_gens, n_gens, dtype=self._dtype, device=self._device
             )
-            self._linear_coefficients = torch.zeros(n_gens, dtype=dtype, device=device)
-            self._bias = torch.tensor(0.0, dtype=dtype, device=device)
+            self._linear_coefficients = torch.zeros(
+                n_gens, dtype=self._dtype, device=self._device
+            )
+            self._bias = torch.tensor(0.0, dtype=self._dtype, device=self._device)
             for monom, coeff in self._poly.terms():
                 coeff = float(coeff)
                 if sum(monom) == 0:
-                    self._bias = torch.tensor(coeff, dtype=dtype, device=device)
+                    self._bias = torch.tensor(
+                        coeff, dtype=self._dtype, device=self._device
+                    )
                 elif sum(monom) == 1:
                     self._linear_coefficients[monom.index(1)] = coeff
                 else:
@@ -202,7 +204,9 @@ class QuadraticPolynomial(object):
                 if isinstance(tensor_like, np.ndarray):
                     tensor_like = torch.from_numpy(tensor_like)
                 elif isinstance(tensor_like, (int, float)):
-                    tensor_like = torch.tensor(tensor_like, dtype=dtype, device=device)
+                    tensor_like = torch.tensor(
+                        tensor_like, dtype=self._dtype, device=self._device
+                    )
                 if isinstance(tensor_like, torch.Tensor):
                     if tensor_like.ndim == 0:
                         attribute_to_set = "_bias"
@@ -234,7 +238,7 @@ class QuadraticPolynomial(object):
                         setattr(
                             self,
                             attribute_to_set,
-                            tensor_like.to(dtype=dtype, device=device),
+                            tensor_like.to(dtype=self._dtype, device=self._device),
                         )
                 else:
                     raise ValueError(
@@ -242,14 +246,14 @@ class QuadraticPolynomial(object):
                     )
             if self._quadratic_coefficients is None:
                 self._quadratic_coefficients = torch.zeros(
-                    n_gens, n_gens, dtype=dtype, device=device
+                    n_gens, n_gens, dtype=self._dtype, device=self._device
                 )
             if self._linear_coefficients is None:
                 self._linear_coefficients = torch.zeros(
-                    n_gens, dtype=dtype, device=device
+                    n_gens, dtype=self._dtype, device=self._device
                 )
             if self._bias is None:
-                self._bias = torch.tensor(0.0, dtype=dtype, device=device)
+                self._bias = torch.tensor(0.0, dtype=self._dtype, device=self._device)
             gens = symbols(" ".join([f"x_{ind}" for ind in range(n_gens)]))
             self._poly = poly(
                 sum(
