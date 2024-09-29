@@ -27,7 +27,7 @@ def test_optimizer():
         False,
         False,
         False,
-        use_window=False,
+        early_stopping=False,
         sampling_period=50,
         convergence_threshold=50,
     )
@@ -53,7 +53,7 @@ def test_optimizer_without_bifurcation():
             False,
             False,
             False,
-            use_window=True,
+            early_stopping=True,
             sampling_period=50,
             convergence_threshold=50,
         )
@@ -70,7 +70,7 @@ def test_optimizer_without_bifurcation():
     )
 
 
-def test_optimizer_with_window():
+def test_optimizer_with_convergence_checker():
     torch.manual_seed(42)
     J = torch.tensor(
         [
@@ -88,7 +88,7 @@ def test_optimizer_with_window():
         False,
         False,
         False,
-        use_window=True,
+        early_stopping=True,
         sampling_period=20,
         convergence_threshold=20,
     )
@@ -113,7 +113,7 @@ def test_optimizer_with_heating():
         False,
         True,
         False,
-        use_window=False,
+        early_stopping=False,
         sampling_period=50,
         convergence_threshold=50,
     )
@@ -176,7 +176,7 @@ def test_timeout():
     assert optimizer.simulation_time > 3.0
 
 
-def test_window():
+def test_convergence_checker():
     torch.manual_seed(42)
     J = torch.tensor(
         [

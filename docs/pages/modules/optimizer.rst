@@ -12,5 +12,5 @@ Optimizer
 .. autoclass:: SymplecticIntegrator
     :members:
 
-.. autoclass:: StopWindow
+.. autoclass:: ConvergenceChecker
     :members:
