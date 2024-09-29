@@ -632,16 +632,8 @@ constant_int = 1
 def test_init_spin_polynomial():
     polynomial = QuadraticPolynomial(matrix, vector, constant_int, dtype=torch.float32)
     ising = polynomial.to_ising(domain="spin")
-    ising.computed_spins = torch.tensor(
-        [
-            [1, -1],
-            [-1, 1],
-            [1, 1],
-        ],
-        dtype=torch.float32,
-    )
     assert torch.equal(
-        ising.J,
+        ising._J,
         torch.tensor(
             [
                 [0, -2, 2],
@@ -651,9 +643,19 @@ def test_init_spin_polynomial():
             dtype=torch.float32,
         ),
     )
-    assert torch.equal(ising.h, torch.tensor([1, 2, -3], dtype=torch.float32))
+    assert torch.equal(ising._h, torch.tensor([1, 2, -3], dtype=torch.float32))
     assert torch.equal(
-        polynomial.convert_spins(ising, domain="spin"),
+        polynomial.convert_spins(
+            torch.tensor(
+                [
+                    [1, -1],
+                    [-1, 1],
+                    [1, 1],
+                ],
+                dtype=torch.float32,
+            ),
+            domain="spin",
+        ),
         torch.tensor(
             [
                 [1, -1],
@@ -698,17 +700,8 @@ def test_init_binary_polynomial():
         matrix, vector, constant_int, dtype=torch.float32
     )
     ising = binary_polynomial.to_ising(domain="binary")
-    assert binary_polynomial.convert_spins(ising, domain="binary") is None
-    ising.computed_spins = torch.tensor(
-        [
-            [1, -1],
-            [-1, 1],
-            [1, 1],
-        ],
-        dtype=torch.float32,
-    )
     assert torch.equal(
-        ising.J,
+        ising._J,
         torch.tensor(
             [
                 [0, -0.5, 0.5],
@@ -718,9 +711,19 @@ def test_init_binary_polynomial():
             dtype=torch.float32,
         ),
     )
-    assert torch.equal(ising.h, torch.tensor([0.5, 2.5, -1], dtype=torch.float32))
+    assert torch.equal(ising._h, torch.tensor([0.5, 2.5, -1], dtype=torch.float32))
     assert torch.equal(
-        binary_polynomial.convert_spins(ising, domain="binary"),
+        binary_polynomial.convert_spins(
+            torch.tensor(
+                [
+                    [1, -1],
+                    [-1, 1],
+                    [1, 1],
+                ],
+                dtype=torch.float32,
+            ),
+            domain="binary",
+        ),
         torch.tensor(
             [
                 [1, 0],
@@ -753,20 +756,8 @@ def test_init_integer_polynomial():
         matrix, vector, constant_int, dtype=torch.float32
     )
     ising = integer_polynomial.to_ising(domain="int2")
-    assert integer_polynomial.convert_spins(ising, domain="int2") is None
-    ising.computed_spins = torch.tensor(
-        [
-            [1, -1],
-            [-1, 1],
-            [1, 1],
-            [-1, -1],
-            [-1, -1],
-            [1, -1],
-        ],
-        dtype=torch.float32,
-    )
     assert torch.equal(
-        ising.J,
+        ising._J,
         torch.tensor(
             [
                 [0, 0, -0.5, -1, 0.5, 1],
@@ -780,10 +771,23 @@ def test_init_integer_polynomial():
         ),
     )
     assert torch.equal(
-        ising.h, torch.tensor([0.5, 1, 5.5, 11, 0, 0], dtype=torch.float32)
+        ising._h, torch.tensor([0.5, 1, 5.5, 11, 0, 0], dtype=torch.float32)
     )
     assert torch.equal(
-        integer_polynomial.convert_spins(ising, domain="int2"),
+        integer_polynomial.convert_spins(
+            torch.tensor(
+                [
+                    [1, -1],
+                    [-1, 1],
+                    [1, 1],
+                    [-1, -1],
+                    [-1, -1],
+                    [1, -1],
+                ],
+                dtype=torch.float32,
+            ),
+            domain="int2",
+        ),
         torch.tensor(
             [
                 [1, 2],
@@ -825,14 +829,12 @@ def test_wrong_domain_to_ising(dtype: torch.dtype, device: torch.device):
     "dtype, device", [(dtype, device) for dtype in DTYPES for device in DEVICES]
 )
 def test_wrong_domain_convert_spin(dtype: torch.dtype, device: torch.device):
-    ising = Ising(
-        make_quadratic_tensor(True, dtype, device), dtype=dtype, device=device
-    )
-    ising.computed_spins = torch.ones(3, 3)
     with pytest.raises(ValueError):
         QuadraticPolynomial(
             make_quadratic_tensor(True, dtype, device), dtype=dtype, device=device
-        ).convert_spins(ising, domain="Hello world!")
+        ).convert_spins(
+            torch.ones(3, 3, dtype=dtype, device=device), domain="Hello world!"
+        )
 
 
 @pytest.mark.parametrize(
