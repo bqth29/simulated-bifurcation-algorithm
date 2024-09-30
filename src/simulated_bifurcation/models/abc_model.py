@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Optional, Tuple
+from typing import Literal, Optional, Tuple
 
 import torch
 
@@ -26,7 +26,7 @@ class ABCModel(ABC, QuadraticPolynomial):
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
-        ballistic: bool = False,
+        mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         minimize: bool = True,
         verbose: bool = True,
@@ -41,7 +41,7 @@ class ABCModel(ABC, QuadraticPolynomial):
             agents,
             max_steps,
             best_only,
-            ballistic,
+            mode,
             heated,
             minimize,
             verbose,
@@ -56,7 +56,7 @@ class ABCModel(ABC, QuadraticPolynomial):
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
-        ballistic: bool = False,
+        mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         verbose: bool = True,
         *,
@@ -69,7 +69,7 @@ class ABCModel(ABC, QuadraticPolynomial):
             agents,
             max_steps,
             best_only,
-            ballistic,
+            mode,
             heated,
             True,
             verbose,
@@ -84,7 +84,7 @@ class ABCModel(ABC, QuadraticPolynomial):
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
-        ballistic: bool = False,
+        mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         verbose: bool = True,
         *,
@@ -97,7 +97,7 @@ class ABCModel(ABC, QuadraticPolynomial):
             agents,
             max_steps,
             best_only,
-            ballistic,
+            mode,
             heated,
             False,
             verbose,

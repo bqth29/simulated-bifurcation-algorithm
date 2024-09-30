@@ -21,7 +21,7 @@ Ising:
 """
 
 import re
-from typing import Optional, Tuple, Union
+from typing import Literal, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -313,7 +313,7 @@ class QuadraticPolynomial(Polynomial):
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
-        ballistic: bool = False,
+        mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         minimize: bool = True,
         verbose: bool = True,
@@ -379,9 +379,10 @@ class QuadraticPolynomial(Polynomial):
         timeout : float | None, default=None
             Time in seconds after which the simulation is stopped.
             None means no timeout.
-        ballistic : bool, optional
-            if True, the ballistic SB will be used, else it will be the
-            discrete SB (default is True)
+        mode : "ballistic" | "discrete", optional, default = "ballistic"
+            Whether to use the ballistic or the discrete SB algorithm.
+            See Notes for further information about the variants of the SB
+            algorithm.
         heated : bool, optional
             if True, the heated SB will be used, else it will be the non-heated
             SB (default is True)
@@ -407,7 +408,7 @@ class QuadraticPolynomial(Polynomial):
         ising_equivalent.minimize(
             agents,
             max_steps,
-            ballistic,
+            mode,
             heated,
             verbose,
             use_window=use_window,
@@ -430,7 +431,7 @@ class QuadraticPolynomial(Polynomial):
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
-        ballistic: bool = False,
+        mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         verbose: bool = True,
         *,
@@ -495,9 +496,10 @@ class QuadraticPolynomial(Polynomial):
         timeout : float | None, default=None
             Time in seconds after which the simulation is stopped.
             None means no timeout.
-        ballistic : bool, optional
-            if True, the ballistic SB will be used, else it will be the
-            discrete SB (default is True)
+        mode : "ballistic" | "discrete", optional, default = "ballistic"
+            Whether to use the ballistic or the discrete SB algorithm.
+            See Notes for further information about the variants of the SB
+            algorithm.
         heated : bool, optional
             if True, the heated SB will be used, else it will be the non-heated
             SB (default is True)
@@ -518,7 +520,7 @@ class QuadraticPolynomial(Polynomial):
             agents,
             max_steps,
             best_only,
-            ballistic,
+            mode,
             heated,
             True,
             verbose,
@@ -534,7 +536,7 @@ class QuadraticPolynomial(Polynomial):
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
-        ballistic: bool = False,
+        mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         verbose: bool = True,
         *,
@@ -598,9 +600,10 @@ class QuadraticPolynomial(Polynomial):
         timeout : float | None, default=None
             Time in seconds after which the simulation is stopped.
             None means no timeout.
-        ballistic : bool, optional
-            if True, the ballistic SB will be used, else it will be the
-            discrete SB (default is True)
+        mode : "ballistic" | "discrete", optional, default = "ballistic"
+            Whether to use the ballistic or the discrete SB algorithm.
+            See Notes for further information about the variants of the SB
+            algorithm.
         heated : bool, optional
             if True, the heated SB will be used, else it will be the non-heated
             SB (default is True)
@@ -621,7 +624,7 @@ class QuadraticPolynomial(Polynomial):
             agents,
             max_steps,
             best_only,
-            ballistic,
+            mode,
             heated,
             False,
             verbose,
