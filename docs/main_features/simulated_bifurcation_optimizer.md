@@ -1,8 +1,14 @@
 # Simulated Bifurcation Optimizer
 
-This package provides an implementation of all four versions of the Simulated Bifurcation algorithm (bSB, dSB, HbSB or HdSB) enhanced by supplementary features that allow the user, for instance, to define advanced stop criteria and harness the parallelization of the algorithm by running a multi-agent optimization CPU or GPU.
+<!--
+    TODO: update with the latest versions of the parameters
+    - `domain` will move from `str` to `Union[str, List[str]]` for multi-domain optimization
+    - `ballistic` will be renamed and its value will be a `Literal` (either `"ballistic"` or `"discrete"`)
+-->
 
-Three optimization functions (`optimize`, `maximize` and `minimize`) that all share the same pool of parameters are available. These parameters are meant to set the different extra-features of the algorithm and to allow a more personalized experience. They are gathered in the following table and their usage and specific role in the optimizer are described thoughout this page.
+This package provides a Python implementation of all four versions of the Simulated Bifurcation algorithm (bSB, dSB, HbSB or HdSB) enhanced with supplementary features that allow the user, for instance, to define advanced stop criteria and harness the parallelization of the algorithm by running a multi-agent optimization CPU or GPU.
+
+Three optimization functions (`optimize`, `maximize` and `minimize`) that all share the same pool of parameters are available. These parameters are meant to tune the different extra-features of the algorithm and to allow a more personalized experience. They are gathered in the following table and their usage and specific role in the optimizer are described thoughout this page.
 
 > - The mandatory parameters are written in **bold**
 > - Except for `polynomial` which is positional and must be defined as the first parameter, all other parameters are keyword-only and their order does not matter

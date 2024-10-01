@@ -5,7 +5,6 @@
 modules/simulated_bifurcation.md
 modules/core.md
 modules/optimizer.md
-modules/polynomial.md
 modules/models.md
 ```
 
@@ -14,5 +13,4 @@ This section introduces the different modules of the package with their respecti
 - [`simulated_bifurcation`](modules/simulated_bifurcation.md): Module defining high-level routines for a basic usage.
 - [`core`](modules/core.md): Module of utility models to help define and solve optimization problems with the Simulated Bifurcation algorithm.
 - [`optimizer`](modules/optimizer.md): Module providing an implementation of the Simulated Bifurcation algorithm. Serves as a back-end for the core module.
-- [`polynomial`](modules/polynomial.md): Utility classes to define and utilize high-order multivariate polynomials.
 - [`models`](modules/models.md): Module containing the implementation of several common combinatorial optimization problems.
