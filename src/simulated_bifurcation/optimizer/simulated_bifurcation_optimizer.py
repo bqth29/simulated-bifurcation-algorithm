@@ -5,7 +5,7 @@ from typing import Optional, Tuple
 
 import torch
 from numpy import minimum
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .environment import ENVIRONMENT
 from .simulated_bifurcation_engine import SimulatedBifurcationEngine
