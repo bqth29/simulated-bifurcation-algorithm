@@ -12,7 +12,7 @@ def test_ising():
         agents=10,
         verbose=False,
         best_only=True,
-        ballistic=True,
+        mode="ballistic",
     )
     assert torch.equal(
         torch.tensor([-1.0, 1.0, -1.0], dtype=torch.float32), spin_vector

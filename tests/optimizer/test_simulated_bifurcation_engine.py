@@ -1,3 +1,5 @@
+import pytest
+
 from src.simulated_bifurcation.optimizer.simulated_bifurcation_engine import (
     SimulatedBifurcationEngine,
 )
@@ -5,14 +7,12 @@ from src.simulated_bifurcation.optimizer.simulated_bifurcation_engine import (
 
 def test_simulated_bifurcation_engine():
     assert SimulatedBifurcationEngine.bSB == SimulatedBifurcationEngine.get_engine(
-        ballistic=True, heated=False
+        "ballistic"
     )
     assert SimulatedBifurcationEngine.dSB == SimulatedBifurcationEngine.get_engine(
-        ballistic=False, heated=False
+        "discrete"
     )
-    assert SimulatedBifurcationEngine.HbSB == SimulatedBifurcationEngine.get_engine(
-        ballistic=True, heated=True
-    )
-    assert SimulatedBifurcationEngine.HdSB == SimulatedBifurcationEngine.get_engine(
-        ballistic=False, heated=True
-    )
+    with pytest.raises(
+        ValueError, match="Unknwown Simulated Bifurcation engine: unknown-engine."
+    ):
+        SimulatedBifurcationEngine.get_engine("unknown-engine")

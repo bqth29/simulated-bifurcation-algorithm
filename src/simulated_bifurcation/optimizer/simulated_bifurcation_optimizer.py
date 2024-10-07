@@ -69,6 +69,7 @@ class SimulatedBifurcationOptimizer:
         max_steps: Optional[int],
         timeout: Optional[float],
         engine: SimulatedBifurcationEngine,
+        heated: bool,
         verbose: bool,
         sampling_period: int,
         convergence_threshold: int,
@@ -78,7 +79,7 @@ class SimulatedBifurcationOptimizer:
         self.window = None
         self.symplectic_integrator = None
         self.heat_coefficient = ENVIRONMENT.heat_coefficient
-        self.heated = engine.heated
+        self.heated = heated
         self.verbose = verbose
         self.start_time = None
         self.simulation_time = None

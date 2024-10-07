@@ -28,7 +28,7 @@ models:
 
 """
 
-from typing import Optional, Tuple, Union
+from typing import Literal, Optional, Tuple, Union
 
 import torch
 
@@ -164,7 +164,7 @@ def optimize(
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
-    ballistic: bool = False,
+    mode: Literal["ballistic", "discrete"] = "ballistic",
     heated: bool = False,
     minimize: bool = True,
     verbose: bool = True,
@@ -228,7 +228,7 @@ def optimize(
         polynomial at this vector. Otherwise, returns all the vectors
         found by the SB algorithm and the values of polynomial at these
         points.
-    ballistic : bool, default=False, keyword-only
+    mode : "ballistic" | "discrete",  default="ballistic, keyword-only
         Whether to use the ballistic or the discrete SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
@@ -422,7 +422,7 @@ def optimize(
         agents=agents,
         max_steps=max_steps,
         best_only=best_only,
-        ballistic=ballistic,
+        mode=mode,
         heated=heated,
         minimize=minimize,
         verbose=verbose,
@@ -442,7 +442,7 @@ def minimize(
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
-    ballistic: bool = False,
+    mode: Literal["ballistic", "discrete"] = "ballistic",
     heated: bool = False,
     verbose: bool = True,
     use_window: bool = True,
@@ -505,7 +505,7 @@ def minimize(
         polynomial at this vector. Otherwise, returns all the vectors
         found by the SB algorithm and the values of polynomial at these
         points.
-    ballistic : bool, default=False, keyword-only
+    mode : "ballistic" | "discrete",  default="ballistic, keyword-only
         Whether to use the ballistic or the discrete SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
@@ -686,7 +686,7 @@ def minimize(
         agents=agents,
         max_steps=max_steps,
         best_only=best_only,
-        ballistic=ballistic,
+        mode=mode,
         heated=heated,
         minimize=True,
         verbose=verbose,
@@ -705,7 +705,7 @@ def maximize(
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
-    ballistic: bool = False,
+    mode: Literal["ballistic", "discrete"] = "ballistic",
     heated: bool = False,
     verbose: bool = True,
     use_window: bool = True,
@@ -768,7 +768,7 @@ def maximize(
         polynomial at this vector. Otherwise, returns all the vectors
         found by the SB algorithm and the values of polynomial at these
         points.
-    ballistic : bool, default=False, keyword-only
+    mode : "ballistic" | "discrete",  default="ballistic, keyword-only
         Whether to use the ballistic or the discrete SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
@@ -949,7 +949,7 @@ def maximize(
         agents=agents,
         max_steps=max_steps,
         best_only=best_only,
-        ballistic=ballistic,
+        mode=mode,
         heated=heated,
         minimize=False,
         verbose=verbose,
