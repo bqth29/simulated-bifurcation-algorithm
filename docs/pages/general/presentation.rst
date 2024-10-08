@@ -1,1 +1,0 @@
-.. automodule:: simulated_bifurcation
