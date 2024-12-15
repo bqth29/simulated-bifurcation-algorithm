@@ -386,6 +386,72 @@ def test_optimize_integer_polynomial():
     assert value == -23.0
 
 
+def test_init_mixed_types_polynomial():
+    integer_polynomial = QuadraticPolynomial(
+        matrix, vector, constant_int, dtype=torch.float32
+    )
+    ising = integer_polynomial.to_ising(domain=["spin", "binary", "int2"])
+    assert integer_polynomial.convert_spins(ising, domain="int2") is None
+    ising.computed_spins = torch.tensor(
+        [
+            [1, -1],
+            [-1, 1],
+            [1, 1],
+            [-1, -1],
+        ],
+        dtype=torch.float32,
+    )
+    assert torch.equal(
+        ising.J,
+        torch.tensor(
+            [
+                [0, -1, 1, 2],
+                [-1, 0, -1, -2],
+                [1, -1, 0, 0],
+                [2, -2, 0, 0],
+            ],
+            dtype=torch.float32,
+        ),
+    )
+    assert torch.equal(ising.h, torch.tensor([-1, 4, -0.5, -1], dtype=torch.float32))
+    assert torch.equal(
+        integer_polynomial.convert_spins(ising, domain=["spin", "binary", "int2"]),
+        torch.tensor(
+            [
+                [1, -1],
+                [0, 1],
+                [1, 1],
+            ],
+            dtype=torch.float32,
+        ),
+    )
+
+
+def test_call_mixed_types_polynomial():
+    integer_polynomial = QuadraticPolynomial(
+        matrix, vector, constant_int, dtype=torch.float32
+    )
+    assert integer_polynomial(torch.tensor([-1, 1, 3], dtype=torch.float32)) == 9.0
+
+
+def test_optimize_mixed_types_polynomial():
+    integer_polynomial = QuadraticPolynomial(
+        matrix, vector, constant_int, dtype=torch.float32
+    )
+    int_vars, value = integer_polynomial.optimize(
+        domain=["spin", "binary", "int2"], verbose=False
+    )
+    assert torch.equal(int_vars, torch.tensor([1, 0, 3], dtype=torch.float32))
+    assert value == -13.0
+
+
+def test_init_mixed_types_polynomial_wrong_number_of_domains():
+    with pytest.raises(ValueError, match="Expected 3 domains to be provided, got 2."):
+        QuadraticPolynomial(matrix, vector, constant_int, dtype=torch.float32).to_ising(
+            domain=["spin", "binary"]
+        )
+
+
 def test_to():
     polynomial = QuadraticPolynomial(matrix, vector, constant_int, dtype=torch.float32)
 
@@ -419,7 +485,7 @@ def test_wrong_domain_to_ising():
         QuadraticPolynomial(quadratic).to_ising(domain="int2.5")
 
 
-def test_wrong_domain_cnvert_spin():
+def test_wrong_domain_convert_spin():
     ising = Ising(quadratic)
     ising.computed_spins = torch.ones(3, 3)
     with pytest.raises(ValueError):
