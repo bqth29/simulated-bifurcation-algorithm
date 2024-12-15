@@ -214,8 +214,12 @@ def optimize(
 
         If the variables have different domains, a list of string with the
         same length as the number of variables can be provided instead.
-    dtype : torch.dtype, default=torch.float32, keyword-only
-        Data-type used for running the computations in the SB algorithm.
+    dtype: torch.dtype, optional
+        Data-type used for storing the coefficients of the Ising model.
+        If provided, expected to be one of `torch.float32` or `torch.float64`.
+        If `None`, the dtype of the QuadraticPolynomial will be used, except
+        if this dtype is none of `torch.float32` or `torch.float64`, in which case
+        `torch.float32` will be used by default.
     device : str | torch.device, optional
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
@@ -501,8 +505,12 @@ def minimize(
 
         If the variables have different domains, a list of string with the
         same length as the number of variables can be provided instead.
-    dtype : torch.dtype, default=torch.float32, keyword-only
-        Data-type used for running the computations in the SB algorithm.
+    dtype: torch.dtype, optional
+        Data-type used for storing the coefficients of the Ising model.
+        If provided, expected to be one of `torch.float32` or `torch.float64`.
+        If `None`, the dtype of the QuadraticPolynomial will be used, except
+        if this dtype is none of `torch.float32` or `torch.float64`, in which case
+        `torch.float32` will be used by default.
     device : str | torch.device, optional
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
@@ -773,8 +781,12 @@ def maximize(
 
         If the variables have different domains, a list of string with the
         same length as the number of variables can be provided instead.
-    dtype : torch.dtype, default=torch.float32, keyword-only
-        Data-type used for running the computations in the SB algorithm.
+    dtype: torch.dtype, optional
+        Data-type used for storing the coefficients of the Ising model.
+        If provided, expected to be one of `torch.float32` or `torch.float64`.
+        If `None`, the dtype of the QuadraticPolynomial will be used, except
+        if this dtype is none of `torch.float32` or `torch.float64`, in which case
+        `torch.float32` will be used by default.
     device : str | torch.device, optional
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high

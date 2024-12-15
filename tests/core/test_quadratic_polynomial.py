@@ -755,8 +755,7 @@ def test_init_mixed_types_polynomial():
         matrix, vector, constant_int, dtype=torch.float32
     )
     ising = integer_polynomial.to_ising(domain=["spin", "binary", "int2"])
-    assert integer_polynomial.convert_spins(ising, domain="int2") is None
-    ising.computed_spins = torch.tensor(
+    computed_spins = torch.tensor(
         [
             [1, -1],
             [-1, 1],
@@ -766,7 +765,7 @@ def test_init_mixed_types_polynomial():
         dtype=torch.float32,
     )
     assert torch.equal(
-        ising.J,
+        ising._J,
         torch.tensor(
             [
                 [0, -1, 1, 2],
@@ -777,9 +776,11 @@ def test_init_mixed_types_polynomial():
             dtype=torch.float32,
         ),
     )
-    assert torch.equal(ising.h, torch.tensor([-1, 4, -0.5, -1], dtype=torch.float32))
+    assert torch.equal(ising._h, torch.tensor([-1, 4, -0.5, -1], dtype=torch.float32))
     assert torch.equal(
-        integer_polynomial.convert_spins(ising, domain=["spin", "binary", "int2"]),
+        integer_polynomial.convert_spins(
+            computed_spins, domain=["spin", "binary", "int2"]
+        ),
         torch.tensor(
             [
                 [1, -1],
