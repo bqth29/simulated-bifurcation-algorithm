@@ -230,3 +230,35 @@ def test_no_stop_criterion():
     )
     with pytest.raises(ValueError, match="No stopping criterion provided."):
         optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
+
+
+def test_keyboard_interrupt():
+    class SimulatedBifurcationOptimizerTest(SimulatedBifurcationOptimizer):
+        def _step_update(self) -> None:
+            super()._step_update()
+            if self.step >= 1000:
+                raise KeyboardInterrupt
+
+    torch.manual_seed(42)
+    J = torch.tensor(
+        [
+            [1, 2, 3],
+            [2, 1, 4],
+            [3, 4, 1],
+        ],
+        dtype=torch.float32,
+    )
+    h = torch.tensor([1, 0, -2], dtype=torch.float32)
+    ising = Ising(J, h)
+    optimizer = SimulatedBifurcationOptimizerTest(
+        20, 10000, None, SimulatedBifurcationEngine.bSB, True, 50, 50
+    )
+    with pytest.warns(
+        RuntimeWarning,
+        match="Simulation interrupted by user. Current spins will be returned.",
+    ):
+        spins = optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
+        assert isinstance(spins, torch.Tensor)
+        assert (4, 20) == tuple(spins.shape)
+        assert torch.all(torch.abs(spins) == 1.0)
+        assert optimizer.step < 10000

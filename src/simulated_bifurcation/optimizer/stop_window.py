@@ -1,7 +1,7 @@
 from typing import Tuple, Union
 
 import torch
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 
 class StopWindow:
