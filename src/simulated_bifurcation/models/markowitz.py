@@ -183,11 +183,11 @@ class Markowitz(SequentialMarkowitz):
 
     @property
     def covariance(self) -> torch.Tensor:
-        return -(2 / self.risk_coefficient) * self[2]
+        return -(2 / self.risk_coefficient) * self._quadratic_coefficients
 
     @property
     def expected_return(self) -> torch.Tensor:
-        return self[1]
+        return self._linear_coefficients
 
     @property
     def portfolio(self) -> Optional[torch.Tensor]:

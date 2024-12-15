@@ -71,7 +71,7 @@ def test_sequential_markowitz():
                     [0.0, 0.0, 0.0, 0.0, 0.0, 0.50, 0.06, -1.0],
                 ]
             ),
-            model[2],
+            model.quadratic,
         )
     )
     assert torch.all(
@@ -79,10 +79,10 @@ def test_sequential_markowitz():
             torch.tensor(
                 [0.5000, 1.0000, 0.5500, 0.5500, 0.7000, 0.5000, 1.4000, 0.2000]
             ),
-            model[1],
+            model.linear,
         )
     )
-    assert torch.equal(torch.tensor(-0.2), model[0])
+    assert torch.equal(torch.tensor(-0.2), model.bias)
 
     model.maximize(agents=128, use_window=False, verbose=False)
     assert (4, 2) == model.portfolio.shape

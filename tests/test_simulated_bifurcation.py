@@ -103,12 +103,14 @@ def test_maximize_integer():
 
 
 def test_best_only():
-    spins_best_only, energy_best_only = minimize(matrix, agents=42, dtype=torch.float32)
+    spins_best_only, energy_best_only = minimize(
+        matrix, domain="spin", agents=42, dtype=torch.float32
+    )
     assert spins_best_only.shape == (3,)
     assert isinstance(energy_best_only, torch.Tensor)
     assert energy_best_only.shape == ()
     spins_all, energies_all = minimize(
-        matrix, agents=42, best_only=False, dtype=torch.float32
+        matrix, domain="spin", agents=42, best_only=False, dtype=torch.float32
     )
     assert spins_all.shape == (42, 3)
     assert isinstance(energies_all, torch.Tensor)
