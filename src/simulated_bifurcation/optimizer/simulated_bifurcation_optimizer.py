@@ -5,7 +5,7 @@ from typing import Optional, Tuple
 
 import torch
 from numpy import minimum
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .environment import ENVIRONMENT
 from .simulated_bifurcation_engine import SimulatedBifurcationEngine
@@ -143,7 +143,7 @@ class SimulatedBifurcationOptimizer:
             matrix.device,
         )
 
-    def __step_update(self) -> None:
+    def _step_update(self) -> None:
         self.step += 1
         self.iterations_progress.update()
 
@@ -185,34 +185,42 @@ class SimulatedBifurcationOptimizer:
         use_window: bool,
     ) -> torch.Tensor:
         self.start_time = time()
-        while self.run:
-            if self.heated:
-                momentum_copy = self.symplectic_integrator.momentum.clone()
+        try:
+            while self.run:
+                if self.heated:
+                    momentum_copy = self.symplectic_integrator.momentum.clone()
 
-            (
-                momentum_coefficient,
-                position_coefficient,
-                quadratic_coefficient,
-            ) = self.__compute_symplectic_coefficients()
-            self.symplectic_integrator.step(
-                momentum_coefficient,
-                position_coefficient,
-                quadratic_coefficient,
-                matrix,
+                (
+                    momentum_coefficient,
+                    position_coefficient,
+                    quadratic_coefficient,
+                ) = self.__compute_symplectic_coefficients()
+                self.symplectic_integrator.step(
+                    momentum_coefficient,
+                    position_coefficient,
+                    quadratic_coefficient,
+                    matrix,
+                )
+
+                if self.heated:
+                    self.__heat(momentum_copy)
+
+                self._step_update()
+                if use_window and self.__do_sampling:
+                    sampled_spins = self.symplectic_integrator.sample_spins()
+                    self.window.update(sampled_spins)
+
+                self.__check_stop(use_window)
+        except KeyboardInterrupt:
+            warnings.warn(
+                RuntimeWarning(
+                    "Simulation interrupted by user. Current spins will be returned."
+                ),
+                stacklevel=2,
             )
-
-            if self.heated:
-                self.__heat(momentum_copy)
-
-            self.__step_update()
-            if use_window and self.__do_sampling:
-                sampled_spins = self.symplectic_integrator.sample_spins()
-                self.window.update(sampled_spins)
-
-            self.__check_stop(use_window)
-
-        sampled_spins = self.symplectic_integrator.sample_spins()
-        return sampled_spins
+        finally:
+            sampled_spins = self.symplectic_integrator.sample_spins()
+            return sampled_spins
 
     def __heat(self, momentum_copy: torch.Tensor) -> None:
         torch.add(

@@ -28,6 +28,7 @@ import torch
 from sympy import Poly, poly, symbols
 
 from .ising import Ising
+from .variable import Variable
 
 INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
 DOMAIN_ERROR = ValueError(
@@ -422,9 +423,8 @@ class QuadraticPolynomial(object):
         )
         J = (
             -0.5
-            * integer_to_binary_matrix
-            @ symmetrical_matrix
-            @ integer_to_binary_matrix.t()
+            * left_integer_to_binary_conversion
+            @ spin_weighted_integer_to_binary_matrix
         )
         h = (
             0.5 * integer_to_binary_matrix @ self._linear_coefficients
@@ -463,6 +463,9 @@ class QuadraticPolynomial(object):
               are n-bits non-negative integers, that is integers between 0 and
               2^n - 1 inclusive. "int..." represents any string starting with
               "int" and followed by a positive integer n, e.g. "int3", "int42".
+
+            If the variables have different domains, a list of string with the
+            same length as the number of variables can be provided instead.
 
         Returns
         -------
