@@ -95,3 +95,26 @@ def test_negative_ising():
     assert negative_ising.linear_term
     assert len(negative_ising) == 3
     assert negative_ising.dimension == 3
+
+
+def test_presolve_ising():
+    ising = Ising(J, h)
+    ising.minimize(agents=10, presolve=True)
+    assert tuple(ising.computed_spins.shape) == (3, 10)
+
+
+def test_presolve_solves_all_spins():
+    presolvable_J = torch.tensor(
+        [
+            [0.0, 0.5, -1.0],
+            [0.5, 0.0, 2.0],
+            [-1.0, 2.0, 0.0],
+        ],
+        dtype=torch.float32,
+    )
+    presolvable_h = torch.tensor([2.0, 1.0, -4.0], dtype=torch.float32)
+    ising = Ising(presolvable_J, presolvable_h)
+    ising.minimize(agents=3, presolve=True)
+    assert torch.equal(
+        ising.computed_spins, torch.tensor([[-1, -1, -1], [1, 1, 1], [1, 1, 1]])
+    )

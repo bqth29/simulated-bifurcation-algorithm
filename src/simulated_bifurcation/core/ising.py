@@ -23,7 +23,12 @@ from typing import Optional, TypeVar, Union
 import torch
 from numpy import ndarray
 
-from ..optimizer import SimulatedBifurcationEngine, SimulatedBifurcationOptimizer
+from ..optimizer import (
+    Postprocessing,
+    Preprocessing,
+    SimulatedBifurcationEngine,
+    SimulatedBifurcationOptimizer,
+)
 
 # Workaround because `Self` type is only available in Python >= 3.11
 SelfIsing = TypeVar("SelfIsing", bound="Ising")
@@ -249,6 +254,7 @@ class Ising:
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
+        presolve: bool = False
     ) -> None:
         """
         Minimize the energy of the Ising model using the Simulated Bifurcation
@@ -400,6 +406,30 @@ class Ising:
             sampling_period,
             convergence_threshold,
         )
+        if presolve:
+            presolved_spins, reduced_J, reduced_h = Preprocessing(
+                self.J, self.h
+            ).presolve()
+            if reduced_J.shape[1] == 0:
+                self.computed_spins = presolved_spins.repeat(agents, 1).t()
+                return
+            reduced_model = Ising(reduced_J, reduced_h, self.dtype, self.device)
+            reduced_model.minimize(
+                agents=agents,
+                max_steps=max_steps,
+                ballistic=ballistic,
+                heated=heated,
+                verbose=verbose,
+                use_window=use_window,
+                sampling_period=sampling_period,
+                convergence_threshold=convergence_threshold,
+                timeout=timeout,
+                presolve=False,
+            )
+            self.computed_spins = Postprocessing.reconstruct_spins(
+                reduced_model.computed_spins, presolved_spins
+            )
+            return
         tensor = self.as_simulated_bifurcation_tensor()
         spins = optimizer.run_integrator(tensor, use_window)
         if self.linear_term:

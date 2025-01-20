@@ -172,6 +172,7 @@ def optimize(
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
+    presolve: bool = False,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Optimize a multivariate quadratic polynomial using the
@@ -258,6 +259,10 @@ def optimize(
     timeout : float | None, default=None, keyword-only
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
+    presolve : bool, optional
+        if `True`, the model will be preprocessed to find spins that can be
+        optimized before entering the SB algorithm, reducing the
+        computation size (default is False)
 
     Returns
     -------
@@ -436,6 +441,7 @@ def optimize(
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
         timeout=timeout,
+        presolve=presolve,
     )
     return result, evaluation
 
@@ -455,6 +461,7 @@ def minimize(
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
+    presolve: bool = False,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Minimize a multivariate quadratic polynomial using the
@@ -538,6 +545,10 @@ def minimize(
     timeout : float | None, default=None, keyword-only
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
+    presolve : bool, optional
+        if `True`, the model will be preprocessed to find spins that can be
+        optimized before entering the SB algorithm, reducing the
+        computation size (default is False)
 
     Returns
     -------
@@ -706,6 +717,7 @@ def minimize(
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
         timeout=timeout,
+        presolve=presolve,
     )
 
 
@@ -724,6 +736,7 @@ def maximize(
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
+    presolve: bool = False,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Maximize a multivariate quadratic polynomial using the
@@ -807,6 +820,10 @@ def maximize(
     timeout : float | None, default=None, keyword-only
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
+    presolve : bool, optional
+        if `True`, the model will be preprocessed to find spins that can be
+        optimized before entering the SB algorithm, reducing the
+        computation size (default is False)
 
     Returns
     -------
@@ -975,4 +992,5 @@ def maximize(
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
         timeout=timeout,
+        presolve=presolve,
     )

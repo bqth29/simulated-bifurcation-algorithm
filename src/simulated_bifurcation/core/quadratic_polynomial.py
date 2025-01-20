@@ -349,6 +349,7 @@ class QuadraticPolynomial(Polynomial):
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
+        presolve: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local extremum of the model by optimizing
@@ -422,6 +423,10 @@ class QuadraticPolynomial(Polynomial):
         minimize : bool, optional
             if `True` the optimization direction is minimization, otherwise it
             is maximization (default is True)
+        presolve : bool, optional
+            if `True`, the model will be preprocessed to find spins that can be
+            optimized before entering the SB algorithm, reducing the
+            computation size (default is False)
 
         Returns
         -------
@@ -441,6 +446,7 @@ class QuadraticPolynomial(Polynomial):
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            presolve=presolve,
         )
         self.sb_result = self.convert_spins(ising_equivalent, domain)
         result = self.sb_result.t().to(dtype=self.dtype)
@@ -465,6 +471,7 @@ class QuadraticPolynomial(Polynomial):
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
+        presolve: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local minimum of the model by optimizing
@@ -535,6 +542,10 @@ class QuadraticPolynomial(Polynomial):
             if `True` only the best found solution to the optimization problem
             is returned, otherwise all the solutions found by the simulated
             bifurcation algorithm.
+        presolve : bool, optional
+            if `True`, the model will be preprocessed to find spins that can be
+            optimized before entering the SB algorithm, reducing the
+            computation size (default is False)
 
         Returns
         -------
@@ -553,6 +564,7 @@ class QuadraticPolynomial(Polynomial):
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            presolve=presolve,
         )
 
     def maximize(
@@ -569,6 +581,7 @@ class QuadraticPolynomial(Polynomial):
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
+        presolve: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local maximum of the model by optimizing
@@ -638,6 +651,10 @@ class QuadraticPolynomial(Polynomial):
             if `True` only the best found solution to the optimization problem
             is returned, otherwise all the solutions found by the simulated
             bifurcation algorithm.
+        presolve : bool, optional
+            if `True`, the model will be preprocessed to find spins that can be
+            optimized before entering the SB algorithm, reducing the
+            computation size (default is False)
 
         Returns
         -------
@@ -656,6 +673,7 @@ class QuadraticPolynomial(Polynomial):
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            presolve=presolve,
         )
 
     @staticmethod
