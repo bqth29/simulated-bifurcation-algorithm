@@ -28,15 +28,17 @@ models:
 
 """
 
-from typing import Optional, Tuple, Union
+from typing import List, Literal, Optional, Sequence, Tuple, Union
 
 import torch
+from numpy import ndarray
+from sympy import Poly
 
-from .core import PolynomialLike, QuadraticPolynomial
+from .core import QuadraticPolynomial
 
 
 def build_model(
-    *polynomial: PolynomialLike,
+    *polynomial_data: Union[Poly, Sequence[Union[torch.Tensor, ndarray, float, int]]],
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
 ) -> QuadraticPolynomial:
@@ -48,23 +50,23 @@ def build_model(
     In matrix notation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
     square matrix, `l` a vector and `c` a constant.
 
-    Parameters
-    ----------
-    polynomial : PolynomialLike
-        Source data of the multivariate quadratic polynomial to build. It can
-        be a SymPy polynomial expression or tensors/arrays of coefficients.
+    Positional Parameters
+    ---------------------
+    polynomial_data : sympy.Poly | Sequence[TensorLike]
+        Source data of the multivariate quadratic polynomial to optimize. It can
+        be a SymPy Poly or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
         the coefficients is the number of dimensions of the tensor/array,
-        and all dimensions must be equal. The quadratic tensor must be square
-        and symmetric and is mandatory. The linear tensor must be 1-dimensional
-        and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional. Tensors can be passed in an arbitrary order.
+        and all dimensions must be equal. The quadratic tensor must be square and
+        2-dimensional. The linear tensor must be 1-dimensional and the constant term
+        can either be a float/int or a 0-dimensional tensor. All are optional.
+        Tensors can be passed in an arbitrary order.
 
     Keyword-Only Parameters
     -----------------------
-    dtype : torch.dtype, default=torch.float32, keyword only
-        Data-type used for storing the coefficients of the polynomial.
-    device : str | torch.device, default="cpu", keyword only
+    dtype : torch.dtype, optional
+        Data-type used for running the computations in the SB algorithm.
+    device : str | torch.device, optional
         Device on which the polynomial is located. If available, use "cuda"
         to use the polynomial on a GPU.
 
@@ -78,9 +80,6 @@ def build_model(
     --------
     minimize, maximize, optimize :
         Shorthands for polynomial creation and optimization.
-    polynomial :
-        Module providing some polynomial types as well as an abstract
-        polynomial class `QuadraticPolynomial`.
     models :
         Module containing the implementation of several common
         combinatorial optimization problems.
@@ -153,22 +152,22 @@ def build_model(
       tensor(123., device='cuda:0')
 
     """
-    return QuadraticPolynomial(*polynomial, dtype=dtype, device=device)
+    return QuadraticPolynomial(*polynomial_data, dtype=dtype, device=device)
 
 
 def optimize(
-    *polynomial: PolynomialLike,
-    domain: str = "spin",
+    *polynomial_data: Union[Poly, Sequence[Union[torch.Tensor, ndarray, float, int]]],
+    domain: Union[str, List[str]],
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
-    ballistic: bool = False,
+    mode: Literal["ballistic", "discrete"] = "ballistic",
     heated: bool = False,
     minimize: bool = True,
     verbose: bool = True,
-    use_window: bool = True,
+    early_stopping: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
@@ -187,18 +186,21 @@ def optimize(
     In matrix notation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
     square matrix, `l` a vector and `c` a constant.
 
-    Parameters
-    ----------
-    polynomial : PolynomialLike
+    Positional Parameters
+    ---------------------
+    polynomial_data : sympy.Poly | Sequence[TensorLike]
         Source data of the multivariate quadratic polynomial to optimize. It can
-        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        be a SymPy Poly or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
         the coefficients is the number of dimensions of the tensor/array,
-        and all dimensions must be equal. The quadratic tensor must be square
-        and symmetric and is mandatory. The linear tensor must be 1-dimensional
-        and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional. Tensors can be passed in an arbitrary order.
-    domain : {"spin", "binary", "int..."}, default="spin", keyword-only
+        and all dimensions must be equal. The quadratic tensor must be square and
+        2-dimensional. The linear tensor must be 1-dimensional and the constant term
+        can either be a float/int or a 0-dimensional tensor. All are optional.
+        Tensors can be passed in an arbitrary order.
+
+    Keyword-Only Parameters
+    -----------------------
+    domain : {"spin", "binary", "int..."}
         Domain over which the optimization is done.
 
         - "spin" : Optimize the polynomial over vectors whose entries are
@@ -210,50 +212,56 @@ def optimize(
           2^n - 1 inclusive. "int..." represents any string starting with
           "int" and followed by a positive integer n, e.g. "int3", "int42".
 
-    dtype : torch.dtype, default=torch.float32, keyword-only
-        Data-type used for running the computations in the SB algorithm.
-    device : str | torch.device, default="cpu", keyword-only
+        If the variables have different domains, a list of string with the
+        same length as the number of variables can be provided instead.
+    dtype: torch.dtype, optional
+        Data-type used for storing the coefficients of the Ising model.
+        If provided, expected to be one of `torch.float32` or `torch.float64`.
+        If `None`, the dtype of the QuadraticPolynomial will be used, except
+        if this dtype is none of `torch.float32` or `torch.float64`, in which case
+        `torch.float32` will be used by default.
+    device : str | torch.device, optional
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
         dimensional instances or when running the algorithm with many
         agents). Output tensors are located on this device.
-    agents : int, default=128, keyword-only
+    agents : int, default=128, optional
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
-    max_steps : int, default=10_000, keyword-only
+    max_steps : int, default=10_000, optional
         Number of iterations after which the algorithm is stopped
         regardless of whether convergence has been achieved.
-    best_only : bool, default=True, keyword-only
+    best_only : bool, default=True, optional
         If True, return only the best vector found and the value of the
         polynomial at this vector. Otherwise, returns all the vectors
         found by the SB algorithm and the values of polynomial at these
         points.
-    ballistic : bool, default=False, keyword-only
+    mode : "ballistic" | "discrete",  default="ballistic, keyword-only
         Whether to use the ballistic or the discrete SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
-    heated : bool, default=False, keyword-only
+    heated : bool, default=False, optional
         Whether to use the heated or non-heated SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
-    minimize : bool, default=True, keyword-only
+    minimize : bool, default=True, optional
         If True, minimizes the polynomial over the specified domain.
         Otherwise, the polynomial is maximized.
-    verbose : bool, default=True, keyword-only
+    verbose : bool, default=True, optional
         Whether to display a progress bar to monitor the progress of the
         algorithm.
-    use_window : bool, default=True, keyword-only
-        Whether to use the window as a stopping criterion. An agent is said
-        to have converged if its energy has not changed over the
-        last `convergence_threshold` energy samplings
+    early_stopping : bool, default=True, keyword-only
+        Whether to use early stopping or not, making agents' convergence a
+        stopping criterion. An agent is said to have converged if its energy
+        has not changed over the last `convergence_threshold` energy samplings
         (done every `sampling_period` steps).
     sampling_period : int, default=50, keyword-only
-        Number of iterations between two consecutive energy samplings by
-        the window.
+        Number of iterations between two consecutive spins samplings used for
+        early stopping.
     convergence_threshold : int, default=50, keyword-only
         Number of consecutive identical energy samplings considered as a
-        proof of convergence by the window.
-    timeout : float | None, default=None, keyword-only
+        proof of convergence of an agent.
+    timeout : float | None, default=None, optional
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
 
@@ -277,15 +285,19 @@ def optimize(
     Raises
     ------
     ValueError
-        If `domain` is not one of {"spin", "binary", "int..."}, where
-        "int..." designates any string starting with "int" and followed by
-        a positive integer, or more formally, any string matching the
-        following regular expression: ^int[1-9][0-9]*$.
+        If `domain` (or any domain in case a list is passed) is not one
+        of {"spin", "binary", "int..."}, where "int..." designates any
+        string starting with "int" and followed by a positive integer,
+        or more formally, any string matching the regular expression
+        `^int[1-9][0-9]*$`.
+    ValueError
+        If `domain` is used as a list of optimization domains with a
+        length different from the number of variables.
 
     Warns
     -----
     Use of Stop Window
-        If `use_window` is True and no agent has reached the convergence
+        If `early_stopping` is True and no agent has reached the convergence
         criterion defined by `sampling_period` and `convergence_threshold`
         within `max_steps` iterations, a warning is logged in the console.
         This is just an indication however; the returned vectors may still be
@@ -413,7 +425,7 @@ def optimize(
 
     """
     model = build_model(
-        *polynomial,
+        *polynomial_data,
         dtype=dtype,
         device=device,
     )
@@ -422,30 +434,31 @@ def optimize(
         agents=agents,
         max_steps=max_steps,
         best_only=best_only,
-        ballistic=ballistic,
+        mode=mode,
         heated=heated,
         minimize=minimize,
         verbose=verbose,
-        use_window=use_window,
+        early_stopping=early_stopping,
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
         timeout=timeout,
+        dtype=dtype,
     )
     return result, evaluation
 
 
 def minimize(
-    *polynomial: PolynomialLike,
-    domain: str = "spin",
+    *polynomial_data: Union[Poly, Sequence[Union[torch.Tensor, ndarray, float, int]]],
+    domain: Union[str, List[str]],
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
-    ballistic: bool = False,
+    mode: Literal["ballistic", "discrete"] = "ballistic",
     heated: bool = False,
     verbose: bool = True,
-    use_window: bool = True,
+    early_stopping: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
@@ -464,18 +477,21 @@ def minimize(
     In matrix notation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
     square matrix, `l` a vector and `c` a constant.
 
-    Parameters
-    ----------
-    polynomial : PolynomialLike
+    Positional Parameters
+    ---------------------
+    polynomial_data : sympy.Poly | Sequence[TensorLike]
         Source data of the multivariate quadratic polynomial to optimize. It can
-        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        be a SymPy Poly or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
         the coefficients is the number of dimensions of the tensor/array,
-        and all dimensions must be equal. The quadratic tensor must be square
-        and symmetric and is mandatory. The linear tensor must be 1-dimensional
-        and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional. Tensors can be passed in an arbitrary order.
-    domain : {"spin", "binary", "int..."}, default="spin", keyword-only
+        and all dimensions must be equal. The quadratic tensor must be square and
+        2-dimensional. The linear tensor must be 1-dimensional and the constant term
+        can either be a float/int or a 0-dimensional tensor. All are optional.
+        Tensors can be passed in an arbitrary order.
+
+    Keyword-Only Parameters
+    -----------------------
+    domain : {"spin", "binary", "int..."}
         Domain over which the optimization is done.
 
         - "spin" : Optimize the polynomial over vectors whose entries are
@@ -487,47 +503,53 @@ def minimize(
           2^n - 1 inclusive. "int..." represents any string starting with
           "int" and followed by a positive integer n, e.g. "int3", "int42".
 
-    dtype : torch.dtype, default=torch.float32, keyword-only
-        Data-type used for running the computations in the SB algorithm.
-    device : str | torch.device, default="cpu", keyword-only
+        If the variables have different domains, a list of string with the
+        same length as the number of variables can be provided instead.
+    dtype: torch.dtype, optional
+        Data-type used for storing the coefficients of the Ising model.
+        If provided, expected to be one of `torch.float32` or `torch.float64`.
+        If `None`, the dtype of the QuadraticPolynomial will be used, except
+        if this dtype is none of `torch.float32` or `torch.float64`, in which case
+        `torch.float32` will be used by default.
+    device : str | torch.device, optional
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
         dimensional instances or when running the algorithm with many
         agents). Output tensors are located on this device.
-    agents : int, default=128, keyword-only
+    agents : int, default=128, optional
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
-    max_steps : int, default=10_000, keyword-only
+    max_steps : int, default=10_000, optional
         Number of iterations after which the algorithm is stopped
         regardless of whether convergence has been achieved.
-    best_only : bool, default=True, keyword-only
+    best_only : bool, default=True, optional
         If True, return only the best vector found and the value of the
         polynomial at this vector. Otherwise, returns all the vectors
         found by the SB algorithm and the values of polynomial at these
         points.
-    ballistic : bool, default=False, keyword-only
+    mode : "ballistic" | "discrete",  default="ballistic, keyword-only
         Whether to use the ballistic or the discrete SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
-    heated : bool, default=False, keyword-only
+    heated : bool, default=False, optional
         Whether to use the heated or non-heated SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
-    verbose : bool, default=True, keyword-only
+    verbose : bool, default=True, optional
         Whether to display a progress bar to monitor the progress of the
         algorithm.
-    use_window : bool, default=True, keyword-only
-        Whether to use the window as a stopping criterion. An agent is said
-        to have converged if its energy has not changed over the
-        last `convergence_threshold` energy samplings
+    early_stopping : bool, default=True, keyword-only
+        Whether to use early stopping or not, making agents' convergence a
+        stopping criterion. An agent is said to have converged if its energy
+        has not changed over the last `convergence_threshold` energy samplings
         (done every `sampling_period` steps).
     sampling_period : int, default=50, keyword-only
-        Number of iterations between two consecutive energy samplings by
-        the window.
+        Number of iterations between two consecutive spins samplings used for
+        early stopping.
     convergence_threshold : int, default=50, keyword-only
         Number of consecutive identical energy samplings considered as a
-        proof of convergence by the window.
-    timeout : float | None, default=None, keyword-only
+        proof of convergence of an agent.
+    timeout : float | None, default=None, optional
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
 
@@ -551,15 +573,19 @@ def minimize(
     Raises
     ------
     ValueError
-        If `domain` is not one of {"spin", "binary", "int..."}, where
-        "int..." designates any string starting with "int" and followed by
-        a positive integer, or more formally, any string matching the
-        following regular expression: ^int[1-9][0-9]*$.
+        If `domain` (or any domain in case a list is passed) is not one
+        of {"spin", "binary", "int..."}, where "int..." designates any
+        string starting with "int" and followed by a positive integer,
+        or more formally, any string matching the regular expression
+        `^int[1-9][0-9]*$`.
+    ValueError
+        If `domain` is used as a list of optimization domains with a
+        length different from the number of variables.
 
     Warns
     -----
     Use of Stop Window
-        If `use_window` is True and no agent has reached the convergence
+        If `early_stopping` is True and no agent has reached the convergence
         criterion defined by `sampling_period` and `convergence_threshold`
         within `max_steps` iterations, a warning is logged in the console.
         This is just an indication however; the returned vectors may still be
@@ -679,18 +705,18 @@ def minimize(
 
     """
     return optimize(
-        *polynomial,
+        *polynomial_data,
         domain=domain,
         dtype=dtype,
         device=device,
         agents=agents,
         max_steps=max_steps,
         best_only=best_only,
-        ballistic=ballistic,
+        mode=mode,
         heated=heated,
         minimize=True,
         verbose=verbose,
-        use_window=use_window,
+        early_stopping=early_stopping,
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
         timeout=timeout,
@@ -698,17 +724,17 @@ def minimize(
 
 
 def maximize(
-    *polynomial: PolynomialLike,
-    domain: str = "spin",
+    *polynomial_data: Union[Poly, Sequence[Union[torch.Tensor, ndarray, float, int]]],
+    domain: Union[str, List[str]],
     dtype: Optional[torch.dtype] = None,
     device: Optional[Union[str, torch.device]] = None,
     agents: int = 128,
     max_steps: int = 10_000,
     best_only: bool = True,
-    ballistic: bool = False,
+    mode: Literal["ballistic", "discrete"] = "ballistic",
     heated: bool = False,
     verbose: bool = True,
-    use_window: bool = True,
+    early_stopping: bool = True,
     sampling_period: int = 50,
     convergence_threshold: int = 50,
     timeout: Optional[float] = None,
@@ -727,18 +753,21 @@ def maximize(
     In matrix notation, this gives: `x.T Q x + l.T x + c`, where `Q` is a
     square matrix, `l` a vector and `c` a constant.
 
-    Parameters
-    ----------
-    polynomial : PolynomialLike
+    Positional Parameters
+    ---------------------
+    polynomial_data : sympy.Poly | Sequence[TensorLike]
         Source data of the multivariate quadratic polynomial to optimize. It can
-        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        be a SymPy Poly or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
         the coefficients is the number of dimensions of the tensor/array,
-        and all dimensions must be equal. The quadratic tensor must be square
-        and symmetric and is mandatory. The linear tensor must be 1-dimensional
-        and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional. Tensors can be passed in an arbitrary order.
-    domain : {"spin", "binary", "int..."}, default="spin", keyword-only
+        and all dimensions must be equal. The quadratic tensor must be square and
+        2-dimensional. The linear tensor must be 1-dimensional and the constant term
+        can either be a float/int or a 0-dimensional tensor. All are optional.
+        Tensors can be passed in an arbitrary order.
+
+    Keyword-Only Parameters
+    -----------------------
+    domain : {"spin", "binary", "int..."}
         Domain over which the optimization is done.
 
         - "spin" : Optimize the polynomial over vectors whose entries are
@@ -750,47 +779,53 @@ def maximize(
           2^n - 1 inclusive. "int..." represents any string starting with
           "int" and followed by a positive integer n, e.g. "int3", "int42".
 
-    dtype : torch.dtype, default=torch.float32, keyword-only
-        Data-type used for running the computations in the SB algorithm.
-    device : str | torch.device, default="cpu", keyword-only
+        If the variables have different domains, a list of string with the
+        same length as the number of variables can be provided instead.
+    dtype: torch.dtype, optional
+        Data-type used for storing the coefficients of the Ising model.
+        If provided, expected to be one of `torch.float32` or `torch.float64`.
+        If `None`, the dtype of the QuadraticPolynomial will be used, except
+        if this dtype is none of `torch.float32` or `torch.float64`, in which case
+        `torch.float32` will be used by default.
+    device : str | torch.device, optional
         Device on which the SB algorithm is run. If available, use "cuda"
         to run the SB algorithm on GPU (much faster, especially for high
         dimensional instances or when running the algorithm with many
         agents). Output tensors are located on this device.
-    agents : int, default=128, keyword-only
+    agents : int, default=128, optional
         Number of simultaneous execution of the SB algorithm. This is much
         faster than sequentially running the SB algorithm `agents` times.
-    max_steps : int, default=10_000, keyword-only
+    max_steps : int, default=10_000, optional
         Number of iterations after which the algorithm is stopped
         regardless of whether convergence has been achieved.
-    best_only : bool, default=True, keyword-only
+    best_only : bool, default=True, optional
         If True, return only the best vector found and the value of the
         polynomial at this vector. Otherwise, returns all the vectors
         found by the SB algorithm and the values of polynomial at these
         points.
-    ballistic : bool, default=False, keyword-only
+    mode : "ballistic" | "discrete",  default="ballistic, keyword-only
         Whether to use the ballistic or the discrete SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
-    heated : bool, default=False, keyword-only
+    heated : bool, default=False, optional
         Whether to use the heated or non-heated SB algorithm.
         See Notes for further information about the variants of the SB
         algorithm.
-    verbose : bool, default=True, keyword-only
+    verbose : bool, default=True, optional
         Whether to display a progress bar to monitor the progress of the
         algorithm.
-    use_window : bool, default=True, keyword-only
-        Whether to use the window as a stopping criterion. An agent is said
-        to have converged if its energy has not changed over the
-        last `convergence_threshold` energy samplings
+    early_stopping : bool, default=True, keyword-only
+        Whether to use early stopping or not, making agents' convergence a
+        stopping criterion. An agent is said to have converged if its energy
+        has not changed over the last `convergence_threshold` energy samplings
         (done every `sampling_period` steps).
     sampling_period : int, default=50, keyword-only
-        Number of iterations between two consecutive energy samplings by
-        the window.
+        Number of iterations between two consecutive spins samplings used for
+        early stopping.
     convergence_threshold : int, default=50, keyword-only
         Number of consecutive identical energy samplings considered as a
-        proof of convergence by the window.
-    timeout : float | None, default=None, keyword-only
+        proof of convergence of an agent.
+    timeout : float | None, default=None, optional
         Time, in seconds, after which the simulation will be stopped.
         None means no timeout.
 
@@ -814,15 +849,19 @@ def maximize(
     Raises
     ------
     ValueError
-        If `domain` is not one of {"spin", "binary", "int..."}, where
-        "int..." designates any string starting with "int" and followed by
-        a positive integer, or more formally, any string matching the
-        following regular expression: ^int[1-9][0-9]*$.
+        If `domain` (or any domain in case a list is passed) is not one
+        of {"spin", "binary", "int..."}, where "int..." designates any
+        string starting with "int" and followed by a positive integer,
+        or more formally, any string matching the regular expression
+        `^int[1-9][0-9]*$`.
+    ValueError
+        If `domain` is used as a list of optimization domains with a
+        length different from the number of variables.
 
     Warns
     -----
     Use of Stop Window
-        If `use_window` is True and no agent has reached the convergence
+        If `early_stopping` is True and no agent has reached the convergence
         criterion defined by `sampling_period` and `convergence_threshold`
         within `max_steps` iterations, a warning is logged in the console.
         This is just an indication however; the returned vectors may still be
@@ -942,18 +981,18 @@ def maximize(
 
     """
     return optimize(
-        *polynomial,
+        *polynomial_data,
         domain=domain,
         dtype=dtype,
         device=device,
         agents=agents,
         max_steps=max_steps,
         best_only=best_only,
-        ballistic=ballistic,
+        mode=mode,
         heated=heated,
         minimize=False,
         verbose=verbose,
-        use_window=use_window,
+        early_stopping=early_stopping,
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
         timeout=timeout,
