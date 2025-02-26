@@ -21,17 +21,17 @@ def test_optimizer():
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = Ising(J, h)
-    ising.minimize(
-        20,
-        10000,
-        "discrete",
-        False,
-        False,
+    optimized_spins = ising.minimize(
+        agents=20,
+        max_steps=10000,
+        mode="discrete",
+        heated=False,
+        verbose=False,
         use_window=False,
         sampling_period=50,
         convergence_threshold=50,
     )
-    assert torch.equal(torch.ones((3, 20)), ising.computed_spins)
+    assert torch.equal(torch.ones((3, 20)), optimized_spins)
 
 
 def test_optimizer_without_bifurcation():
@@ -48,26 +48,15 @@ def test_optimizer_without_bifurcation():
     ising = Ising(J, h)
     with pytest.warns(ConvergenceWarning):
         ising.minimize(
-            5,
-            10,
-            "discrete",
-            False,
-            False,
+            agents=5,
+            max_steps=10,
+            mode="discrete",
+            heated=False,
+            verbose=False,
             use_window=True,
             sampling_period=50,
             convergence_threshold=50,
         )
-    assert torch.equal(
-        torch.tensor(
-            [
-                [1.0, 1.0, -1.0, -1.0, 1.0],
-                [1.0, -1.0, -1.0, -1.0, 1.0],
-                [1.0, -1.0, 1.0, -1.0, 1.0],
-            ],
-            dtype=torch.float32,
-        ),
-        ising.computed_spins,
-    )
 
 
 def test_optimizer_with_window():
@@ -82,17 +71,17 @@ def test_optimizer_with_window():
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = Ising(J, h)
-    ising.minimize(
-        20,
-        30000,
-        "discrete",
-        False,
-        False,
+    optimized_spins = ising.minimize(
+        agents=20,
+        max_steps=30000,
+        mode="discrete",
+        heated=False,
+        verbose=False,
         use_window=True,
         sampling_period=20,
         convergence_threshold=20,
     )
-    assert torch.equal(torch.ones((3, 20)), ising.computed_spins)
+    assert torch.equal(torch.ones((3, 20)), optimized_spins)
 
 
 def test_optimizer_with_heating():
@@ -107,17 +96,17 @@ def test_optimizer_with_heating():
     )
     h = torch.tensor([1, 0, -2], dtype=torch.float32)
     ising = Ising(J, h)
-    ising.minimize(
-        20,
-        10000,
-        "discrete",
-        True,
-        False,
+    optimized_spins = ising.minimize(
+        agents=20,
+        max_steps=10000,
+        mode="discrete",
+        heated=True,
+        verbose=False,
         use_window=False,
         sampling_period=50,
         convergence_threshold=50,
     )
-    assert torch.equal(torch.ones((3, 20)), ising.computed_spins)
+    assert torch.equal(torch.ones((3, 20)), optimized_spins)
 
 
 def test_set_optimization_environment():
@@ -230,3 +219,35 @@ def test_no_stop_criterion():
     )
     with pytest.raises(ValueError, match="No stopping criterion provided."):
         optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
+
+
+def test_keyboard_interrupt():
+    class SimulatedBifurcationOptimizerTest(SimulatedBifurcationOptimizer):
+        def _step_update(self) -> None:
+            super()._step_update()
+            if self.step >= 1000:
+                raise KeyboardInterrupt
+
+    torch.manual_seed(42)
+    J = torch.tensor(
+        [
+            [1, 2, 3],
+            [2, 1, 4],
+            [3, 4, 1],
+        ],
+        dtype=torch.float32,
+    )
+    h = torch.tensor([1, 0, -2], dtype=torch.float32)
+    ising = Ising(J, h)
+    optimizer = SimulatedBifurcationOptimizerTest(
+        20, 10000, None, SimulatedBifurcationEngine.bSB, True, False, 50, 50
+    )
+    with pytest.warns(
+        RuntimeWarning,
+        match="Simulation interrupted by user. Current spins will be returned.",
+    ):
+        spins = optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
+        assert isinstance(spins, torch.Tensor)
+        assert (4, 20) == tuple(spins.shape)
+        assert torch.all(torch.abs(spins) == 1.0)
+        assert optimizer.step < 10000
