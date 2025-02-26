@@ -1,34 +1,31 @@
 from enum import Enum
+from typing import Callable, Literal
 
 import torch
 
 
 class SimulatedBifurcationEngine(Enum):
     """
-    Enum class that gathers the 4 variants of the Simulated Bifurcation
-    algorithm:
-
-    1. Ballistic SB (bSB)
-    2. Discrete SB (dSB)
-    3. Heated ballistic SB (HbSB)
-    4. Heated discrete SB (HdSB)
+    Variants of the Simulated Bifurcation algorithm.
     """
 
-    bSB = torch.nn.Identity(), False
-    dSB = torch.sign, False
-    HbSB = torch.nn.Identity(), True
-    HdSB = torch.sign, True
+    bSB = torch.nn.Identity()
+    dSB = torch.sign
 
-    def __init__(self, activation_function, heated: bool) -> None:
-        self.activation_function = activation_function
-        self.heated = heated
+    def __init__(
+        self, activation_function: Callable[[torch.Tensor], torch.Tensor]
+    ) -> None:
+        self.__activation_function = activation_function
+
+    @property
+    def activation_function(self) -> Callable[[torch.Tensor], torch.Tensor]:
+        return self.__activation_function
 
     @staticmethod
-    def get_engine(ballistic: bool, heated: bool):
-        if ballistic:
-            if heated:
-                return SimulatedBifurcationEngine.HbSB
+    def get_engine(engine_name: Literal["ballistic", "discrete"]):
+        if engine_name == "ballistic":
             return SimulatedBifurcationEngine.bSB
-        if heated:
-            return SimulatedBifurcationEngine.HdSB
-        return SimulatedBifurcationEngine.dSB
+        elif engine_name == "discrete":
+            return SimulatedBifurcationEngine.dSB
+        else:
+            raise ValueError(f"Unknwown Simulated Bifurcation engine: {engine_name}.")
