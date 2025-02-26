@@ -27,7 +27,7 @@ def test_optimizer():
         mode="discrete",
         heated=False,
         verbose=False,
-        use_window=False,
+        early_stopping=False,
         sampling_period=50,
         convergence_threshold=50,
     )
@@ -53,7 +53,7 @@ def test_optimizer_without_bifurcation():
             mode="discrete",
             heated=False,
             verbose=False,
-            use_window=True,
+            early_stopping=True,
             sampling_period=50,
             convergence_threshold=50,
         )
@@ -77,7 +77,7 @@ def test_optimizer_with_window():
         mode="discrete",
         heated=False,
         verbose=False,
-        use_window=True,
+        early_stopping=True,
         sampling_period=20,
         convergence_threshold=20,
     )
@@ -102,7 +102,7 @@ def test_optimizer_with_heating():
         mode="discrete",
         heated=True,
         verbose=False,
-        use_window=False,
+        early_stopping=False,
         sampling_period=50,
         convergence_threshold=50,
     )
