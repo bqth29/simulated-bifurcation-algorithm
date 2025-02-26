@@ -1,15 +1,6 @@
 name: "Testing"
 
 on:
-  push:
-    branches:
-    - main
-  pull_request:
-    branches:
-      - main
-    types:
-      - opened
-      - synchronize
   workflow_run:
     workflows: ["Lint"]
     types:
