@@ -1,0 +1,25 @@
+name: Build documentation
+
+on: [push]
+
+jobs:
+  doc_ubuntu:
+    name: Build documentation on Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip3 install .[docs]
+
+      - name: Build doc
+        run: |
+          sphinx-build -a docs ./build-docs
