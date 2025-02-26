@@ -34,17 +34,36 @@ jobs:
           coverage run -m pytest
 
       - name: Coverage
+        if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
         run: |
           coverage report
           coverage json
+
+      - name: Upload coverage artifact
+        if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.json
 
       - name: Metadata check
         if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
         run: |
           python .github/scripts/metadata_checker
 
+  upload-coverage:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          
       - name: Upload coverage to Codecov
-        if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+
