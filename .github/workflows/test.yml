@@ -5,7 +5,6 @@ on:
     workflows: ["Lint"]
     types:
       - completed
-  workflow_dispatch:
 
 jobs:
   test:
