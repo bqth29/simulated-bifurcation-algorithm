@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   doc_ubuntu:
-    name: Build documentation on Ubuntu
+    name: Build documentation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -20,6 +20,6 @@ jobs:
           python -m pip install --upgrade pip
           pip3 install .[docs]
 
-      - name: Build doc
+      - name: Build documentation
         run: |
           sphinx-build -a docs ./build-docs
