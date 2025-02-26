@@ -21,12 +21,12 @@ Ising:
 """
 
 import re
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
+from sympy import Poly, poly, symbols
 
-from ..polynomial import Polynomial, PolynomialLike
 from .ising import Ising
 from .variable import Variable
 
@@ -40,12 +40,7 @@ DOMAIN_ERROR = ValueError(
 )
 
 
-class QuadraticPolynomialError(ValueError):
-    def __init__(self, degree: int) -> None:
-        super().__init__(f"Expected a degree 2 polynomial, got {degree}.")
-
-
-class QuadraticPolynomial(Polynomial):
+class QuadraticPolynomial(object):
     """
     Internal implementation of a multivariate quadratic polynomial.
 
@@ -71,15 +66,15 @@ class QuadraticPolynomial(Polynomial):
 
     Parameters
     ----------
-    polynomial : PolynomialLike
+    polynomial_data : sympy.Poly | Sequence[TensorLike]
         Source data of the multivariate quadratic polynomial to optimize. It can
-        be a SymPy polynomial expression or tensors/arrays of coefficients.
+        be a SymPy Poly or tensors/arrays of coefficients.
         If tensors/arrays are provided, the monomial degree associated to
         the coefficients is the number of dimensions of the tensor/array,
-        and all dimensions must be equal. The quadratic tensor must be square
-        and symmetric and is mandatory. The linear tensor must be 1-dimensional
-        and the constant term can either be a float/int or a 0-dimensional tensor.
-        Both are optional. Tensors can be passed in an arbitrary order.
+        and all dimensions must be equal. The quadratic tensor must be square and
+        2-dimensional. The linear tensor must be 1-dimensional and the constant term
+        can either be a float/int or a 0-dimensional tensor. All are optional.
+        Tensors can be passed in an arbitrary order.
 
     Keyword-Only Parameters
     -----------------------
@@ -96,7 +91,7 @@ class QuadraticPolynomial(Polynomial):
       ...                   [0, 3]])
       >>> poly = QuadraticPolynomial(Q)
 
-    (Option 2) Instantiate a polynomial from a SymPy expression
+    (Option 2) Instantiate a polynomial from a SymPy poly
 
       >>> x, y = sympy.symbols("x y")
       >>> expression = sympy.poly(x**2 - 2 * x * y + 3 * y**2)
@@ -159,47 +154,205 @@ class QuadraticPolynomial(Polynomial):
 
     def __init__(
         self,
-        *polynomial_like: PolynomialLike,
+        *polynomial_data: Union[
+            Poly, Sequence[Union[torch.Tensor, np.ndarray, float, int]]
+        ],
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
-    ) -> None:
-        super().__init__(*polynomial_like, dtype=dtype, device=device)
+    ):
+        self._dtype = torch.get_default_dtype() if dtype is None else dtype
+        self._device = (
+            torch.get_default_device() if device is None else torch.device(device)
+        )
         self.sb_result = None
-        if self.degree != 2:
-            raise QuadraticPolynomialError(self.degree)
+
+        if len(polynomial_data) == 1 and isinstance(polynomial_data[0], Poly):
+            if not polynomial_data[0].is_quadratic:
+                raise ValueError(
+                    f"Expected a quadratic polynomial but got a total degree of {polynomial_data[0].total_degree()}."
+                )
+            self._poly = polynomial_data[0]
+            n_gens = len(self._poly.gens)
+            self._quadratic_coefficients = torch.zeros(
+                n_gens, n_gens, dtype=self._dtype, device=self._device
+            )
+            self._linear_coefficients = torch.zeros(
+                n_gens, dtype=self._dtype, device=self._device
+            )
+            self._bias = torch.tensor(0.0, dtype=self._dtype, device=self._device)
+            for monom, coeff in self._poly.terms():
+                coeff = float(coeff)
+                if sum(monom) == 0:
+                    self._bias = torch.tensor(
+                        coeff, dtype=self._dtype, device=self._device
+                    )
+                elif sum(monom) == 1:
+                    self._linear_coefficients[monom.index(1)] = coeff
+                else:
+                    if 2 in monom:
+                        row = monom.index(2)
+                        col = row
+                    else:
+                        row = monom.index(1)
+                        col = monom.index(1, row + 1)
+                    self._quadratic_coefficients[row, col] = coeff
+        else:
+            n_gens = None
+            self._quadratic_coefficients = None
+            self._linear_coefficients = None
+            self._bias = None
+            for tensor_like in polynomial_data:
+                if isinstance(tensor_like, np.ndarray):
+                    tensor_like = torch.from_numpy(tensor_like)
+                elif isinstance(tensor_like, (int, float)):
+                    tensor_like = torch.tensor(
+                        tensor_like, dtype=self._dtype, device=self._device
+                    )
+                if isinstance(tensor_like, torch.Tensor):
+                    if tensor_like.ndim == 0:
+                        attribute_to_set = "_bias"
+                    elif tensor_like.ndim == 1:
+                        attribute_to_set = "_linear_coefficients"
+                    elif tensor_like.ndim == 2:
+                        attribute_to_set = "_quadratic_coefficients"
+                        rows, cols = tensor_like.shape
+                        if rows != cols:
+                            raise ValueError(
+                                "Provided quadratic coefficients tensor is not square."
+                            )
+                    else:
+                        raise ValueError(
+                            f"Expected a tensor with at most 2 dimensions, got {tensor_like.ndim}."
+                        )
+                    if getattr(self, attribute_to_set) is not None:
+                        raise ValueError(
+                            f"Providing two tensors for the same degree is ambiguous. Got at least two tensors for degree {tensor_like.ndim}."
+                        )
+                    else:
+                        if tensor_like.ndim > 0:
+                            if n_gens is None:
+                                n_gens = tensor_like.shape[0]
+                            elif n_gens != tensor_like.shape[0]:
+                                raise ValueError(
+                                    f"Inconsistant shape among provided tensors. Expected {n_gens} but got {tensor_like.shape[0]}."
+                                )
+                        setattr(
+                            self,
+                            attribute_to_set,
+                            tensor_like.to(dtype=self._dtype, device=self._device),
+                        )
+                else:
+                    raise ValueError(
+                        f"Unsupported coefficient tensor type: {type(tensor_like)}. Expected a torch.Tensor or a numpy.ndarray."
+                    )
+            if self._quadratic_coefficients is None:
+                self._quadratic_coefficients = torch.zeros(
+                    n_gens, n_gens, dtype=self._dtype, device=self._device
+                )
+            if self._linear_coefficients is None:
+                self._linear_coefficients = torch.zeros(
+                    n_gens, dtype=self._dtype, device=self._device
+                )
+            if self._bias is None:
+                self._bias = torch.tensor(0.0, dtype=self._dtype, device=self._device)
+            gens = symbols(" ".join([f"x_{ind}" for ind in range(n_gens)]))
+            self._poly = poly(
+                sum(
+                    self._quadratic_coefficients[row, col].item()
+                    * gens[row]
+                    * gens[col]
+                    for row, col in torch.nonzero(
+                        self._quadratic_coefficients, as_tuple=False
+                    )
+                )
+                + sum(
+                    self._linear_coefficients[ind].item() * gens[ind]
+                    for ind in torch.nonzero(self._linear_coefficients, as_tuple=False)
+                )
+                + self._bias.item()
+            )
+
+        self._n_gens = len(self._poly.gens)
 
     def __call__(self, value: Union[torch.Tensor, np.ndarray]) -> torch.Tensor:
         if not isinstance(value, torch.Tensor):
             try:
-                value = torch.tensor(value, dtype=self.dtype, device=self.device)
+                value = torch.tensor(value, dtype=self._dtype, device=self._device)
             except Exception as err:
                 raise TypeError("Input value cannot be cast to Tensor.") from err
 
-        if value.shape[-1] != self.n_variables:
+        if value.shape[-1] != self._n_gens:
             raise ValueError(
                 f"Size of the input along the last axis should be "
-                f"{self.n_variables}, it is {value.shape[-1]}."
+                f"{self._n_gens}, it is {value.shape[-1]}."
             )
 
         quadratic_term = torch.nn.functional.bilinear(
             value,
             value,
-            torch.unsqueeze(self[2], 0),
+            torch.unsqueeze(self._quadratic_coefficients, 0),
         )
-        affine_term = value @ self[1] + self[0]
+        affine_term = value @ self._linear_coefficients + self._bias
         evaluation = torch.squeeze(quadratic_term, -1) + affine_term
         return evaluation
 
+    @property
+    def poly(self) -> Poly:
+        """Poly representation of the quadratic polynomial.
+        If the quadratic polynomial was instanciated from tensors, the gens
+        of the Poly were automatically created and labeled x_0, ..., x_n.
+
+        Returns
+        -------
+        Poly
+        """
+        return self._poly
+
+    @property
+    def quadratic(self) -> torch.Tensor:
+        """Quadratic coefficients tensor of the quadratic polynomial.
+
+        Returns
+        -------
+        torch.Tensor
+            2-dimensional square tensor.
+        """
+        return self._quadratic_coefficients
+
+    @property
+    def linear(self) -> torch.Tensor:
+        """Linear coefficients tensor of the quadratic polynomial.
+
+        Returns
+        -------
+        torch.Tensor
+            1-dimensional tensor.
+        """
+        return self._linear_coefficients
+
+    @property
+    def bias(self) -> torch.Tensor:
+        """Bias of the quadratic polynomial.
+
+        Returns
+        -------
+        torch.Tensor
+            0-dimensional tensor.
+        """
+        return self._bias
+
     def __get_variables(self, domain: Union[str, List[str]]) -> List[Variable]:
         if isinstance(domain, str):
-            return [Variable.from_str(domain) for _ in range(self.n_variables)]
-        if len(domain) != self.n_variables:
+            return [Variable.from_str(domain) for _ in range(self._n_gens)]
+        if len(domain) != self._n_gens:
             raise ValueError(
-                f"Expected {self.n_variables} domains to be provided, got {len(domain)}."
+                f"Expected {self._n_gens} domains to be provided, got {len(domain)}."
             )
         return [Variable.from_str(variable_domain) for variable_domain in domain]
 
-    def to_ising(self, domain: Union[str, List[str]]) -> Ising:
+    def to_ising(
+        self, domain: Union[str, List[str]], dtype: Optional[torch.dtype] = None
+    ) -> Ising:
         """
         Generate an equivalent Ising model of the problem.
         The notion of equivalence means that finding the ground
@@ -222,6 +375,12 @@ class QuadraticPolynomial(Polynomial):
 
             If the variables have different domains, a list of string with the
             same length as the number of variables can be provided instead.
+        dtype: torch.dtype, optional
+            Data-type used for storing the coefficients of the Ising model.
+            If provided, expected to be one of `torch.float32` or `torch.float64`.
+            If `None`, the dtype of the QuadraticPolynomial will be used, except
+            if this dtype is none of `torch.float32` or `torch.float64`, in which case
+            `torch.float32` will be used by default.
 
         Returns
         -------
@@ -242,16 +401,27 @@ class QuadraticPolynomial(Polynomial):
             length different from the number of variables.
 
         """
+        dtype = (
+            dtype
+            if dtype is not None
+            else (
+                self._dtype
+                if self._dtype in [torch.float32, torch.float64]
+                else torch.float32
+            )
+        )
         variables = self.__get_variables(domain=domain)
         spin_identity_vector = QuadraticPolynomial.__spin_identity_vector(
-            variables=variables, dtype=self.dtype, device=self.device
+            variables=variables, dtype=dtype, device=self._device
         )
         spin_weighted_integer_to_binary_matrix = (
             spin_identity_vector + 1
         ) * QuadraticPolynomial.__integer_to_binary_matrix(
-            variables=variables, dtype=self.dtype, device=self.device
+            variables=variables, dtype=dtype, device=self._device
         )
-        symmetric_quadratic_tensor = (self[2] + self[2].t()) / 2
+        symmetric_quadratic_tensor = (
+            self._quadratic_coefficients + self._quadratic_coefficients.t()
+        ) / 2
         left_integer_to_binary_conversion = (
             spin_weighted_integer_to_binary_matrix.t() @ symmetric_quadratic_tensor
         )
@@ -261,17 +431,19 @@ class QuadraticPolynomial(Polynomial):
             @ spin_weighted_integer_to_binary_matrix
         )
         h = (
-            0.5 * spin_weighted_integer_to_binary_matrix.t() @ self[1].reshape(-1, 1)
+            0.5
+            * spin_weighted_integer_to_binary_matrix.t()
+            @ self._linear_coefficients.reshape(-1, 1)
             - J.sum(axis=1).reshape(-1, 1)
             - left_integer_to_binary_conversion @ spin_identity_vector
         ).reshape(
             -1,
         )
         torch.diag(J)[...] = 0
-        return Ising(J, h, self.dtype, self.device)
+        return Ising(J, h, dtype, self._device)
 
     def convert_spins(
-        self, ising: Ising, domain: Union[str, List[str]]
+        self, optimized_spins: torch.Tensor, domain: Union[str, List[str]]
     ) -> Optional[torch.Tensor]:
         """
         Retrieves information from the optimized equivalent Ising model.
@@ -316,27 +488,26 @@ class QuadraticPolynomial(Polynomial):
         """
         variables = self.__get_variables(domain=domain)
         spin_identity_vector = QuadraticPolynomial.__spin_identity_vector(
-            variables=variables, dtype=self.dtype, device=self.device
+            variables=variables, dtype=self._dtype, device=self._device
         )
         spin_weighted_integer_to_binary_matrix = (
             spin_identity_vector + 1
         ) * QuadraticPolynomial.__integer_to_binary_matrix(
-            variables=variables, dtype=self.dtype, device=self.device
+            variables=variables, dtype=self._dtype, device=self._device
         )
         return (
             None
-            if ising.computed_spins is None
+            if optimized_spins is None
             else (
-                0.5
-                * spin_weighted_integer_to_binary_matrix
-                @ (ising.computed_spins + 1)
+                0.5 * spin_weighted_integer_to_binary_matrix @ (optimized_spins + 1)
                 - spin_identity_vector
             )
         )
 
     def optimize(
         self,
-        domain: Union[str, List[str]],
+        *,
+        domain: str,
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
@@ -344,11 +515,11 @@ class QuadraticPolynomial(Polynomial):
         heated: bool = False,
         minimize: bool = True,
         verbose: bool = True,
-        *,
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
+        dtype: Optional[torch.dtype] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local extremum of the model by optimizing
@@ -390,6 +561,20 @@ class QuadraticPolynomial(Polynomial):
         Parameters
         ----------
         *
+        domain : {"spin", "binary", "int..."}
+            Domain over which the optimization is done.
+
+            - "spin" : Optimize the polynomial over vectors whose entries are
+            in {-1, 1}.
+            - "binary" : Optimize the polynomial over vectors whose entries are
+            in {0, 1}.
+            - "int..." : Optimize the polynomial over vectors whose entries
+            are n-bits non-negative integers, that is integers between 0 and
+            2^n - 1 inclusive. "int..." represents any string starting with
+            "int" and followed by a positive integer n, e.g. "int3", "int42".
+
+            If the variables have different domains, a list of string with the
+            same length as the number of variables can be provided instead.
         convergence_threshold : int, optional
             number of consecutive identical spin sampling considered as a proof
             of convergence (default is 50)
@@ -422,28 +607,37 @@ class QuadraticPolynomial(Polynomial):
         minimize : bool, optional
             if `True` the optimization direction is minimization, otherwise it
             is maximization (default is True)
+        dtype: torch.dtype, optional
+            Data-type used for storing the coefficients of the Ising model and
+            running the Simulated Bifurcation algorithm computations.
+            If provided, expected to be one of `torch.float32` or `torch.float64`.
+            If `None`, the dtype of the QuadraticPolynomial will be used, except
+            if this dtype is none of `torch.float32` or `torch.float64`, in which case
+            `torch.float32` will be used by default.
 
         Returns
         -------
         Tensor
         """
         if minimize:
-            ising_equivalent = self.to_ising(domain)
+            ising_equivalent = self.to_ising(domain, dtype=dtype)
         else:
-            ising_equivalent = -self.to_ising(domain)
-        ising_equivalent.minimize(
-            agents,
-            max_steps,
-            ballistic,
-            heated,
-            verbose,
+            ising_equivalent = -self.to_ising(domain, dtype=dtype)
+        optimized_spins = ising_equivalent.minimize(
+            agents=agents,
+            max_steps=max_steps,
+            ballistic=ballistic,
+            heated=heated,
+            verbose=verbose,
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
         )
-        self.sb_result = self.convert_spins(ising_equivalent, domain)
-        result = self.sb_result.t().to(dtype=self.dtype)
+        self.sb_result = self.convert_spins(optimized_spins, domain).to(
+            dtype=self._dtype, device=self._device
+        )
+        result = self.sb_result.t()
         evaluation = self(result)
         if best_only:
             i_best = torch.argmin(evaluation) if minimize else torch.argmax(evaluation)
@@ -453,6 +647,7 @@ class QuadraticPolynomial(Polynomial):
 
     def minimize(
         self,
+        *,
         domain: Union[str, List[str]],
         agents: int = 128,
         max_steps: int = 10000,
@@ -460,11 +655,11 @@ class QuadraticPolynomial(Polynomial):
         ballistic: bool = False,
         heated: bool = False,
         verbose: bool = True,
-        *,
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
+        dtype: Optional[torch.dtype] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local minimum of the model by optimizing
@@ -506,6 +701,20 @@ class QuadraticPolynomial(Polynomial):
         Parameters
         ----------
         *
+        domain : {"spin", "binary", "int..."}
+            Domain over which the optimization is done.
+
+            - "spin" : Optimize the polynomial over vectors whose entries are
+            in {-1, 1}.
+            - "binary" : Optimize the polynomial over vectors whose entries are
+            in {0, 1}.
+            - "int..." : Optimize the polynomial over vectors whose entries
+            are n-bits non-negative integers, that is integers between 0 and
+            2^n - 1 inclusive. "int..." represents any string starting with
+            "int" and followed by a positive integer n, e.g. "int3", "int42".
+
+            If the variables have different domains, a list of string with the
+            same length as the number of variables can be provided instead.
         convergence_threshold : int, optional
             number of consecutive identical spin sampling considered as a proof
             of convergence (default is 50)
@@ -535,28 +744,37 @@ class QuadraticPolynomial(Polynomial):
             if `True` only the best found solution to the optimization problem
             is returned, otherwise all the solutions found by the simulated
             bifurcation algorithm.
+        dtype: torch.dtype, optional
+            Data-type used for storing the coefficients of the Ising model and
+            running the Simulated Bifurcation algorithm computations.
+            If provided, expected to be one of `torch.float32` or `torch.float64`.
+            If `None`, the dtype of the QuadraticPolynomial will be used, except
+            if this dtype is none of `torch.float32` or `torch.float64`, in which case
+            `torch.float32` will be used by default.
 
         Returns
         -------
         Tensor
         """
         return self.optimize(
-            domain,
-            agents,
-            max_steps,
-            best_only,
-            ballistic,
-            heated,
-            True,
-            verbose,
+            domain=domain,
+            agents=agents,
+            max_steps=max_steps,
+            best_only=best_only,
+            ballistic=ballistic,
+            heated=heated,
+            minimize=True,
+            verbose=verbose,
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            dtype=dtype,
         )
 
     def maximize(
         self,
+        *,
         domain: Union[str, List[str]],
         agents: int = 128,
         max_steps: int = 10000,
@@ -564,11 +782,11 @@ class QuadraticPolynomial(Polynomial):
         ballistic: bool = False,
         heated: bool = False,
         verbose: bool = True,
-        *,
         use_window: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
+        dtype: Optional[torch.dtype] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local maximum of the model by optimizing
@@ -609,6 +827,21 @@ class QuadraticPolynomial(Polynomial):
 
         Parameters
         ----------
+        *
+        domain : {"spin", "binary", "int..."}
+            Domain over which the optimization is done.
+
+            - "spin" : Optimize the polynomial over vectors whose entries are
+            in {-1, 1}.
+            - "binary" : Optimize the polynomial over vectors whose entries are
+            in {0, 1}.
+            - "int..." : Optimize the polynomial over vectors whose entries
+            are n-bits non-negative integers, that is integers between 0 and
+            2^n - 1 inclusive. "int..." represents any string starting with
+            "int" and followed by a positive integer n, e.g. "int3", "int42".
+
+            If the variables have different domains, a list of string with the
+            same length as the number of variables can be provided instead.
         convergence_threshold : int, optional
             number of consecutive identical spin sampling considered as a proof
             of convergence (default is 50)
@@ -638,24 +871,32 @@ class QuadraticPolynomial(Polynomial):
             if `True` only the best found solution to the optimization problem
             is returned, otherwise all the solutions found by the simulated
             bifurcation algorithm.
+        dtype: torch.dtype, optional
+            Data-type used for storing the coefficients of the Ising model and
+            running the Simulated Bifurcation algorithm computations.
+            If provided, expected to be one of `torch.float32` or `torch.float64`.
+            If `None`, the dtype of the QuadraticPolynomial will be used, except
+            if this dtype is none of `torch.float32` or `torch.float64`, in which case
+            `torch.float32` will be used by default.
 
         Returns
         -------
         Tensor
         """
         return self.optimize(
-            domain,
-            agents,
-            max_steps,
-            best_only,
-            ballistic,
-            heated,
-            False,
-            verbose,
+            domain=domain,
+            agents=agents,
+            max_steps=max_steps,
+            best_only=best_only,
+            ballistic=ballistic,
+            heated=heated,
+            minimize=False,
+            verbose=verbose,
             use_window=use_window,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
+            dtype=dtype,
         )
 
     @staticmethod
