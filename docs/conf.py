@@ -1,5 +1,6 @@
 import os
 import sys
+import datetime
 
 sys.path.insert(0, os.path.abspath("../src"))
 
@@ -12,9 +13,9 @@ sys.path.insert(0, os.path.abspath("../src"))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "Simulated Bifurcation"
-copyright = "2024, Romain Ageron, Thomas Bouquet and Lorenzo Pugliese"
+copyright = f"{datetime.datetime.now().year}, Romain Ageron, Thomas Bouquet and Lorenzo Pugliese"
 author = "Romain Ageron, Thomas Bouquet and Lorenzo Pugliese"
-release = "2.0.1"
+release = "2.0.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

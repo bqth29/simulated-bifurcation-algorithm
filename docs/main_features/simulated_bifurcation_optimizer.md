@@ -15,22 +15,22 @@ Three optimization functions (`optimize`, `maximize` and `minimize`) that all sh
 > - `optimize` has an extra `minimize` boolean parameter (default `True`)
 > - The parameters are for optimization features only, for parameters related to quantum physics theory, see [Advanced Usage](advanced_usage.md)
 
-| Parameter                                       | Type                    | Default value   | Usage                                                                                                                                                                                  |
-| ----------------------------------------------- | ----------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [**`polynomial`**](#quadratic-model-definition) | `PolynomialLike`        |                 | Quadratic model to optimize.                                                                                                                                                           |
-| [`agents`](#parallelization-multi-agent-search) | `int`                   | `128`           | Number of oscillators to evolve in parallel                                                                                                                                            |
-| [`ballistic`](#sb-algorithm-versions)           | `bool`                  | `True`          | Whether to use the ballistic version of the SB algorithm (bSB) or the discrete version (dSB).                                                                                          |
-| [`best_only`](#outputs)                         | `bool`                  | `True`          | Whether to only return the best agent and its associated objective function value, or all agents at once.                                                                              |
-| [`convergence_threshold`](#early-stopping)      | `int`                   | `50`            | Number of consecutive samplings after which an agent is considered to have converged if its Ising energy has not changed. Its value is read only if `use_window` is set to `True`.     |
-| [`device`](#gpu-computation)                    | `str` or `torch.device` | `None`          | Device on which to run the optimization (CPU or GPU).                                                                                                                                  |
-| [**`domain`**](#optimization-domain)            | `str`                   |                 | Domain on which the optimization is carried out (spin, binary or integer values).                                                                                                      |
-| [`dtype`](#quadratic-model-definition)          | `torch.dtype`           | `torch.float32` | Computation dtype.                                                                                                                                                                     |
-| [`heated`](#sb-algorithm-versions)              | `bool`                  | `False`         | Whether to use the heated version of the SB algorithm or not.                                                                                                                          |
-| [`max_steps`](#number-of-iterations)            | `int`                   | `10000`         | Maximum number of iterations of the optimizer (one iteration is one step in the symplectic Euler scheme). If reached, the computation is stopped and the current results are returned. |
-| [`sampling_period`](#early-stopping)            | `int`                   | `50`            | Number of iterations between two successive oscillator samplings to verify early stopping conditions. Its value is read only if `use_window` is set to `True`.                         |
-| [`timeout`](#computation-timeout)               | `int`                   | `None`          | Maximum computation time of the optimizer in seconds. If reached, the computation is stopped and the current results are returned.                                                     |
-| [`use_window`](#early-stopping)                 | `bool`                  | `True`          | Whether to use early-stopping or not.                                                                                                                                                  |
-| [`verbose`](#display-the-evolution-status)      | `bool`                  | `True`          | Whether to display the evolution status of the optimizer with progress bars or not.                                                                                                    |
+| Parameter                                       | Type                         | Default value   | Usage                                                                                                                                                                                  |
+| ----------------------------------------------- | ---------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [**`polynomial`**](#quadratic-model-definition) | `PolynomialLike`             |                 | Quadratic model to optimize.                                                                                                                                                           |
+| [`agents`](#parallelization-multi-agent-search) | `int`                        | `128`           | Number of oscillators to evolve in parallel                                                                                                                                            |
+| [`mode`](#sb-algorithm-versions)                | `"ballistic` or `"discrete"` | `True`          | Whether to use the ballistic version of the SB algorithm (bSB) or the discrete version (dSB).                                                                                          |
+| [`best_only`](#outputs)                         | `bool`                       | `True`          | Whether to only return the best agent and its associated objective function value, or all agents at once.                                                                              |
+| [`convergence_threshold`](#early-stopping)      | `int`                        | `50`            | Number of consecutive samplings after which an agent is considered to have converged if its Ising energy has not changed. Its value is read only if `early_stopping` is set to `True`. |
+| [`device`](#gpu-computation)                    | `str` or `torch.device`      | `None`          | Device on which to run the optimization (CPU or GPU).                                                                                                                                  |
+| [**`domain`**](#optimization-domain)            | `str`                        |                 | Domain on which the optimization is carried out (spin, binary or integer values).                                                                                                      |
+| [`dtype`](#quadratic-model-definition)          | `torch.dtype`                | `torch.float32` | Computation dtype.                                                                                                                                                                     |
+| [`early_stopping`](#early-stopping)             | `bool`                       | `True`          | Whether to use early-stopping or not.                                                                                                                                                  |
+| [`heated`](#sb-algorithm-versions)              | `bool`                       | `False`         | Whether to use the heated version of the SB algorithm or not.                                                                                                                          |
+| [`max_steps`](#number-of-iterations)            | `int`                        | `10000`         | Maximum number of iterations of the optimizer (one iteration is one step in the symplectic Euler scheme). If reached, the computation is stopped and the current results are returned. |
+| [`sampling_period`](#early-stopping)            | `int`                        | `50`            | Number of iterations between two successive oscillator samplings to verify early stopping conditions. Its value is read only if `early_stopping` is set to `True`.                     |
+| [`timeout`](#computation-timeout)               | `int`                        | `None`          | Maximum computation time of the optimizer in seconds. If reached, the computation is stopped and the current results are returned.                                                     |  |
+| [`verbose`](#display-the-evolution-status)      | `bool`                       | `True`          | Whether to display the evolution status of the optimizer with progress bars or not.                                                                                                    |
 
 ## Quadratic model definition
 
@@ -152,19 +152,19 @@ At regular intervals (this interval being called a *sampling period*), the agent
 
 The purpose of sampling the spins at regular intervals is to decorrelate them and make their stability more informative about their convergence (because the evolution of the spins is *slow* it is expected that most of the spins will not change from a time step to the following).
 
-> The sampling period and convergence threshold are respectively set using the `sampling_period` and `convergence_threshold` parameters. Whether or not to use early-stopping is decided with the `use_window` parameter:
+> The sampling period and convergence threshold are respectively set using the `sampling_period` and `convergence_threshold` parameters. Whether or not to use early-stopping is decided with the `early_stopping` parameter:
 >
 > ```python
-> sb.minimize(polynomial, domain="spin", use_window=True, sampling_period=30, convergence_threshold=100)
+> sb.minimize(polynomial, domain="spin", early_stopping=True, sampling_period=30, convergence_threshold=100)
 > ```
 
 ### Combining stopping criteria
 
 Between 1 and 3 stopping criteria can be used at the same time to control the algorithm behavior. This means that the stooping condition of the algorithm can combine restrictions in terms of number of iterations and computation time, alongside early-stopping.
 
-> ⚠️ At least one stopping criterion must be provided, i.e. at least one of `max_steps` or `timeout` must be different from `None` or `use_window` must be set to `True`. Otherwise, a `ValueError` will be raised stating: _"No stopping criterion provided."_
+> ⚠️ At least one stopping criterion must be provided, i.e. at least one of `max_steps` or `timeout` must be different from `None` or `early_stopping` must be set to `True`. Otherwise, a `ValueError` will be raised stating: _"No stopping criterion provided."_
 
-Any combination of `max_steps`, `timeout` and `use_window` is allowed as long as it respects the previous warning.
+Any combination of `max_steps`, `timeout` and `early_stopping` is allowed as long as it respects the previous warning.
 
 ## Display the evolution status
 
@@ -179,7 +179,7 @@ This implementation offers the user the possibility to monitor the evolution of 
 Note that each progress bar is displayed only if the associated stopping criterion is being used by the SB optimizer, i.e.:
 - the **🔁 Iterations** progress bar is displayed if [`max_steps`](#number-of-iterations) is not `None`
 - the **⏳ Simulation times** progress bar is displayed if [`timeout`](#computation-timeout) is not `None`
-- the **🏁 Bifurcated agents** progress bar is displayed if [`use_window`](#early-stopping) is set to `True`
+- the **🏁 Bifurcated agents** progress bar is displayed if [`early_stopping`](#early-stopping) is set to `True`
 
 > Whether or not to display the progress bars is set using the `verbose` parameter:
 >

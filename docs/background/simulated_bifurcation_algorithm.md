@@ -2,34 +2,20 @@
 
 The **Simulated Bifurcation (SB) algorithm**[^1][^2][^3] is a fast and highly parallelizable state-of-the-art algorithm for combinatorial optimization inspired by quantum physics and spins dynamics. It was first introduced by Toshiba experts and relies on Hamiltonian quantum mechanics to find local minima of [Ising problems](quadratic_optimization.md#ising-model), known to be NP-hard.
 
-## General presentation
-
 <!--
     TODO:
+    ## General presentation
     - simple and general presentation of the algorithm
     - inputs / outputs
     - parallelization
+    ## Advanced quantum theory
+    ### Oscillators
+    ### Symplifying assumptions
+    ### Ballistic SB v. Discrete SB
+    ### Thermal fluctuations
 -->
 
-## Advanced quantum theory
-
-<!-- TODO -->
-
-### Oscillators
-
-<!-- TODO -->
-
-### Symplifying assumptions
-
-<!-- TODO -->
-
-### Ballistic SB v. Discrete SB
-
-<!-- TODO -->
-
-### Thermal fluctuations
-
-<!-- TODO -->
+> 🚧 This page is a work in progress. We invite you to consult the publications listed at the end of this page to learn more about the Simulated Bifurcation algorithm. A simplified presentation of the algorithm will be available soon.
 
 [^1]: Hayato Goto et al., "Combinatorial optimization by simulating adiabatic bifurcations in nonlinear Hamiltonian systems". Sci. Adv.5, eaav2372(2019). DOI:10.1126/sciadv.aav2372
 
