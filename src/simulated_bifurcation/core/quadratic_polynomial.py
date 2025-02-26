@@ -515,7 +515,7 @@ class QuadraticPolynomial(object):
         heated: bool = False,
         minimize: bool = True,
         verbose: bool = True,
-        use_window: bool = True,
+        early_stopping: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
@@ -542,13 +542,15 @@ class QuadraticPolynomial(object):
         algorithm with a supplementary non-symplectic term to refine the model
 
         To stop the iterations of the symplectic integrator, a number of maximum
-        steps needs to be specified. However, a refined way to stop is also possible
-        using a window that checks that the spins have not changed among a set
-        number of previous steps. In practice, a every fixed number of steps
-        (called a sampling period) the current spins will be compared to the
-        previous ones. If they remain constant throughout a certain number of
-        consecutive samplings (called the convergence threshold), the spins are
-        considered to have bifurcated and the algorithm stops.
+        steps and/or a timeout need(s) to be specified. However, a refined way to stop
+        is also possible using a convergence checker that asserts that the energy
+        of the agents has not changed during a fixed number of steps. If so, the computation
+        stops earlier than expected. In practice, every fixed number of steps (called a
+        sampling period) the current spins will be compared to the previous
+        ones (energy-wise). If the energy remains constant throughout a certain number of
+        consecutive samplings (called the convergence threshold), the spins are considered
+        to have bifurcated andthe algorithm stops. These spaced samplings make it possible
+        to decorrelate the spins and make their stability more informative.
 
         Finally, it is possible to make several particle vectors at the same
         time (each one being called an agent). As the vectors are randomly
@@ -585,9 +587,9 @@ class QuadraticPolynomial(object):
             (default is 10000)
         agents : int, optional
             number of vectors to make evolve at the same time (default is 128)
-        use_window : bool, optional
-            indicates whether to use the window as a stopping criterion or not
-            (default is True)
+        early_stopping : bool, optional
+            indicates whether to use the early stopping or not, thus making agents'
+            convergence a stopping criterion (default is True)
         timeout : float | None, default=None
             Time in seconds after which the simulation is stopped.
             None means no timeout.
@@ -630,7 +632,7 @@ class QuadraticPolynomial(object):
             mode=mode,
             heated=heated,
             verbose=verbose,
-            use_window=use_window,
+            early_stopping=early_stopping,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
@@ -656,7 +658,7 @@ class QuadraticPolynomial(object):
         mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         verbose: bool = True,
-        use_window: bool = True,
+        early_stopping: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
@@ -683,13 +685,15 @@ class QuadraticPolynomial(object):
         algorithm with a supplementary non-symplectic term to refine the model
 
         To stop the iterations of the symplectic integrator, a number of maximum
-        steps needs to be specified. However, a refined way to stop is also possible
-        using a window that checks that the spins have not changed among a set
-        number of previous steps. In practice, a every fixed number of steps
-        (called a sampling period) the current spins will be compared to the
-        previous ones. If they remain constant throughout a certain number of
-        consecutive samplings (called the convergence threshold), the spins are
-        considered to have bifurcated and the algorithm stops.
+        steps and/or a timeout need(s) to be specified. However, a refined way to stop
+        is also possible using a convergence checker that asserts that the energy
+        of the agents has not changed during a fixed number of steps. If so, the computation
+        stops earlier than expected. In practice, every fixed number of steps (called a
+        sampling period) the current spins will be compared to the previous
+        ones (energy-wise). If the energy remains constant throughout a certain number of
+        consecutive samplings (called the convergence threshold), the spins are considered
+        to have bifurcated andthe algorithm stops. These spaced samplings make it possible
+        to decorrelate the spins and make their stability more informative.
 
         Finally, it is possible to make several particle vectors at the same
         time (each one being called an agent). As the vectors are randomly
@@ -726,9 +730,9 @@ class QuadraticPolynomial(object):
             (default is 10000)
         agents : int, optional
             number of vectors to make evolve at the same time (default is 128)
-        use_window : bool, optional
-            indicates whether to use the window as a stopping criterion or not
-            (default is True)
+        early_stopping : bool, optional
+            indicates whether to use the early stopping or not, thus making agents'
+            convergence a stopping criterion (default is True)
         timeout : float | None, default=None
             Time in seconds after which the simulation is stopped.
             None means no timeout.
@@ -767,7 +771,7 @@ class QuadraticPolynomial(object):
             heated=heated,
             minimize=True,
             verbose=verbose,
-            use_window=use_window,
+            early_stopping=early_stopping,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
@@ -784,7 +788,7 @@ class QuadraticPolynomial(object):
         mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         verbose: bool = True,
-        use_window: bool = True,
+        early_stopping: bool = True,
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
@@ -811,13 +815,15 @@ class QuadraticPolynomial(object):
         algorithm with a supplementary non-symplectic term to refine the model
 
         To stop the iterations of the symplectic integrator, a number of maximum
-        steps needs to be specified. However, a refined way to stop is also possible
-        using a window that checks that the spins have not changed among a set
-        number of previous steps. In practice, a every fixed number of steps
-        (called a sampling period) the current spins will be compared to the
-        previous ones. If they remain constant throughout a certain number of
-        consecutive samplings (called the convergence threshold), the spins are
-        considered to have bifurcated and the algorithm stops.
+        steps and/or a timeout need(s) to be specified. However, a refined way to stop
+        is also possible using a convergence checker that asserts that the energy
+        of the agents has not changed during a fixed number of steps. If so, the computation
+        stops earlier than expected. In practice, every fixed number of steps (called a
+        sampling period) the current spins will be compared to the previous
+        ones (energy-wise). If the energy remains constant throughout a certain number of
+        consecutive samplings (called the convergence threshold), the spins are considered
+        to have bifurcated andthe algorithm stops. These spaced samplings make it possible
+        to decorrelate the spins and make their stability more informative.
 
         Finally, it is possible to make several particle vectors at the same
         time (each one being called an agent). As the vectors are randomly
@@ -854,9 +860,9 @@ class QuadraticPolynomial(object):
             (default is 10000)
         agents : int, optional
             number of vectors to make evolve at the same time (default is 128)
-        use_window : bool, optional
-            indicates whether to use the window as a stopping criterion or not
-            (default is True)
+        early_stopping : bool, optional
+            indicates whether to use the early stopping or not, thus making agents'
+            convergence a stopping criterion (default is True)
         timeout : float | None, default=None
             Time in seconds after which the simulation is stopped.
             None means no timeout.
@@ -895,7 +901,7 @@ class QuadraticPolynomial(object):
             heated=heated,
             minimize=False,
             verbose=verbose,
-            use_window=use_window,
+            early_stopping=early_stopping,
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
