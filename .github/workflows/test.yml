@@ -11,7 +11,7 @@ on:
       - opened
       - synchronize
   workflow_run:
-    workflows: ["lint"]
+    workflows: ["Lint"]
     types:
       - completed
   workflow_dispatch:
