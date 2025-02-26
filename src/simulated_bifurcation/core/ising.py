@@ -18,7 +18,7 @@ QuadraticPolynomial:
 
 """
 
-from typing import Optional, TypeVar, Union
+from typing import Literal, Optional, TypeVar, Union
 
 import torch
 from numpy import ndarray
@@ -200,7 +200,7 @@ class Ising(object):
         *,
         agents: int = 128,
         max_steps: int = 10000,
-        ballistic: bool = False,
+        mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         verbose: bool = True,
         use_window: bool = True,
@@ -221,7 +221,7 @@ class Ising(object):
         max_steps : int, default=10_000
             Number of iterations after which the algorithm is stopped
             regardless of whether convergence has been achieved.
-        ballistic : bool, default=False
+        mode : "ballistic" | "discrete", optional, default = "ballistic"
             Whether to use the ballistic or the discrete SB algorithm.
             See Notes for further information about the variants of the SB
             algorithm.
@@ -347,12 +347,13 @@ class Ising(object):
         https://doi.org/10.1038/s42005-022-00929-9
 
         """
-        engine = SimulatedBifurcationEngine.get_engine(ballistic, heated)
+        engine = SimulatedBifurcationEngine.get_engine(mode)
         optimizer = SimulatedBifurcationOptimizer(
             agents,
             max_steps,
             timeout,
             engine,
+            heated,
             verbose,
             sampling_period,
             convergence_threshold,

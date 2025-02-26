@@ -18,7 +18,7 @@ def test_knapsack():
         "status": "not optimized",
     }
 
-    model.minimize(ballistic=False, verbose=False, agents=100)
+    model.minimize(mode="ballistic", verbose=False, agents=1000)
     assert model.summary["items"] == [1, 2, 3, 4]
     assert model.summary["total_cost"] == 15
     assert model.summary["total_weight"] == 8

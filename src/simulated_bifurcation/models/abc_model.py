@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import List, Optional, Tuple, Union
+from typing import List, Literal, Optional, Tuple, Union
 
 import torch
 
@@ -27,7 +27,7 @@ class ABCModel(ABC, QuadraticPolynomial):
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
-        ballistic: bool = False,
+        mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         minimize: bool = True,
         verbose: bool = True,
@@ -42,7 +42,7 @@ class ABCModel(ABC, QuadraticPolynomial):
             agents=agents,
             max_steps=max_steps,
             best_only=best_only,
-            ballistic=ballistic,
+            mode=mode,
             heated=heated,
             minimize=minimize,
             verbose=verbose,
@@ -59,7 +59,7 @@ class ABCModel(ABC, QuadraticPolynomial):
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
-        ballistic: bool = False,
+        mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         verbose: bool = True,
         use_window: bool = True,
@@ -72,7 +72,7 @@ class ABCModel(ABC, QuadraticPolynomial):
             agents=agents,
             max_steps=max_steps,
             best_only=best_only,
-            ballistic=ballistic,
+            mode=mode,
             heated=heated,
             minimize=True,
             verbose=verbose,
@@ -89,7 +89,7 @@ class ABCModel(ABC, QuadraticPolynomial):
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
-        ballistic: bool = False,
+        mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         verbose: bool = True,
         use_window: bool = True,
@@ -102,7 +102,7 @@ class ABCModel(ABC, QuadraticPolynomial):
             agents=agents,
             max_steps=max_steps,
             best_only=best_only,
-            ballistic=ballistic,
+            mode=mode,
             heated=heated,
             minimize=False,
             verbose=verbose,

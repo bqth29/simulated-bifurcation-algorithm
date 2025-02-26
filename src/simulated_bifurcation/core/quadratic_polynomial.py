@@ -21,7 +21,7 @@ Ising:
 """
 
 import re
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -511,7 +511,7 @@ class QuadraticPolynomial(object):
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
-        ballistic: bool = False,
+        mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         minimize: bool = True,
         verbose: bool = True,
@@ -591,9 +591,10 @@ class QuadraticPolynomial(object):
         timeout : float | None, default=None
             Time in seconds after which the simulation is stopped.
             None means no timeout.
-        ballistic : bool, optional
-            if True, the ballistic SB will be used, else it will be the
-            discrete SB (default is True)
+        mode : "ballistic" | "discrete", optional, default = "ballistic"
+            Whether to use the ballistic or the discrete SB algorithm.
+            See Notes for further information about the variants of the SB
+            algorithm.
         heated : bool, optional
             if True, the heated SB will be used, else it will be the non-heated
             SB (default is True)
@@ -626,7 +627,7 @@ class QuadraticPolynomial(object):
         optimized_spins = ising_equivalent.minimize(
             agents=agents,
             max_steps=max_steps,
-            ballistic=ballistic,
+            mode=mode,
             heated=heated,
             verbose=verbose,
             use_window=use_window,
@@ -652,7 +653,7 @@ class QuadraticPolynomial(object):
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
-        ballistic: bool = False,
+        mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         verbose: bool = True,
         use_window: bool = True,
@@ -731,9 +732,10 @@ class QuadraticPolynomial(object):
         timeout : float | None, default=None
             Time in seconds after which the simulation is stopped.
             None means no timeout.
-        ballistic : bool, optional
-            if True, the ballistic SB will be used, else it will be the
-            discrete SB (default is True)
+        mode : "ballistic" | "discrete", optional, default = "ballistic"
+            Whether to use the ballistic or the discrete SB algorithm.
+            See Notes for further information about the variants of the SB
+            algorithm.
         heated : bool, optional
             if True, the heated SB will be used, else it will be the non-heated
             SB (default is True)
@@ -761,7 +763,7 @@ class QuadraticPolynomial(object):
             agents=agents,
             max_steps=max_steps,
             best_only=best_only,
-            ballistic=ballistic,
+            mode=mode,
             heated=heated,
             minimize=True,
             verbose=verbose,
@@ -779,7 +781,7 @@ class QuadraticPolynomial(object):
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
-        ballistic: bool = False,
+        mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
         verbose: bool = True,
         use_window: bool = True,
@@ -858,9 +860,10 @@ class QuadraticPolynomial(object):
         timeout : float | None, default=None
             Time in seconds after which the simulation is stopped.
             None means no timeout.
-        ballistic : bool, optional
-            if True, the ballistic SB will be used, else it will be the
-            discrete SB (default is True)
+        mode : "ballistic" | "discrete", optional, default = "ballistic"
+            Whether to use the ballistic or the discrete SB algorithm.
+            See Notes for further information about the variants of the SB
+            algorithm.
         heated : bool, optional
             if True, the heated SB will be used, else it will be the non-heated
             SB (default is True)
@@ -888,7 +891,7 @@ class QuadraticPolynomial(object):
             agents=agents,
             max_steps=max_steps,
             best_only=best_only,
-            ballistic=ballistic,
+            mode=mode,
             heated=heated,
             minimize=False,
             verbose=verbose,
