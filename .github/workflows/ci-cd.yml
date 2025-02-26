@@ -52,7 +52,7 @@ jobs:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         os: [ubuntu-latest, windows-latest, macos-latest]
-    name: Build package on ${{ matrix.os }} with Python ${{ matrix.python-version }}
+    name: Build package on ${{ matrix.os }} with Python ${{ matrix.python-version }} ⚙️
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -75,6 +75,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[test]
 
+      - name: Metadata check
+        if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
+        run: |
+          python .github/scripts/metadata_checker
+
   test:
     needs: install
     strategy:
@@ -82,7 +87,7 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         os: [ubuntu-latest, windows-latest, macos-latest]
 
-    name: Run tests on ${{ matrix.os }} for Python ${{ matrix.python-version }}
+    name: Run tests on ${{ matrix.os }} for Python ${{ matrix.python-version }} 🧪
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
@@ -101,13 +106,13 @@ jobs:
 
       - name: Run tests with Pytest
         run: |
-          coverage run -m pytest
+          python -m coverage run -m pytest
 
       - name: Coverage
         if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
         run: |
-          coverage report
-          coverage json
+          python -m coverage report
+          python -m coverage json
 
       - name: Upload coverage artifact
         if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
@@ -116,15 +121,10 @@ jobs:
           name: coverage-report
           path: coverage.json
 
-      - name: Metadata check
-        if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
-        run: |
-          python .github/scripts/metadata_checker
-
   upload-coverage:
     runs-on: ubuntu-latest
     needs: test
-    name: Upload coverage report to Codecov
+    name: Upload coverage report to Codecov 📊
     steps:
       - name: Download coverage report
         uses: actions/download-artifact@v4
