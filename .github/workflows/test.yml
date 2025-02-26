@@ -1,4 +1,4 @@
-name: "Testing"
+name: Testing
 
 on:
   workflow_run:
