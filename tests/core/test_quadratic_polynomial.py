@@ -23,8 +23,7 @@ def test_init_from_poly(dtype: torch.dtype, device: torch.device):
 
     assert quadratic_polynomial._dtype == dtype
     assert quadratic_polynomial._device == device
-    assert quadratic_polynomial._n_gens == 3
-    assert quadratic_polynomial._poly == polynomial
+    assert quadratic_polynomial._dimension == 3
     assert torch.equal(
         torch.tensor(
             [[1, 4, 0], [0, 3, -2], [0, 0, -5]],
@@ -58,8 +57,7 @@ def test_init_from_poly_no_bias(dtype: torch.dtype, device: torch.device):
 
     assert quadratic_polynomial._dtype == dtype
     assert quadratic_polynomial._device == device
-    assert quadratic_polynomial._n_gens == 3
-    assert quadratic_polynomial._poly == polynomial
+    assert quadratic_polynomial._dimension == 3
     assert torch.equal(
         torch.tensor(
             [[1, 4, 0], [0, 3, -2], [0, 0, -5]],
@@ -91,8 +89,7 @@ def test_init_from_poly_no_degree_1_monoms(dtype: torch.dtype, device: torch.dev
 
     assert quadratic_polynomial._dtype == dtype
     assert quadratic_polynomial._device == device
-    assert quadratic_polynomial._n_gens == 3
-    assert quadratic_polynomial._poly == polynomial
+    assert quadratic_polynomial._dimension == 3
     assert torch.equal(
         torch.tensor(
             [[1, 4, 0], [0, 3, -2], [0, 0, -5]],
@@ -124,8 +121,7 @@ def test_init_from_poly_no_degree_2_monoms(dtype: torch.dtype, device: torch.dev
 
     assert quadratic_polynomial._dtype == dtype
     assert quadratic_polynomial._device == device
-    assert quadratic_polynomial._n_gens == 3
-    assert quadratic_polynomial._poly == polynomial
+    assert quadratic_polynomial._dimension == 3
     assert torch.equal(
         torch.tensor(
             [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
@@ -247,7 +243,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(torch.zeros(3, dtype=dtype, device=device), polynomial.linear)
     assert torch.equal(torch.tensor(0, dtype=dtype, device=device), polynomial.bias)
-    assert make_poly(True, False, False, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_quadratic_tensor(quadratic_coefficients_as_tensor, dtype, device),
@@ -259,7 +254,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(torch.tensor(0, dtype=dtype, device=device), polynomial.bias)
-    assert make_poly(True, True, False, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_linear_tensor(linear_coefficients_as_tensor, dtype, device),
@@ -271,7 +265,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(torch.tensor(0, dtype=dtype, device=device), polynomial.bias)
-    assert make_poly(True, True, False, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_quadratic_tensor(quadratic_coefficients_as_tensor, dtype, device),
@@ -283,7 +276,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(torch.zeros(3, dtype=dtype, device=device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, False, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_bias(bias_as_tensor, dtype, device),
@@ -295,7 +287,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(torch.zeros(3, dtype=dtype, device=device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, False, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_linear_tensor(linear_coefficients_as_tensor, dtype, device),
@@ -309,7 +300,6 @@ def test_build_polynomial_from_tensor(
     )
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(False, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_bias(bias_as_tensor, dtype, device),
@@ -323,7 +313,6 @@ def test_build_polynomial_from_tensor(
     )
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(False, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_quadratic_tensor(quadratic_coefficients_as_tensor, dtype, device),
@@ -336,7 +325,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_quadratic_tensor(quadratic_coefficients_as_tensor, dtype, device),
@@ -349,7 +337,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_quadratic_tensor(quadratic_coefficients_as_tensor, dtype, device),
@@ -362,7 +349,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_quadratic_tensor(quadratic_coefficients_as_tensor, dtype, device),
@@ -375,7 +361,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_linear_tensor(quadratic_coefficients_as_tensor, dtype, device),
@@ -388,7 +373,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_linear_tensor(linear_coefficients_as_tensor, dtype, device),
@@ -401,7 +385,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_linear_tensor(linear_coefficients_as_tensor, dtype, device),
@@ -414,7 +397,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_linear_tensor(linear_coefficients_as_tensor, dtype, device),
@@ -427,7 +409,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_bias(bias_as_tensor, dtype, device),
@@ -440,7 +421,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_bias(bias_as_tensor, dtype, device),
@@ -453,7 +433,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_bias(bias_as_tensor, dtype, device),
@@ -466,7 +445,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     polynomial = QuadraticPolynomial(
         make_bias(bias_as_tensor, dtype, device),
@@ -479,7 +457,6 @@ def test_build_polynomial_from_tensor(
     assert torch.equal(make_quadratic_tensor(True, dtype, device), polynomial.quadratic)
     assert torch.equal(make_linear_tensor(True, dtype, device), polynomial.linear)
     assert torch.equal(make_bias(True, dtype, device), polynomial.bias)
-    assert make_poly(True, True, True, dtype in INT_DTYPES) == polynomial.poly
 
     with pytest.raises(
         ValueError,

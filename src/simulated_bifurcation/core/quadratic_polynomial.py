@@ -25,7 +25,7 @@ from typing import List, Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
-from sympy import Poly, poly, symbols
+from sympy import Poly
 
 from .ising import Ising
 from .variable import Variable
@@ -167,20 +167,20 @@ class QuadraticPolynomial(object):
         self.sb_result = None
 
         if len(polynomial_data) == 1 and isinstance(polynomial_data[0], Poly):
-            if not polynomial_data[0].is_quadratic:
+            polynomial = polynomial_data[0]
+            if not polynomial.is_quadratic:
                 raise ValueError(
-                    f"Expected a quadratic polynomial but got a total degree of {polynomial_data[0].total_degree()}."
+                    f"Expected a quadratic polynomial but got a total degree of {polynomial.total_degree()}."
                 )
-            self._poly = polynomial_data[0]
-            n_gens = len(self._poly.gens)
+            dimension = len(polynomial.gens)
             self._quadratic_coefficients = torch.zeros(
-                n_gens, n_gens, dtype=self._dtype, device=self._device
+                dimension, dimension, dtype=self._dtype, device=self._device
             )
             self._linear_coefficients = torch.zeros(
-                n_gens, dtype=self._dtype, device=self._device
+                dimension, dtype=self._dtype, device=self._device
             )
             self._bias = torch.tensor(0.0, dtype=self._dtype, device=self._device)
-            for monom, coeff in self._poly.terms():
+            for monom, coeff in polynomial.terms():
                 coeff = float(coeff)
                 if sum(monom) == 0:
                     self._bias = torch.tensor(
@@ -197,7 +197,7 @@ class QuadraticPolynomial(object):
                         col = monom.index(1, row + 1)
                     self._quadratic_coefficients[row, col] = coeff
         else:
-            n_gens = None
+            dimension = None
             self._quadratic_coefficients = None
             self._linear_coefficients = None
             self._bias = None
@@ -230,11 +230,11 @@ class QuadraticPolynomial(object):
                         )
                     else:
                         if tensor_like.ndim > 0:
-                            if n_gens is None:
-                                n_gens = tensor_like.shape[0]
-                            elif n_gens != tensor_like.shape[0]:
+                            if dimension is None:
+                                dimension = tensor_like.shape[0]
+                            elif dimension != tensor_like.shape[0]:
                                 raise ValueError(
-                                    f"Inconsistant shape among provided tensors. Expected {n_gens} but got {tensor_like.shape[0]}."
+                                    f"Inconsistant shape among provided tensors. Expected {dimension} but got {tensor_like.shape[0]}."
                                 )
                         setattr(
                             self,
@@ -247,32 +247,16 @@ class QuadraticPolynomial(object):
                     )
             if self._quadratic_coefficients is None:
                 self._quadratic_coefficients = torch.zeros(
-                    n_gens, n_gens, dtype=self._dtype, device=self._device
+                    dimension, dimension, dtype=self._dtype, device=self._device
                 )
             if self._linear_coefficients is None:
                 self._linear_coefficients = torch.zeros(
-                    n_gens, dtype=self._dtype, device=self._device
+                    dimension, dtype=self._dtype, device=self._device
                 )
             if self._bias is None:
                 self._bias = torch.tensor(0.0, dtype=self._dtype, device=self._device)
-            gens = symbols(" ".join([f"x_{ind}" for ind in range(n_gens)]))
-            self._poly = poly(
-                sum(
-                    self._quadratic_coefficients[row, col].item()
-                    * gens[row]
-                    * gens[col]
-                    for row, col in torch.nonzero(
-                        self._quadratic_coefficients, as_tuple=False
-                    )
-                )
-                + sum(
-                    self._linear_coefficients[ind].item() * gens[ind]
-                    for ind in torch.nonzero(self._linear_coefficients, as_tuple=False)
-                )
-                + self._bias.item()
-            )
 
-        self._n_gens = len(self._poly.gens)
+        self._dimension = self._quadratic_coefficients.shape[0]
 
     def __call__(self, value: Union[torch.Tensor, np.ndarray]) -> torch.Tensor:
         if not isinstance(value, torch.Tensor):
@@ -281,10 +265,10 @@ class QuadraticPolynomial(object):
             except Exception as err:
                 raise TypeError("Input value cannot be cast to Tensor.") from err
 
-        if value.shape[-1] != self._n_gens:
+        if value.shape[-1] != self._dimension:
             raise ValueError(
                 f"Size of the input along the last axis should be "
-                f"{self._n_gens}, it is {value.shape[-1]}."
+                f"{self._dimension}, it is {value.shape[-1]}."
             )
 
         quadratic_term = torch.nn.functional.bilinear(
@@ -295,18 +279,6 @@ class QuadraticPolynomial(object):
         affine_term = value @ self._linear_coefficients + self._bias
         evaluation = torch.squeeze(quadratic_term, -1) + affine_term
         return evaluation
-
-    @property
-    def poly(self) -> Poly:
-        """Poly representation of the quadratic polynomial.
-        If the quadratic polynomial was instanciated from tensors, the gens
-        of the Poly were automatically created and labeled x_0, ..., x_n.
-
-        Returns
-        -------
-        Poly
-        """
-        return self._poly
 
     @property
     def quadratic(self) -> torch.Tensor:
@@ -343,10 +315,10 @@ class QuadraticPolynomial(object):
 
     def __get_variables(self, domain: Union[str, List[str]]) -> List[Variable]:
         if isinstance(domain, str):
-            return [Variable.from_str(domain) for _ in range(self._n_gens)]
-        if len(domain) != self._n_gens:
+            return [Variable.from_str(domain) for _ in range(self._dimension)]
+        if len(domain) != self._dimension:
             raise ValueError(
-                f"Expected {self._n_gens} domains to be provided, got {len(domain)}."
+                f"Expected {self._dimension} domains to be provided, got {len(domain)}."
             )
         return [Variable.from_str(variable_domain) for variable_domain in domain]
 
