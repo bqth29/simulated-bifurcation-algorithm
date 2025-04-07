@@ -272,11 +272,14 @@ class QuadraticPolynomial(object):
             )
 
         quadratic_term = torch.nn.functional.bilinear(
-            value,
-            value,
-            torch.unsqueeze(self._quadratic_coefficients, 0),
-        )
-        affine_term = value @ self._linear_coefficients + self._bias
+            value.to(torch.float32),
+            value.to(torch.float32),
+            torch.unsqueeze(self._quadratic_coefficients, 0).to(torch.float32),
+        ).to(self._dtype)
+        affine_term = (
+            value.to(torch.float32) @ self._linear_coefficients.to(torch.float32)
+            + self._bias.to(torch.float32)
+        ).to(self._dtype)
         evaluation = torch.squeeze(quadratic_term, -1) + affine_term
         return evaluation
 
