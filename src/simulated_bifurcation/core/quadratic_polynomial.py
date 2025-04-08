@@ -28,9 +28,8 @@ import torch
 from sympy import Poly
 
 from .ising import Ising
+from .utils import safe_get_device, safe_get_dtype
 from .variable import Variable
-
-from .utils import safe_get_dtype, safe_get_device
 
 INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
 DOMAIN_ERROR = ValueError(
