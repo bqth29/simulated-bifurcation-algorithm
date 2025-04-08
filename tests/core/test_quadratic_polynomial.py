@@ -7,7 +7,7 @@ from sympy import Poly, poly, symbols
 
 from src.simulated_bifurcation.core import QuadraticPolynomial
 
-from ..test_utils import DEVICES, DTYPES, INT_DTYPES
+from ..test_utils import DEVICES, DTYPES
 
 x, y, z = symbols("x y z")
 
