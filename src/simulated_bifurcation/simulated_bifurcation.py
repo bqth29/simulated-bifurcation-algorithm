@@ -131,10 +131,6 @@ def build_model(
       >>> poly(points)
       tensor([0, 3, 1, 2])
 
-    Migrate the polynomial to the GPU for faster computation
-
-      >>> poly.to(device="cuda")
-
     Maximize this polynomial over {0, 1, ..., 14, 15} x {0, 1, ..., 14, 15}
     (outputs are located on the GPU)
 
@@ -442,7 +438,6 @@ def optimize(
         sampling_period=sampling_period,
         convergence_threshold=convergence_threshold,
         timeout=timeout,
-        dtype=dtype,
     )
     return result, evaluation
 

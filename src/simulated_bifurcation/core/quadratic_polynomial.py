@@ -132,10 +132,6 @@ class QuadraticPolynomial(object):
       >>> poly(points)
       tensor([0, 3, 1, 2])
 
-    Migrate the polynomial to the GPU for faster computation
-
-      >>> poly.to(device="cuda")
-
     Maximize this polynomial over {0, 1, ..., 14, 15} x {0, 1, ..., 14, 15}
     (outputs are located on the GPU)
 
@@ -272,14 +268,14 @@ class QuadraticPolynomial(object):
             )
 
         quadratic_term = torch.nn.functional.bilinear(
-            value.to(torch.float32),
-            value.to(torch.float32),
-            torch.unsqueeze(self._quadratic_coefficients, 0).to(torch.float32),
-        ).to(self._dtype)
+            value,
+            value,
+            torch.unsqueeze(self._quadratic_coefficients, 0),
+        )
         affine_term = (
-            value.to(torch.float32) @ self._linear_coefficients.to(torch.float32)
-            + self._bias.to(torch.float32)
-        ).to(self._dtype)
+            value @ self._linear_coefficients
+            + self._bias
+        )
         evaluation = torch.squeeze(quadratic_term, -1) + affine_term
         return evaluation
 
@@ -326,7 +322,7 @@ class QuadraticPolynomial(object):
         return [Variable.from_str(variable_domain) for variable_domain in domain]
 
     def to_ising(
-        self, domain: Union[str, List[str]], dtype: Optional[torch.dtype] = None
+        self, domain: Union[str, List[str]]
     ) -> Ising:
         """
         Generate an equivalent Ising model of the problem.
@@ -376,23 +372,14 @@ class QuadraticPolynomial(object):
             length different from the number of variables.
 
         """
-        dtype = (
-            dtype
-            if dtype is not None
-            else (
-                self._dtype
-                if self._dtype in [torch.float32, torch.float64]
-                else torch.float32
-            )
-        )
         variables = self.__get_variables(domain=domain)
         spin_identity_vector = QuadraticPolynomial.__spin_identity_vector(
-            variables=variables, dtype=dtype, device=self._device
+            variables=variables, dtype=self._dtype, device=self._device
         )
         spin_weighted_integer_to_binary_matrix = (
             spin_identity_vector + 1
         ) * QuadraticPolynomial.__integer_to_binary_matrix(
-            variables=variables, dtype=dtype, device=self._device
+            variables=variables, dtype=self._dtype, device=self._device
         )
         symmetric_quadratic_tensor = (
             self._quadratic_coefficients + self._quadratic_coefficients.t()
@@ -415,7 +402,7 @@ class QuadraticPolynomial(object):
             -1,
         )
         torch.diag(J)[...] = 0
-        return Ising(J, h, dtype, self._device)
+        return Ising(J, h, self._dtype, self._device)
 
     def convert_spins(
         self, optimized_spins: torch.Tensor, domain: Union[str, List[str]]
@@ -491,7 +478,6 @@ class QuadraticPolynomial(object):
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
-        dtype: Optional[torch.dtype] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local extremum of the model by optimizing
@@ -595,9 +581,9 @@ class QuadraticPolynomial(object):
         Tensor
         """
         if minimize:
-            ising_equivalent = self.to_ising(domain, dtype=dtype)
+            ising_equivalent = self.to_ising(domain)
         else:
-            ising_equivalent = -self.to_ising(domain, dtype=dtype)
+            ising_equivalent = -self.to_ising(domain)
         optimized_spins = ising_equivalent.minimize(
             agents=agents,
             max_steps=max_steps,
@@ -634,7 +620,6 @@ class QuadraticPolynomial(object):
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
-        dtype: Optional[torch.dtype] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local minimum of the model by optimizing
@@ -747,7 +732,6 @@ class QuadraticPolynomial(object):
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
-            dtype=dtype,
         )
 
     def maximize(
@@ -764,7 +748,6 @@ class QuadraticPolynomial(object):
         sampling_period: int = 50,
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
-        dtype: Optional[torch.dtype] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Computes a local maximum of the model by optimizing
@@ -877,7 +860,6 @@ class QuadraticPolynomial(object):
             sampling_period=sampling_period,
             convergence_threshold=convergence_threshold,
             timeout=timeout,
-            dtype=dtype,
         )
 
     @staticmethod
