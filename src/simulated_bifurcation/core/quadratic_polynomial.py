@@ -272,10 +272,7 @@ class QuadraticPolynomial(object):
             value,
             torch.unsqueeze(self._quadratic_coefficients, 0),
         )
-        affine_term = (
-            value @ self._linear_coefficients
-            + self._bias
-        )
+        affine_term = value @ self._linear_coefficients + self._bias
         evaluation = torch.squeeze(quadratic_term, -1) + affine_term
         return evaluation
 
@@ -321,9 +318,7 @@ class QuadraticPolynomial(object):
             )
         return [Variable.from_str(variable_domain) for variable_domain in domain]
 
-    def to_ising(
-        self, domain: Union[str, List[str]]
-    ) -> Ising:
+    def to_ising(self, domain: Union[str, List[str]]) -> Ising:
         """
         Generate an equivalent Ising model of the problem.
         The notion of equivalence means that finding the ground
