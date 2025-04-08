@@ -30,6 +30,8 @@ from sympy import Poly
 from .ising import Ising
 from .variable import Variable
 
+from .utils import safe_get_dtype, safe_get_device
+
 INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
 DOMAIN_ERROR = ValueError(
     f'Input type must be one of "spin" or "binary", or be a string starting'
@@ -160,10 +162,8 @@ class QuadraticPolynomial(object):
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
     ):
-        self._dtype = torch.get_default_dtype() if dtype is None else dtype
-        self._device = (
-            torch.get_default_device() if device is None else torch.device(device)
-        )
+        self._dtype = safe_get_dtype(dtype)
+        self._device = safe_get_device(device)
         self.sb_result = None
 
         if len(polynomial_data) == 1 and isinstance(polynomial_data[0], Poly):
@@ -421,15 +421,12 @@ class QuadraticPolynomial(object):
         self, optimized_spins: torch.Tensor, domain: Union[str, List[str]]
     ) -> Optional[torch.Tensor]:
         """
-        Retrieves information from the optimized equivalent Ising model.
-        Returns the best found vector if `ising.ground_state` is not `None`.
-        Returns `None` otherwise.
+        Convert optimized spins back to the optimization domain.
 
         Parameters
         ----------
-        ising : IsingCore
-            Equivalent Ising model to optimized with the Simulated
-            Bifurcation algorithm.
+        optimized_spins : torch.Tensor
+            Optimized spins to convert.
         domain : str
             Domain over which the optimization is done.
 
