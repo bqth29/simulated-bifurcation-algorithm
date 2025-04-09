@@ -1,7 +1,7 @@
 import pytest
 
-from simulated_bifurcation.core.optimization_domain import OptimizationDomain
-from simulated_bifurcation.core.variable import Variable
+from src.simulated_bifurcation.core.optimization_domain import OptimizationDomain
+from src.simulated_bifurcation.core.variable import Variable
 
 
 def test_init_spin_variable():

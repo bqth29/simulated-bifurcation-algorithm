@@ -183,33 +183,6 @@ def make_bias(
     return torch.tensor(2, dtype=dtype, device=device) if as_tensor else 2.0
 
 
-def make_poly(
-    use_quadratic: bool, use_linear: bool, use_bias: bool, as_int: bool
-) -> Poly:
-    x_0, x_1, x_2 = symbols("x_0, x_1, x_2")
-    number_conversion = int if as_int else float
-    quadratic_monoms = (
-        number_conversion(1) * x_0**2
-        - number_conversion(2) * x_0 * x_1
-        - number_conversion(1) * x_0 * x_2
-        + number_conversion(2) * x_1**2
-        - number_conversion(3) * x_1 * x_2
-        + number_conversion(3) * x_2**2
-    )
-    linear_monoms = (
-        -number_conversion(1) * x_0
-        - number_conversion(2) * x_1
-        + number_conversion(1) * x_2
-    )
-    bias = number_conversion(2)
-    return poly(
-        number_conversion(0)
-        + (quadratic_monoms if use_quadratic else number_conversion(0))
-        + (linear_monoms if use_linear else number_conversion(0))
-        + (bias if use_bias else number_conversion(0))
-    )
-
-
 @pytest.mark.parametrize(
     "quadratic_coefficients_as_tensor, linear_coefficients_as_tensor, bias_as_tensor, dtype, device",
     [

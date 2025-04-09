@@ -9,7 +9,7 @@ package_version = "1.3.0.dev0"
 
 
 dependencies = [
-    "numpy<2",
+    "numpy",
     "sympy",
     "torch>=2.2.0",
     "tqdm",
@@ -18,7 +18,7 @@ dependencies = [
 # optional dependencies
 docs = ["sphinx", "numpydoc", "furo", "myst-parser"]
 lint = [
-    "black==24.3.0",
+    "black",
     "flake8",
     "isort",
 ]
