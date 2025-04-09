@@ -7,7 +7,7 @@ def test_number_partitioning_with_even_sum():
     torch.manual_seed(42)
     numbers = [2, 7, 3, 8, 1, 5, 4, 6]
     model = NumberPartitioning(numbers, dtype=torch.float32)
-    model.optimize(agents=10, verbose=False)
+    model.minimize(agents=10, verbose=False)
     result = model.partition
     assert result["left"]["sum"] == result["right"]["sum"]
 
@@ -16,7 +16,7 @@ def test_number_partitioning_with_odd_sum():
     torch.manual_seed(42)
     numbers = [2, 7, 3, 9, 1, 5, 4, 6]
     model = NumberPartitioning(numbers, dtype=torch.float32)
-    model.optimize(agents=10, verbose=False)
+    model.minimize(agents=10, verbose=False)
     result = model.partition
     assert abs(result["left"]["sum"] - result["right"]["sum"]) == 1
 

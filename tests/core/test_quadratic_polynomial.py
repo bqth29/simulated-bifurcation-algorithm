@@ -586,7 +586,7 @@ def test_call_spin_polynomial():
 
 def test_optimize_spin_polynomial():
     polynomial = QuadraticPolynomial(matrix, vector, constant_int, dtype=torch.float32)
-    spin_vars, value = polynomial.optimize(domain="spin", verbose=False)
+    spin_vars, value = polynomial.minimize(domain="spin", verbose=False)
     assert torch.equal(spin_vars, torch.tensor([1, -1, 1], dtype=torch.float32))
     assert value == -11.0
 
@@ -658,7 +658,7 @@ def test_optimize_binary_polynomial():
     binary_polynomial = QuadraticPolynomial(
         matrix, vector, constant_int, dtype=torch.float32
     )
-    binary_vars, value = binary_polynomial.optimize(domain="binary", verbose=False)
+    binary_vars, value = binary_polynomial.minimize(domain="binary", verbose=False)
     assert torch.equal(binary_vars, torch.tensor([1, 0, 1], dtype=torch.float32))
     assert value == -3.0
 
@@ -722,7 +722,7 @@ def test_optimize_integer_polynomial():
     integer_polynomial = QuadraticPolynomial(
         matrix, vector, constant_int, dtype=torch.float32
     )
-    int_vars, value = integer_polynomial.optimize(domain="int2", verbose=False)
+    int_vars, value = integer_polynomial.minimize(domain="int2", verbose=False)
     assert torch.equal(int_vars, torch.tensor([3, 0, 3], dtype=torch.float32))
     assert value == -23.0
 
@@ -780,7 +780,7 @@ def test_optimize_mixed_types_polynomial():
     integer_polynomial = QuadraticPolynomial(
         matrix, vector, constant_int, dtype=torch.float32
     )
-    int_vars, value = integer_polynomial.optimize(
+    int_vars, value = integer_polynomial.minimize(
         domain=["spin", "binary", "int2"], verbose=False
     )
     assert torch.equal(int_vars, torch.tensor([1, 0, 3], dtype=torch.float32))
