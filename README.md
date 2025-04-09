@@ -52,6 +52,10 @@ pip install simulated-bifurcation
 > pip install git+https://github.com/bqth29/simulated-bifurcation-algorithm.git
 > ```
 
+## 💡 Online documentation
+
+The documentation of the package is available on [ReadTheDocs](https://simulated-bifurcation-algorithm.readthedocs.io/en/latest/?badge=latest).
+
 ## 🧪 The _Simulated Bifurcation_ (SB) algorithm
 
 ### Ising model
@@ -281,7 +285,7 @@ best_vector, best_value = sb.minimize(matrix, best_only=True)
 vectors, values = sb.maximize(matrix, best_only=False)
 ```
 
-## 💡 Advanced usages
+## 🚀 Advanced usages
 
 This section deals with a more complex use of the SB algorithm, as it is closer to the quantum theory from which it is derived. To better understand the significance of the subjects at stake, we recommend reading the theory behind the SB algorithm by Goto _et al._.
 
