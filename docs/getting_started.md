@@ -14,3 +14,8 @@ pip install simulated-bifurcation
 ```bash
 pip install simulated-bifurcation
 ```
+
+> To install the latest working version corresponding to the GitHub main branch status, use:
+> ```
+> pip install git+https://github.com/bqth29/simulated-bifurcation-algorithm.git
+> ```
