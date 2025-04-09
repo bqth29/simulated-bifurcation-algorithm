@@ -18,7 +18,6 @@ Two optimization functions (`maximize` and `minimize`) that all share the same p
 |------------------------------------------------| ---------------------------- | --------------- |----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [**`polynomial`**](#quadratic-model-definition) | `PolynomialLike`             |                 | Quadratic model to optimize.                                                                                                                                                           |
 | [`agents`](#parallelization-multi-agent-search) | `int`                        | `128`           | Number of oscillators to evolve in parallel                                                                                                                                            |
-| [`mode`](#sb-algorithm-versions)               | `"ballistic` or `"discrete"` | `True`          | Whether to use the ballistic version of the SB algorithm (bSB) or the discrete version (dSB).                                                                                          |
 | [`best_only`](#outputs)                        | `bool`                       | `True`          | Whether to only return the best agent and its associated objective function value, or all agents at once.                                                                              |
 | [`convergence_threshold`](#early-stopping)     | `int`                        | `50`            | Number of consecutive samplings after which an agent is considered to have converged if its Ising energy has not changed. Its value is read only if `early_stopping` is set to `True`. |
 | [`device`](#gpu-computation)                   | `str` or `torch.device`      | `None`          | Device on which to run the optimization (CPU or GPU).                                                                                                                                  |
@@ -27,6 +26,7 @@ Two optimization functions (`maximize` and `minimize`) that all share the same p
 | [`early_stopping`](#early-stopping)            | `bool`                       | `True`          | Whether to use early-stopping or not.                                                                                                                                                  |
 | [`heated`](#sb-algorithm-versions)             | `bool`                       | `False`         | Whether to use the heated version of the SB algorithm or not.                                                                                                                          |
 | [`max_steps`](#number-of-iterations)           | `int`                        | `10000`         | Maximum number of iterations of the optimizer (one iteration is one step in the symplectic Euler scheme). If reached, the computation is stopped and the current results are returned. |
+| [`mode`](#sb-algorithm-versions)               | `"ballistic` or `"discrete"` | `"ballistic`          | Whether to use the ballistic version of the SB algorithm (bSB) or the discrete version (dSB).                                                                                          |
 | [`sampling_period`](#early-stopping)           | `int`                        | `50`            | Number of iterations between two successive oscillator samplings to verify early stopping conditions. Its value is read only if `early_stopping` is set to `True`.                     |
 | [`timeout`](#computation-timeout)              | `int`                        | `None`          | Maximum computation time of the optimizer in seconds. If reached, the computation is stopped and the current results are returned.                                                     |  |
 | [`verbose`](#display-the-evolution-status)     | `bool`                       | `True`          | Whether to display the evolution status of the optimizer with progress bars or not.                                                                                                    |
@@ -99,16 +99,18 @@ The parallelization of the algorithm can also be utilized by performing calculat
 
 The original version of the SB algorithm[^1] is not implemented since it is less efficient than the more recent variants of the SB algorithm[^2] :
 
-- **ballistic SB (bSB)** : Uses the position of the particles for the position-based update of the momentums ; usually faster but less accurate.
-- **discrete SB (dSB)** : Uses the sign of the position of the particles for the position-based update of the momentums ; usually slower but more accurate.
+- **ballistic SB (bSB)** : Uses the position of the particles for the position-based update of the momenta ; usually faster but less accurate.
+- **discrete SB (dSB)** : Uses the sign of the position of the particles for the position-based update of the momenta ; usually slower but more accurate.
 
 On top of these two variants, an additional thermal fluctuation term can be added in order to help escape local optima[^3] (HbSB and HdSB).
 
-> The Simulated Bifurcation algorithm version is set using the `ballistic` parameter:
+> The Simulated Bifurcation algorithm version is set using the `mode` and `heated` parameters:
 >
 > ```python
-> sb.minimize(polynomial, domain="spin", ballistic=True) # Ballistic SB
-> sb.minimize(polynomial, domain="spin", ballistic=False) # Discrete SB
+> sb.minimize(polynomial, domain="spin", mode="ballistic", heated=False) # Ballistic SB (bSB)
+> sb.minimize(polynomial, domain="spin", mode="discrete", heated=False) # Discrete SB (dSB)
+> sb.minimize(polynomial, domain="spin", mode="ballistic", heated=True) # Heated Ballistic SB (HbSB)
+> sb.minimize(polynomial, domain="spin", mode="discrete", heated=True) # Heated Discrete SB (HdSB)
 > ```
 
 ## Stopping criteria
