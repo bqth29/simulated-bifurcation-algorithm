@@ -457,16 +457,16 @@ class QuadraticPolynomial(object):
             )
         )
 
-    def optimize(
+    def __optimize(
         self,
         *,
         domain: str,
+        sense: Literal["maximize", "minimize"],
         agents: int = 128,
         max_steps: int = 10000,
         best_only: bool = True,
         mode: Literal["ballistic", "discrete"] = "ballistic",
         heated: bool = False,
-        minimize: bool = True,
         verbose: bool = True,
         early_stopping: bool = True,
         sampling_period: int = 50,
@@ -501,7 +501,7 @@ class QuadraticPolynomial(object):
         sampling period) the current spins will be compared to the previous
         ones (energy-wise). If the energy remains constant throughout a certain number of
         consecutive samplings (called the convergence threshold), the spins are considered
-        to have bifurcated andthe algorithm stops. These spaced samplings make it possible
+        to have bifurcated and the algorithm stops. These spaced samplings make it possible
         to decorrelate the spins and make their stability more informative.
 
         Finally, it is possible to make several particle vectors at the same
@@ -529,6 +529,8 @@ class QuadraticPolynomial(object):
 
             If the variables have different domains, a list of string with the
             same length as the number of variables can be provided instead.
+        sense : "minimize" or "maximize"
+            optimization sense
         convergence_threshold : int, optional
             number of consecutive identical spin sampling considered as a proof
             of convergence (default is 50)
@@ -559,22 +561,12 @@ class QuadraticPolynomial(object):
             if `True` only the best found solution to the optimization problem
             is returned, otherwise all the solutions found by the simulated
             bifurcation algorithm.
-        minimize : bool, optional
-            if `True` the optimization direction is minimization, otherwise it
-            is maximization (default is True)
-        dtype: torch.dtype, optional
-            Data-type used for storing the coefficients of the Ising model and
-            running the Simulated Bifurcation algorithm computations.
-            If provided, expected to be one of `torch.float32` or `torch.float64`.
-            If `None`, the dtype of the QuadraticPolynomial will be used, except
-            if this dtype is none of `torch.float32` or `torch.float64`, in which case
-            `torch.float32` will be used by default.
 
         Returns
         -------
         Tensor
         """
-        if minimize:
+        if sense == "minimize":
             ising_equivalent = self.to_ising(domain)
         else:
             ising_equivalent = -self.to_ising(domain)
@@ -595,7 +587,11 @@ class QuadraticPolynomial(object):
         result = self.sb_result.t()
         evaluation = self(result)
         if best_only:
-            i_best = torch.argmin(evaluation) if minimize else torch.argmax(evaluation)
+            i_best = (
+                torch.argmin(evaluation)
+                if sense == "minimize"
+                else torch.argmax(evaluation)
+            )
             result = result[i_best]
             evaluation = evaluation[i_best]
         return result, evaluation
@@ -643,7 +639,7 @@ class QuadraticPolynomial(object):
         sampling period) the current spins will be compared to the previous
         ones (energy-wise). If the energy remains constant throughout a certain number of
         consecutive samplings (called the convergence threshold), the spins are considered
-        to have bifurcated andthe algorithm stops. These spaced samplings make it possible
+        to have bifurcated and the algorithm stops. These spaced samplings make it possible
         to decorrelate the spins and make their stability more informative.
 
         Finally, it is possible to make several particle vectors at the same
@@ -701,26 +697,19 @@ class QuadraticPolynomial(object):
             if `True` only the best found solution to the optimization problem
             is returned, otherwise all the solutions found by the simulated
             bifurcation algorithm.
-        dtype: torch.dtype, optional
-            Data-type used for storing the coefficients of the Ising model and
-            running the Simulated Bifurcation algorithm computations.
-            If provided, expected to be one of `torch.float32` or `torch.float64`.
-            If `None`, the dtype of the QuadraticPolynomial will be used, except
-            if this dtype is none of `torch.float32` or `torch.float64`, in which case
-            `torch.float32` will be used by default.
 
         Returns
         -------
         Tensor
         """
-        return self.optimize(
+        return self.__optimize(
             domain=domain,
+            sense="minimize",
             agents=agents,
             max_steps=max_steps,
             best_only=best_only,
             mode=mode,
             heated=heated,
-            minimize=True,
             verbose=verbose,
             early_stopping=early_stopping,
             sampling_period=sampling_period,
@@ -771,7 +760,7 @@ class QuadraticPolynomial(object):
         sampling period) the current spins will be compared to the previous
         ones (energy-wise). If the energy remains constant throughout a certain number of
         consecutive samplings (called the convergence threshold), the spins are considered
-        to have bifurcated andthe algorithm stops. These spaced samplings make it possible
+        to have bifurcated and the algorithm stops. These spaced samplings make it possible
         to decorrelate the spins and make their stability more informative.
 
         Finally, it is possible to make several particle vectors at the same
@@ -829,26 +818,19 @@ class QuadraticPolynomial(object):
             if `True` only the best found solution to the optimization problem
             is returned, otherwise all the solutions found by the simulated
             bifurcation algorithm.
-        dtype: torch.dtype, optional
-            Data-type used for storing the coefficients of the Ising model and
-            running the Simulated Bifurcation algorithm computations.
-            If provided, expected to be one of `torch.float32` or `torch.float64`.
-            If `None`, the dtype of the QuadraticPolynomial will be used, except
-            if this dtype is none of `torch.float32` or `torch.float64`, in which case
-            `torch.float32` will be used by default.
 
         Returns
         -------
         Tensor
         """
-        return self.optimize(
+        return self.__optimize(
             domain=domain,
+            sense="maximize",
             agents=agents,
             max_steps=max_steps,
             best_only=best_only,
             mode=mode,
             heated=heated,
-            minimize=False,
             verbose=verbose,
             early_stopping=early_stopping,
             sampling_period=sampling_period,

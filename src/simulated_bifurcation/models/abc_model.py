@@ -21,36 +21,6 @@ class ABCModel(ABC, QuadraticPolynomial):
 
     domain: Union[str, List[str]]
 
-    def optimize(
-        self,
-        *,
-        agents: int = 128,
-        max_steps: int = 10000,
-        best_only: bool = True,
-        mode: Literal["ballistic", "discrete"] = "ballistic",
-        heated: bool = False,
-        minimize: bool = True,
-        verbose: bool = True,
-        early_stopping: bool = True,
-        sampling_period: int = 50,
-        convergence_threshold: int = 50,
-        timeout: Optional[float] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        return super().optimize(
-            domain=self.domain,
-            agents=agents,
-            max_steps=max_steps,
-            best_only=best_only,
-            mode=mode,
-            heated=heated,
-            minimize=minimize,
-            verbose=verbose,
-            early_stopping=early_stopping,
-            sampling_period=sampling_period,
-            convergence_threshold=convergence_threshold,
-            timeout=timeout,
-        )
-
     def minimize(
         self,
         *,
@@ -65,13 +35,13 @@ class ABCModel(ABC, QuadraticPolynomial):
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        return self.optimize(
+        return super().minimize(
+            domain=self.domain,
             agents=agents,
             max_steps=max_steps,
             best_only=best_only,
             mode=mode,
             heated=heated,
-            minimize=True,
             verbose=verbose,
             early_stopping=early_stopping,
             sampling_period=sampling_period,
@@ -93,13 +63,13 @@ class ABCModel(ABC, QuadraticPolynomial):
         convergence_threshold: int = 50,
         timeout: Optional[float] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        return self.optimize(
+        return super().maximize(
+            domain=self.domain,
             agents=agents,
             max_steps=max_steps,
             best_only=best_only,
             mode=mode,
             heated=heated,
-            minimize=False,
             verbose=verbose,
             early_stopping=early_stopping,
             sampling_period=sampling_period,
