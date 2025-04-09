@@ -56,7 +56,7 @@ sb.maximize(p, domain="spin")
 
 A quadratic model is given a PyTorch's dtype that defines the type of its coefficients. When the polynomial is evaluated, the output values are typed using the same dtype.
 
-> ⚠️ The model's dtype is not used for optimization computations. A specific parameter called `dtype` serves this purpose in the optimization methods. For more details, see the [page](simulated_bifurcation_optimizer.md) dedicated to parameters.
+> The model's dtype is also used for optimization computations.
 
 ### Model device
 

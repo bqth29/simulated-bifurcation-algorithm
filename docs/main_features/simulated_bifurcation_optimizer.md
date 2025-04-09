@@ -16,7 +16,7 @@ Three optimization functions (`optimize`, `maximize` and `minimize`) that all sh
 > - The parameters are for optimization features only, for parameters related to quantum physics theory, see [Advanced Usage](advanced_usage.md)
 
 | Parameter                                       | Type                         | Default value   | Usage                                                                                                                                                                                  |
-| ----------------------------------------------- | ---------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ----------------------------------------------- | ---------------------------- | --------------- |----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [**`polynomial`**](#quadratic-model-definition) | `PolynomialLike`             |                 | Quadratic model to optimize.                                                                                                                                                           |
 | [`agents`](#parallelization-multi-agent-search) | `int`                        | `128`           | Number of oscillators to evolve in parallel                                                                                                                                            |
 | [`mode`](#sb-algorithm-versions)                | `"ballistic` or `"discrete"` | `True`          | Whether to use the ballistic version of the SB algorithm (bSB) or the discrete version (dSB).                                                                                          |
@@ -24,7 +24,7 @@ Three optimization functions (`optimize`, `maximize` and `minimize`) that all sh
 | [`convergence_threshold`](#early-stopping)      | `int`                        | `50`            | Number of consecutive samplings after which an agent is considered to have converged if its Ising energy has not changed. Its value is read only if `early_stopping` is set to `True`. |
 | [`device`](#gpu-computation)                    | `str` or `torch.device`      | `None`          | Device on which to run the optimization (CPU or GPU).                                                                                                                                  |
 | [**`domain`**](#optimization-domain)            | `str`                        |                 | Domain on which the optimization is carried out (spin, binary or integer values).                                                                                                      |
-| [`dtype`](#quadratic-model-definition)          | `torch.dtype`                | `torch.float32` | Computation dtype.                                                                                                                                                                     |
+| [`dtype`](#quadratic-model-definition)          | `torch.dtype`                | `torch.float32` | Model and computation dtype.                                                                                                                                                           |
 | [`early_stopping`](#early-stopping)             | `bool`                       | `True`          | Whether to use early-stopping or not.                                                                                                                                                  |
 | [`heated`](#sb-algorithm-versions)              | `bool`                       | `False`         | Whether to use the heated version of the SB algorithm or not.                                                                                                                          |
 | [`max_steps`](#number-of-iterations)            | `int`                        | `10000`         | Maximum number of iterations of the optimizer (one iteration is one step in the symplectic Euler scheme). If reached, the computation is stopped and the current results are returned. |
@@ -34,11 +34,10 @@ Three optimization functions (`optimize`, `maximize` and `minimize`) that all sh
 
 ## Quadratic model definition
 
-The quadratic model to optimize can be defined in a standalone mode with the `build_model` function of the package as presented in the [Quadratic Models](quadratic_models.md) page. Creating a model this way is useful if you intend to use it for other purposes like evaluating input data or defining a custom model dtype.
+The quadratic model to optimize can be defined in a standalone mode with the `build_model` function of the package as presented in the [Quadratic Models](quadratic_models.md) page. Creating a model this way is useful if you intend to use it for other purposes like evaluating input data.
 
-When a model is created with the `build_model` function, you can optimize it using one of the three optimization methods (`optimize`, `maximize` and `minimize`) of the `QuadraticPolynomial` class. These methods have the same name and are equivalent to the three optimization (static) functions described in this page. The only difference is that the methods of the `QuadraticPolynomial` class have no positional argument `polynomial`.
+When a model is created with the `build_model` function, you can optimize it using one of the three optimization methods (`optimize`, `maximize` and `minimize`) of the `QuadraticPolynomial` class. These methods have the same name and are equivalent to the three optimization (static) functions described in this page. The only difference is that the methods of the `QuadraticPolynomial` class have no positional argument `polynomial` and no keyword-only arguments `dtype` and `device` since both are already properties of the quadratic polynomial model.
 
-> Not paying attention to the difference between the model dtype and the computation dtype which is discussed [further on this page](#computation-dtype), it is equivalent to use:
 > ```python
 > sb.minimize(polynomial, **kwargs)
 > ```
@@ -48,7 +47,7 @@ When a model is created with the `build_model` function, you can optimize it usi
 > ```
 > Note that the same holds for `maximize` and `optimize`.
 
-However, if you want to minimize a model "*in one go*" without having to reuse it afterwards, you can define it directly in the optimization function (`optimize`, `maximize` or `minimize`). The model can be defined using [tensors](quadratic_models.md#using-tensors) or a [SymPy expression](quadratic_models.md#using-a-sympy-expression) as explained in the same [Quadratic Models](quadratic_models.md) page.
+However, if you want to minimize a model "*in one go*" without having to reuse it afterward, you can define it directly in the optimization function (`optimize`, `maximize` or `minimize`). The model can be defined using [tensors](quadratic_models.md#using-tensors) or a [SymPy expression](quadratic_models.md#using-a-sympy-expression) as explained in the same [Quadratic Models](quadratic_models.md) page.
 
 > The optimization model is passed as the only positional argument(s) of the optimization method.
 
@@ -66,22 +65,13 @@ Once the model is defined, the optimization domain must be set. It corresponds t
 
 ## Computation dtype
 
-It is possible to configure the computation dtype of the algorithm. On the one hand using a dtype with a less bits can improve the algorithm performances speed-wise and on the other hand, a dtype with a heavier bit representation ay be more accurate. The Simulated Bifurcation is based on numerical values betwwen -1 and 1 thus, only `torch.float32` and `torch.float64` are currently available. Because some key PyTorch methods used in the Simulated Bifurcation backend are not available for `torch.float16`, this dtype cannot be used to run the computations.
-
-Note that the computation dtype is only used for backend computations. The optimization model, if defined in a standalone mode, can have a different dtype (see how to build an optimization model in the [Quadratic Models](quadratic_models.md) page). However, when calling the SB algorithm directly with one of the three `optimize`, `maximize` and `minimize` functions, the computation dtype is also used as the model' dtype.
+It is possible to configure the computation dtype of the algorithm. On the one hand using a dtype with a less bits can improve the algorithm performances speed-wise and on the other hand, a dtype with a heavier bit representation ay be more accurate. The Simulated Bifurcation is based on numerical values between -1 and 1 thus, only `torch.float32` and `torch.float64` are currently available. Because some key PyTorch methods used in the Simulated Bifurcation backend are not available for `torch.float16`, this dtype cannot be used to run the computations. By default, `torch.float32` will be used if no dtype is provided by the user.
 
 > The computation dtype is set using the `dtype` parameter:
 >
 > ```python
 > sb.minimize(polynomial, dtype=torch.float32, **kwargs)
 > ```
-
-If you want to run the SB algorithm using the `torch.float32` dtype and want to create an integer model at the same time, for instance using the `torch.float8` dtype, the model should be created first and the optimization method called from this model in a second time:
-
-```python
-model = sb.build_model(polynomial, dtype=torch.int8) # The dtype parameter refers to the model's dtype
-model.minimize(dtype=torch.float32, **kwargs) # The dtype parameter refers to the computation dtype
-```
 
 ## Parallelization (multi-agent search)
 

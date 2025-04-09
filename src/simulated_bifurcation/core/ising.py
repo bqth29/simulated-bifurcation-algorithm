@@ -24,6 +24,7 @@ import torch
 from numpy import ndarray
 
 from ..optimizer import SimulatedBifurcationEngine, SimulatedBifurcationOptimizer
+from .utils import safe_get_device, safe_get_dtype
 
 # Workaround because `Self` type is only available in Python >= 3.11
 SelfIsing = TypeVar("SelfIsing", bound="Ising")
@@ -91,15 +92,8 @@ class Ising(object):
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
     ) -> None:
-        self._dtype = torch.float32 if dtype is None else dtype
-        self._device = (
-            torch.get_default_device() if device is None else torch.device(device)
-        )
-
-        if self._dtype not in [torch.float32, torch.float64]:
-            raise ValueError(
-                f"Simulated Bifurcation optimization can only be carried out with torch.float32 or torch.float64 dtypes, but got {dtype}."
-            )
+        self._dtype = safe_get_dtype(dtype)
+        self._device = safe_get_device(device)
 
         if isinstance(J, ndarray):
             J = torch.from_numpy(J)

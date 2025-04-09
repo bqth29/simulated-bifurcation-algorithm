@@ -4,7 +4,7 @@ import torch
 
 from src.simulated_bifurcation.core import Ising
 
-from ..test_utils import DEVICES, FLOAT_DTYPES, INT_DTYPES
+from ..test_utils import DEVICES, DTYPES
 
 J = [
     [1, 2, 3],
@@ -20,7 +20,7 @@ h = [1, 0, -1]
         (use_tensor, use_linear_term, dtype, device)
         for use_tensor in [True, False]
         for use_linear_term in [True, False]
-        for dtype in [*FLOAT_DTYPES, None]
+        for dtype in [*DTYPES, None]
         for device in [*DEVICES, None]
     ],
 )
@@ -44,22 +44,6 @@ def test_init_ising(
     assert ising._dimension == 3
     assert ising._dtype == torch.float32 if dtype is None else dtype
     assert ising._device == torch.get_default_device() if device is None else device
-
-
-@pytest.mark.parametrize(
-    "dtype, device",
-    [(dtype, device) for dtype in INT_DTYPES for device in DEVICES],
-)
-def test_init_ising_with_wrong_dtype(dtype: torch.dtype, device: torch.device):
-    with pytest.raises(
-        ValueError,
-        match=f"Simulated Bifurcation optimization can only be carried out with torch.float32 or torch.float64 dtypes, but got {dtype}.",
-    ):
-        Ising(
-            torch.tensor(J, dtype=torch.float32, device=device),
-            dtype=dtype,
-            device=device,
-        )
 
 
 def test_init_ising_with_non_2_dimensional_J():
@@ -88,7 +72,7 @@ def test_init_ising_with_inconsistant_h_shape():
     [
         (use_linear_term, dtype, device)
         for use_linear_term in [True, False]
-        for dtype in FLOAT_DTYPES
+        for dtype in DTYPES
         for device in DEVICES
     ],
 )
@@ -121,7 +105,7 @@ def test_as_simulated_bifurcation_tensor(
     [
         (use_linear_term, dtype, device)
         for use_linear_term in [True, False]
-        for dtype in FLOAT_DTYPES
+        for dtype in DTYPES
         for device in DEVICES
     ],
 )
