@@ -7,7 +7,7 @@
 [![Documentation Status](https://readthedocs.org/projects/simulated-bifurcation-algorithm/badge/?version=latest)](https://simulated-bifurcation-algorithm.readthedocs.io/en/latest/?badge=latest)
 ![GitHub stars](https://img.shields.io/github/stars/bqth29/simulated-bifurcation-algorithm.svg?style=social&label=Star)
 
-The **Simulated Bifurcation** (SB) algorithm is a fast and highly parallelizable state-of-the-art algorithm for combinatorial optimization inspired by quantum physics and spins dynamics. It relies on Hamiltonian quantum mechanics to find local minima of **Ising** problems. The last accuracy tests showed a median optimality gap of less than 1% on high-dimensional instances.
+The **Simulated Bifurcation** (SB) algorithm is a fast and highly parallelizable state-of-the-art algorithm for quadratic combinatorial optimization inspired by quantum physics and spins dynamics. It relies on Hamiltonian quantum mechanics to find local minima of **Ising** problems. The last accuracy tests showed a median optimality gap of less than 1% on high-dimensional instances.
 
 This open-source package utilizes **PyTorch** to leverage GPU computations, harnessing the high potential for parallelization offered by the SB algorithm.
 
@@ -66,15 +66,19 @@ The Simulated Bifurcation algorithm was originally introduced to solve Ising pro
 
 ### Usage on polynomial instances
 
-The SB algorithm can be written as the minimization or maximization of multivariable polynomials of degree two, i.e. written as
+The SB algorithm can be used more broadly to minimize or maximize quadratic models which are multivariable polynomials of degree two, i.e. written as
 
 $$\sum_{i=1}^{N} \sum_{j=1}^{N} M_{ij}x_{i}x_{j} + \sum_{i=1}^{N} v_{i}x_{i} + c$$
 
 for which the $x_{i}$'s can be spins, binary or non-negative integer.
 
-This can also be seen as the sum of a quadratic form, a linear form and a constant term and such a formulation is the basis of many optimization problems.
+This can also be seen as the sum of a quadratic form, a linear form and a constant term (offset) and such a formulation is the basis of many optimization problems.
 
-The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated input vector.
+> Any quadratic model written as above can easily be converted in an equivalent Ising model, thus allowing the use of the SB algorithm for minimizing said quadratic model on a given optimization domain.
+
+The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such quadratic models on a given optimization domain, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated input vector.
+
+> The optimization domain is not necessarily the same for all the variables of the quadratic model.
 
 The input types must be passed to the `domain` argument:
 
@@ -154,7 +158,7 @@ expression = poly(
 polynomial = sb.build_model(expression)
 ```
 
-The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated input vector.
+The `minimize` and `maximize` functions allow to respectively minimize and maximize the value of such polynomials for a given type of input values, relying on the SB algorithm. They both return the optimal polynomial value found by the SB algorithm, along with its associated variable vector.
 
 #### Minimization
 
@@ -167,6 +171,9 @@ binary_value, binary_vector = sb.minimize(matrix, vector, constant, domain='bina
 
 # 3-bits integer minimization
 int_value, int_vector = sb.minimize(matrix, vector, constant, domain='int3')
+
+# Minimization with each variable having its own domain
+value, vector = sb.minimize(matrix, vector, constant, domain=['spin', 'binary', 'int3'])
 ```
 
 Or, using a SymPy expression:
@@ -180,6 +187,9 @@ binary_value, binary_vector = sb.minimize(expression, domain='binary')
 
 # 3-bits integer minimization
 int_value, int_vector = sb.minimize(expression, domain='int3')
+
+# Minimization with each variable having its own domain
+value, vector = sb.minimize(expression, domain=['spin', 'binary', 'int3'])
 ```
 
 #### Maximization
@@ -193,6 +203,9 @@ binary_value, binary_vector = sb.maximize(matrix, vector, constant, domain='bina
 
 # 10-bits integer maximization
 int_value, int_vector = sb.maximize(matrix, vector, constant, domain='int10')
+
+# Maximization with each variable having its own domain
+value, vector = sb.minimize(matrix, vector, constant, domain=['spin', 'binary', 'int10'])
 ```
 
 Or, using a SymPy expression:
@@ -206,6 +219,9 @@ binary_value, binary_vector = sb.maximize(expression, domain='binary')
 
 # 3-bits integer minimization
 int_value, int_vector = sb.maximize(expression, domain='int10')
+
+# Maximization with each variable having its own domain
+value, vector = sb.minimize(expression, domain=['spin', 'binary', 'int10'])
 ```
 
 > For both functions, only the matrix is required, the vector and constant terms are optional.
@@ -282,14 +298,14 @@ The SB algorithm is available in four different versions (Goto _et al._) that re
 3. **Heated ballistic SB (HbSB)**: uses the bSB algorithm with a supplementary non-symplectic term to allow a higher solution space exploration.
 4. **Heated discrete SB (HdSB)**: uses the dSB algorithm with a supplementary non-symplectic term to allow a higher solution space exploration.
 
-These mode can be selected setting the parameters `ballistic` and `heated` to either `True` or `False` in the `Ising.optimize` method or the `minimize`/`maximize` functions.
+These modes can be selected setting the parameters `mode` to either `"ballistic"` or `"discrete"` and `heated` to either `True` or `False` in the `minimize`/`maximize` functions.
 
 ```python
-sb.minimize(matrix, ballistic=True, heated=False)  # bSB
-sb.minimize(matrix, ballistic=False, heated=True)  # HdSB
+sb.minimize(matrix, mode="ballistic", heated=False)  # bSB
+sb.minimize(matrix, mode="discrete", heated=True)  # HdSB
 
-sb.maximize(matrix, ballistic=False, heated=False)  # dSB
-sb.maximize(matrix, ballistic=True, heated=True)  # HbSB
+sb.maximize(matrix, mode="discrete", heated=False)  # dSB
+sb.maximize(matrix, mode="ballistic", heated=True)  # HbSB
 ```
 
 ### SB Algorithm's hyperparameters setting
@@ -306,7 +322,7 @@ sb.reset_env()
 
 ### Derived optimization models
 
-A lot of mathematical problems (QUBO, Travelling Salesman Problem, MAXCUT, ...) can be written as order-two multivariate polynomials problems, and thus can be solved using the Simulated Bifurcation algorithm. Some of them are already implemented in the `models` module:
+A lot of mathematical problems (QUBO, Travelling Salesman Problem, MAXCUT, ...) can be written as quadratic models, and thus can be solved using the Simulated Bifurcation algorithm. Some of them are already implemented in the `models` module:
 
 **🔬 Physics**
 
@@ -324,8 +340,6 @@ A lot of mathematical problems (QUBO, Travelling Salesman Problem, MAXCUT, ...) 
 ### Custom models
 
 You are also free to create your own models using our API. Depending on the type of model you wish to implement, you can create a subclass of the `ABCModel` class to quickly and efficiently link your custom model to an Ising problem and solve it using the SB algorithm. Such a model must have a `domain` class attribute that set the definition domain of all the instances.
-
-The advantage of doing so is that your model can directly call the `optimize` method that it inherits from the `QuadraticPolynomial` interface without having to redefine it.
 
 For instance, here is how the QUBO model was implemented:
 
