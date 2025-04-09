@@ -47,6 +47,11 @@ pip install simulated-bifurcation
 </tbody>
 </table>
 
+> To use the latest package version matching the GitHub main branch status, use:
+> ```
+> pip install git+https://github.com/bqth29/simulated-bifurcation-algorithm.git
+> ```
+
 ## 🧪 The _Simulated Bifurcation_ (SB) algorithm
 
 ### Ising model
