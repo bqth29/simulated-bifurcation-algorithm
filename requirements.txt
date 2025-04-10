@@ -1,5 +1,5 @@
 black==24.8.0
-coverage==7.8.0
+coverage
 flake8==7.2.0
 furo==2024.8.6
 isort==6.0.1

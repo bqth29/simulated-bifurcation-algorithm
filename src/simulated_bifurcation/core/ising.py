@@ -13,7 +13,7 @@ models.Ising:
     polynomials.
 QuadraticPolynomial:
     Class to implement multivariate quadratic polynomials from SymPy
-    polynomial expressions or tensors that can be casted to Ising model
+    polynomial expressions or tensors that can be cast to Ising model
     for Simulated Bifurcation algorithm compatibility purposes.
 
 """
@@ -298,7 +298,7 @@ class Ising(object):
             models and polynomials.
         QuadraticPolynomial:
             Class to implement multivariate quadratic polynomials from SymPy
-            polynomial expressions or tensors that can be casted to Ising model
+            polynomial expressions or tensors that can be cast to Ising model
             for Simulated Bifurcation algorithm compatibility purposes.
 
         Notes
@@ -310,11 +310,11 @@ class Ising(object):
         - ballistic SB : Uses the position of the particles for the
           position-based update of the momentums ; usually faster but
           less accurate. Use this variant by setting
-          `ballistic=True`.
+          `mode="ballistic"`.
         - discrete SB : Uses the sign of the position of the particles
           for the position-based update of the momentums ; usually
           slower but more accurate. Use this variant by setting
-          `ballistic=False`.
+          `mode="discrete"`.
 
         On top of these two variants, an additional thermal fluctuation
         term can be added in order to help escape local optima [3]. Use
