@@ -33,7 +33,7 @@ setuptools.setup(
     name="simulated-bifurcation",
     version=package_version,
     description="Efficient implementation of the quantum-inspired Simulated "
-    "Bifurcation (SB) algorithm to solve Ising-like problems.",
+    "Bifurcation (SB) algorithm to solve quadratic problems.",
     url="https://github.com/bqth29/simulated-bifurcation-algorithm",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -49,6 +49,6 @@ setuptools.setup(
     ],
     install_requires=dependencies,
     extras_require={"lint": lint, "test": test, "dev": dev, "all": dev, "docs": docs},
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     package_dir={"": "src"},
 )
