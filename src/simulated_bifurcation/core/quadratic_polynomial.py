@@ -3,7 +3,7 @@ Implementation of the QuadraticPolynomial class.
 
 QuadraticPolynomial is a utility class to implement multivariate
 quadratic polynomials from SymPy polynomial expressions or tensors.
-They can automatically be casted to Ising model so they can be optimized
+They can automatically be cast to Ising model so they can be optimized
 using the Simulated Bifurcation algorithm on a given domain. The available
 domains are:
 
@@ -58,7 +58,7 @@ class QuadraticPolynomial(object):
     - n-bits integer optimization : variables are all integer values in the range
       0 to 2^n - 1 (inclusive)
 
-    A multivariate quadratic polynomial defined on a given domain can be casted to
+    A multivariate quadratic polynomial defined on a given domain can be cast to
     an equivalent Ising model and thus optimized using the Simulated Bifurcation
     algorithm. The notion of equivalence means that finding the ground state of this
     Ising model is strictly equivalent to finding the vector solution that
