@@ -78,11 +78,11 @@ described in [2]:
 
 - ballistic SB : Uses the position of the particles for the
   position-based update of the momentums ; usually faster but
-  less accurate. Use this variant by setting `ballistic=True`.
+  less accurate. Use this variant by setting `mode="ballistic"`.
 - discrete SB : Uses the sign of the position of the particles for
   the position-based update of the momentums ; usually slower
   but more accurate. Use this variant by setting
-  `ballistic=False`.
+  `mode="discrete"`.
 
 On top of these two variants, an additional thermal fluctuation term
 can be added in order to help escape local maxima [3]. Use this
@@ -184,4 +184,4 @@ reset_env()
 
 
 # !MDC{set}{__version__ = "{version}"}
-__version__ = "1.3.0.dev0"
+__version__ = "2.0.0"
