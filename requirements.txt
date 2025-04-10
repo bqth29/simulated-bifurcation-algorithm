@@ -2,7 +2,7 @@ black==24.8.0
 coverage
 flake8
 furo==2024.8.6
-isort==6.0.1
+isort>=6.0.0
 myst-parser
 numpy>=2.0.0
 numpydoc==1.8.0
