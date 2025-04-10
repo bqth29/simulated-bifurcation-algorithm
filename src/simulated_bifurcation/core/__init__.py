@@ -9,7 +9,7 @@ Ising:
     user-defined polynomial.
 QuadraticPolynomial:
     Class to implement multivariate quadratic polynomials from SymPy
-    polynomial expressions or tensors that can be casted to Ising model
+    polynomial expressions or tensors that can be cast to Ising model
     for Simulated Bifurcation algorithm compatibility purposes.
 
 See Also

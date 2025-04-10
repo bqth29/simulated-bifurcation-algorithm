@@ -1,1 +1,4 @@
--e .[docs]
+furo==2024.8.6
+myst-parser
+numpydoc==1.8.0
+Sphinx>=7.4.7
