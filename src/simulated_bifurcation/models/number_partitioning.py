@@ -20,7 +20,7 @@ class NumberPartitioning(ABCQuadraticModel):
         self.__numbers = numbers[:]
 
     def _as_quadratic_polynomial(
-        self, dtype: Optional[torch.dtype], device: Optional[torch.dtype]
+        self, dtype: Optional[torch.dtype], device: Optional[Union[str, torch.device]]
     ) -> QuadraticPolynomial:
         tensor_numbers = np.array(self.__numbers).reshape(-1, 1)
         return QuadraticPolynomial(

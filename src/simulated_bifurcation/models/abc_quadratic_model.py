@@ -12,15 +12,15 @@ class ABCQuadraticModel(ABC):
 
     @abstractmethod
     def _as_quadratic_polynomial(
-        self, dtype: Optional[torch.dtype], device: Optional[torch.dtype]
+        self, dtype: Optional[torch.dtype], device: Optional[Union[str, torch.device]]
     ) -> QuadraticPolynomial:
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
 
     @abstractmethod
     def _from_optimized_tensor(
         self, optimized_tensor: torch.Tensor, optimized_cost: torch.Tensor
     ) -> Any:
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
 
     def solve(
         self,
@@ -54,7 +54,7 @@ class ABCQuadraticModel(ABC):
             return self._from_optimized_tensor(*quadratic_model.minimize(**kwargs))
         elif self.sense == "maximize":
             return self._from_optimized_tensor(*quadratic_model.maximize(**kwargs))
-        else:
+        else: # pragma: no cover
             raise ValueError(
                 f'Unknown optimization sense {self.sense}. Expected "maximize" or "minimize".'
             )

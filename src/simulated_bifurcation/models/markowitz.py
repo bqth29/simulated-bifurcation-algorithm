@@ -27,7 +27,7 @@ class SequentialMarkowitz(ABCQuadraticModel):
     where:
 
     - :math:`1, ..., t, ... T` are the trading decision instants
-    - :math:`w_{t}` is the stocks portolio at time :math:`t`. All the stocks
+    - :math:`w_{t}` is the stocks portfolio at time :math:`t`. All the stocks
       are integer values.
     - :math:`\\Sigma_{t}` is the assets' covariance matrix at time :math:`t`
     - :math:`\\mu_{t}` is the vector of expected returns at time :math:`t`
@@ -74,7 +74,7 @@ class SequentialMarkowitz(ABCQuadraticModel):
         self.shape = self.timestamps, self.assets
 
     def _as_quadratic_polynomial(
-        self, dtype: Optional[torch.dtype], device: Optional[torch.dtype]
+        self, dtype: Optional[torch.dtype], device: Optional[Union[str, torch.device]]
     ) -> QuadraticPolynomial:
         return QuadraticPolynomial(
             self.__compile_matrix(),
