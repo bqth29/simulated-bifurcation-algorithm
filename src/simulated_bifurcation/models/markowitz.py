@@ -3,10 +3,11 @@ from typing import Optional, Tuple, Union
 import numpy as np
 import torch
 
-from .abc_model import ABCModel
+from ..core.quadratic_polynomial import QuadraticPolynomial
+from .abc_quadratic_model import ABCQuadraticModel
 
 
-class SequentialMarkowitz(ABCModel):
+class SequentialMarkowitz(ABCQuadraticModel):
     """
     Implementation of the Markowitz model for the integer
     trading trajectory optimization problem.
@@ -26,7 +27,7 @@ class SequentialMarkowitz(ABCModel):
     where:
 
     - :math:`1, ..., t, ... T` are the trading decision instants
-    - :math:`w_{t}` is the stocks portolio at time :math:`t`. All the stocks
+    - :math:`w_{t}` is the stocks portfolio at time :math:`t`. All the stocks
       are integer values.
     - :math:`\\Sigma_{t}` is the assets' covariance matrix at time :math:`t`
     - :math:`\\mu_{t}` is the vector of expected returns at time :math:`t`
@@ -34,6 +35,8 @@ class SequentialMarkowitz(ABCModel):
     - :math:`\\Lambda_{t} = w_{t} - w_{t - 1}` are the rebalancing transaction costs
       resulting from the stock difference between time :math:`t - 1` and :math:`t`
     """
+
+    sense = "maximize"
 
     def __init__(
         self,
@@ -43,49 +46,43 @@ class SequentialMarkowitz(ABCModel):
         initial_stocks: Optional[Union[torch.Tensor, np.ndarray]] = None,
         risk_coefficient: float = 1,
         number_of_bits: int = 1,
-        dtype: Optional[torch.dtype] = None,
-        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         """
         Instantiates a Markowitz problem model that can be optimized using
         the Simulated Bifurcation algorithm.
         """
-        self.covariances = self.__cast_to_tensor(
-            covariances, dtype=dtype, device=device
-        )
-        self.expected_returns = self.__cast_to_tensor(
-            expected_returns, dtype=dtype, device=device
-        )
-        self.rebalancing_costs = self.__cast_to_tensor(
-            rebalancing_costs, dtype=dtype, device=device
-        )
+        self.covariances = covariances
+        self.expected_returns = expected_returns
+        self.rebalancing_costs = rebalancing_costs
         self.risk_coefficient = risk_coefficient
         self.timestamps = covariances.shape[0]
         self.assets = covariances.shape[1]
 
         self.initial_stocks = (
-            torch.zeros(self.assets) if initial_stocks is None else initial_stocks
+            torch.zeros(
+                self.assets,
+                dtype=rebalancing_costs.dtype,
+                device=rebalancing_costs.device,
+            )
+            if initial_stocks is None
+            else initial_stocks
         )
 
         self.number_of_bits = number_of_bits
         self.domain = f"int{number_of_bits}"
 
-        matrix, vector, constant = self.compile_model()
-        super().__init__(
-            matrix,
-            vector.reshape(
-                -1,
-            ),
-            constant,
+        self.shape = self.timestamps, self.assets
+
+    def _as_quadratic_polynomial(
+        self, dtype: Optional[torch.dtype], device: Optional[Union[str, torch.device]]
+    ) -> QuadraticPolynomial:
+        return QuadraticPolynomial(
+            self.__compile_matrix(),
+            self.__compile_vector(),
+            self.__compile_offset(),
             dtype=dtype,
             device=device,
         )
-
-    def compile_model(self) -> Tuple[torch.Tensor, torch.Tensor, float]:
-        matrix = self.__compile_matrix()
-        vector = self.__compile_vector()
-        constant = self.__compile_constant()
-        return matrix, vector, constant
 
     def __compile_matrix(self) -> torch.Tensor:
         block_diagonal = self.__create_block_diagonal()
@@ -116,40 +113,19 @@ class SequentialMarkowitz(ABCModel):
             first_timestamp_rebalancing_costs + first_timestamp_rebalancing_costs.t()
         ) @ self.initial_stocks.reshape(-1, 1)
         stacked_expected_returns[: self.assets] += initial_stocks_contribution
-        return stacked_expected_returns
+        return stacked_expected_returns.reshape(
+            -1,
+        )
 
-    def __compile_constant(self) -> float:
+    def __compile_offset(self) -> float:
         initial_portfolio = self.initial_stocks.reshape(-1, 1)
-        constant = (
-            -initial_portfolio.t() @ self.rebalancing_costs[0] @ initial_portfolio
-        )
-        return constant.item()
+        constant = -initial_portfolio.T @ self.rebalancing_costs[0] @ initial_portfolio
+        return float(constant)
 
-    def __cast_to_tensor(
-        self,
-        tensor_like: Union[torch.Tensor, np.ndarray],
-        dtype: torch.dtype,
-        device: Union[str, torch.device],
-    ) -> torch.Tensor:
-        if isinstance(tensor_like, torch.Tensor):
-            return tensor_like.to(dtype=dtype, device=device)
-        else:
-            return torch.from_numpy(tensor_like).to(dtype=dtype, device=device)
-
-    @property
-    def portfolio(self) -> Optional[torch.Tensor]:
-        if self.sb_result is None:
-            return None
-        best_agent = torch.argmax(self(self.sb_result.t())).item()
-        return self.sb_result[:, best_agent].reshape(self.timestamps, self.assets)
-
-    @property
-    def gains(self) -> float:
-        return (
-            self(self.portfolio.reshape(1, -1)).item()
-            if self.portfolio is not None
-            else None
-        )
+    def _from_optimized_tensor(
+        self, optimized_tensor: torch.Tensor, optimized_cost: torch.Tensor
+    ) -> Tuple[torch.Tensor, float]:
+        return optimized_tensor.reshape(*self.shape), optimized_cost.item()
 
 
 class Markowitz(SequentialMarkowitz):
@@ -164,8 +140,6 @@ class Markowitz(SequentialMarkowitz):
         expected_return: Union[torch.Tensor, np.ndarray],
         risk_coefficient: float = 1,
         number_of_bits: int = 1,
-        dtype: Optional[torch.dtype] = None,
-        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         covariance = torch.unsqueeze(covariance, 0)
         expected_return = torch.unsqueeze(expected_return, 0)
@@ -177,25 +151,32 @@ class Markowitz(SequentialMarkowitz):
             None,
             risk_coefficient,
             number_of_bits,
-            dtype,
-            device,
         )
+        self.shape = (-1,)
 
-    @property
-    def covariance(self) -> torch.Tensor:
-        return -(2 / self.risk_coefficient) * self._quadratic_coefficients
 
-    @property
-    def expected_return(self) -> torch.Tensor:
-        return self._linear_coefficients
+def markowitz(
+    covariance: Union[torch.Tensor, np.ndarray],
+    expected_return: Union[torch.Tensor, np.ndarray],
+    risk_coefficient: float = 1,
+    number_of_bits: int = 1,
+) -> Markowitz:
+    return Markowitz(covariance, expected_return, risk_coefficient, number_of_bits)
 
-    @property
-    def portfolio(self) -> Optional[torch.Tensor]:
-        portfolio = super().portfolio
-        return (
-            portfolio.reshape(
-                -1,
-            )
-            if portfolio is not None
-            else None
-        )
+
+def sequential_markowitz(
+    covariances: Union[torch.Tensor, np.ndarray],
+    expected_returns: Union[torch.Tensor, np.ndarray],
+    rebalancing_costs: Union[torch.Tensor, np.ndarray],
+    initial_stocks: Optional[Union[torch.Tensor, np.ndarray]] = None,
+    risk_coefficient: float = 1,
+    number_of_bits: int = 1,
+) -> SequentialMarkowitz:
+    return SequentialMarkowitz(
+        covariances,
+        expected_returns,
+        rebalancing_costs,
+        initial_stocks,
+        risk_coefficient,
+        number_of_bits,
+    )
