@@ -25,7 +25,7 @@ test = [
     "coverage",
     "pytest",
 ]
-dev = docs + lint + test
+dev = docs + lint + test + ["bump2version"]
 
 
 setuptools.setup(
