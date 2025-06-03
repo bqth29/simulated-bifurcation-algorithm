@@ -376,8 +376,6 @@ class QUBO(ABCModel):
 
 If you are using this code for your own projects please cite our work:
 
-[comment]: # (!MDC{begin}{BibTeX})
-
 ```bibtex
 @software{Ageron_Simulated_Bifurcation_SB_2023,
     author = {Ageron, Romain and Bouquet, Thomas and Pugliese, Lorenzo},
@@ -388,5 +386,3 @@ If you are using this code for your own projects please cite our work:
     year = {2025},
 }
 ```
-
-[comment]: # (!MDC{end}{BibTeX})
