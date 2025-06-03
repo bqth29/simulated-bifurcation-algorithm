@@ -42,9 +42,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     major, minor, patch = args.version
 
-    os.system("git checkout main")
-    os.system("git pull")
-
     check_release_date()
 
     new_branch = f"prepare-release-{major}.{minor}.{patch}"
