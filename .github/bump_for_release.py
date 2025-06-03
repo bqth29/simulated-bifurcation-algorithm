@@ -10,5 +10,7 @@ if __name__ == "__main__":
         nargs=3,
         help='version is made of exactly three integer values'
     )
-    major, minor, patch = parser.parse_args()
+
+    args = parser.parse_args()
+    major, minor, patch = args.version
     os.system(f"bump2version --new-version {major}.{minor}.{patch} .")
