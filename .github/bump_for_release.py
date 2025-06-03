@@ -26,5 +26,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     major, minor, patch = args.version
-    # os.system(f"bump2version --new-version {major}.{minor}.{patch} .")
-    # os.system(f"bump2version --new-version {major}.{minor + 1}.{patch}.dev0 .")
+    os.system(f"bump2version --new-version {major}.{minor}.{patch} --commit .")
+    os.system(f"bump2version --new-version {major}.{minor + 1}.{patch}.dev0 --commit .")
