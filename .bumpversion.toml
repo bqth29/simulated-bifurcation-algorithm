@@ -1,5 +1,5 @@
-[bumpversion]
-current_version = '2.1.0.dev0'
+# [bumpversion]
+# current_version = '2.1.0.dev0'
 
 # Specify how to search for and replace the version in the 'Cargo.toml' file.
 [bumpversion:file:setup.py]
