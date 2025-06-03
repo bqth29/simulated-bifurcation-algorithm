@@ -5,3 +5,7 @@
 [bumpversion:file:setup.py]
 search = 'package_version = "{current_version}"'
 replace = 'package_version = "{new_version}"'
+
+[bumpversion:file:CITATION.cff]
+search = 'version: {current_version}'
+replace = 'version: {new_version}'
