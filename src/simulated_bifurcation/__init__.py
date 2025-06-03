@@ -183,5 +183,4 @@ from .simulated_bifurcation import build_model, maximize, minimize
 reset_env()
 
 
-# !MDC{set}{__version__ = "{version}"}
 __version__ = "2.1.0.dev0"
