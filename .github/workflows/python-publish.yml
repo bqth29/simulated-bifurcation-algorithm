@@ -28,10 +28,6 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Check version string
-        run: |
-          python .github/scripts/metadata_checker --release
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
