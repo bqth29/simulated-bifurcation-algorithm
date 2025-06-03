@@ -379,10 +379,10 @@ If you are using this code for your own projects please cite our work:
 ```bibtex
 @software{Ageron_Simulated_Bifurcation_SB_2023,
     author = {Ageron, Romain and Bouquet, Thomas and Pugliese, Lorenzo},
+    month = apr,
     title = {{Simulated Bifurcation (SB) algorithm for Python}},
     url = {https://github.com/bqth29/simulated-bifurcation-algorithm},
     version = {2.1.0.dev0},
-    month = apr,
     year = {2025},
 }
 ```

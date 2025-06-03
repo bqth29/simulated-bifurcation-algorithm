@@ -6,7 +6,9 @@ import re
 
 def check_release_month(line: str, current_date: datetime.date):
     current_month = current_date.strftime("%B").lower()[:3]
-    month_match = re.search("month = {(?P<month>[a-z]{3})}", line)
+    month_match = re.search("month = (?P<month>[a-z]{3})", line)
+    if month_match is not None:
+        print(month_match["month"])
     if month_match is not None and month_match["month"] != current_month:
         raise ValueError(
             f"Release month in README.md ({month_match['month']}) is not consistent with current month ({current_month}). Please update it."
@@ -40,13 +42,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
     major, minor, patch = args.version
 
-    # os.system("git checkout main")
-    # os.system("git pull")
+    os.system("git checkout main")
+    os.system("git pull")
 
     check_release_date()
 
-    # new_branch = f"prepare-release-{major}.{minor}.{patch}"
-    # os.system(f"git checkout -b {new_branch}")
-    # os.system(f"bump2version --new-version {major}.{minor}.{patch} --commit .")
-    # os.system(f"bump2version --new-version {major}.{minor + 1}.0.dev0 --commit .")
-    # os.system(f"git push --set-upstream origin {new_branch}")
+    new_branch = f"prepare-release-{major}.{minor}.{patch}"
+    os.system(f"git checkout -b {new_branch}")
+    os.system(f"bump2version --new-version {major}.{minor}.{patch} --commit .")
+    os.system(f"bump2version --new-version {major}.{minor + 1}.0.dev0 --commit .")
+    os.system(f"git push --set-upstream origin {new_branch}")
