@@ -28,7 +28,7 @@ import torch
 from sympy import Poly
 
 from .ising import Ising
-from .utils import safe_get_device, safe_get_dtype
+from .tensor_bearer import TensorBearer
 from .variable import Variable
 
 INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
@@ -41,7 +41,7 @@ DOMAIN_ERROR = ValueError(
 )
 
 
-class QuadraticPolynomial(object):
+class QuadraticPolynomial(TensorBearer):
     """
     Internal implementation of a multivariate quadratic polynomial.
 
@@ -157,8 +157,7 @@ class QuadraticPolynomial(object):
         dtype: Optional[torch.dtype] = None,
         device: Optional[Union[str, torch.device]] = None,
     ):
-        self._dtype = safe_get_dtype(dtype)
-        self._device = safe_get_device(device)
+        super().__init__(dtype=dtype, device=device)
         self.sb_result = None
 
         if len(polynomial_data) == 1 and isinstance(polynomial_data[0], Poly):
@@ -169,17 +168,17 @@ class QuadraticPolynomial(object):
                 )
             dimension = len(polynomial.gens)
             self._quadratic_coefficients = torch.zeros(
-                dimension, dimension, dtype=self._dtype, device=self._device
+                dimension, dimension, dtype=self.dtype, device=self.device
             )
             self._linear_coefficients = torch.zeros(
-                dimension, dtype=self._dtype, device=self._device
+                dimension, dtype=self.dtype, device=self.device
             )
-            self._bias = torch.tensor(0.0, dtype=self._dtype, device=self._device)
+            self._bias = torch.tensor(0.0, dtype=self.dtype, device=self.device)
             for monom, coeff in polynomial.terms():
                 coeff = float(coeff)
                 if sum(monom) == 0:
                     self._bias = torch.tensor(
-                        coeff, dtype=self._dtype, device=self._device
+                        coeff, dtype=self.dtype, device=self.device
                     )
                 elif sum(monom) == 1:
                     self._linear_coefficients[monom.index(1)] = coeff
@@ -201,7 +200,7 @@ class QuadraticPolynomial(object):
                     tensor_like = torch.from_numpy(tensor_like)
                 elif isinstance(tensor_like, (int, float)):
                     tensor_like = torch.tensor(
-                        tensor_like, dtype=self._dtype, device=self._device
+                        tensor_like, dtype=self.dtype, device=self.device
                     )
                 if isinstance(tensor_like, torch.Tensor):
                     if tensor_like.ndim == 0:
@@ -234,7 +233,7 @@ class QuadraticPolynomial(object):
                         setattr(
                             self,
                             attribute_to_set,
-                            tensor_like.to(dtype=self._dtype, device=self._device),
+                            tensor_like.to(dtype=self.dtype, device=self.device),
                         )
                 else:
                     raise ValueError(
@@ -242,21 +241,21 @@ class QuadraticPolynomial(object):
                     )
             if self._quadratic_coefficients is None:
                 self._quadratic_coefficients = torch.zeros(
-                    dimension, dimension, dtype=self._dtype, device=self._device
+                    dimension, dimension, dtype=self.dtype, device=self.device
                 )
             if self._linear_coefficients is None:
                 self._linear_coefficients = torch.zeros(
-                    dimension, dtype=self._dtype, device=self._device
+                    dimension, dtype=self.dtype, device=self.device
                 )
             if self._bias is None:
-                self._bias = torch.tensor(0.0, dtype=self._dtype, device=self._device)
+                self._bias = torch.tensor(0.0, dtype=self.dtype, device=self.device)
 
         self._dimension = self._quadratic_coefficients.shape[0]
 
     def __call__(self, value: Union[torch.Tensor, np.ndarray]) -> torch.Tensor:
         if not isinstance(value, torch.Tensor):
             try:
-                value = torch.tensor(value, dtype=self._dtype, device=self._device)
+                value = torch.tensor(value, dtype=self.dtype, device=self.device)
             except Exception as err:
                 raise TypeError("Input value cannot be cast to Tensor.") from err
 
@@ -368,12 +367,12 @@ class QuadraticPolynomial(object):
         """
         variables = self.__get_variables(domain=domain)
         spin_identity_vector = QuadraticPolynomial.__spin_identity_vector(
-            variables=variables, dtype=self._dtype, device=self._device
+            variables=variables, dtype=self.dtype, device=self.device
         )
         spin_weighted_integer_to_binary_matrix = (
             spin_identity_vector + 1
         ) * QuadraticPolynomial.__integer_to_binary_matrix(
-            variables=variables, dtype=self._dtype, device=self._device
+            variables=variables, dtype=self.dtype, device=self.device
         )
         symmetric_quadratic_tensor = (
             self._quadratic_coefficients + self._quadratic_coefficients.t()
@@ -396,7 +395,7 @@ class QuadraticPolynomial(object):
             -1,
         )
         torch.diag(J)[...] = 0
-        return Ising(J, h, self._dtype, self._device)
+        return Ising(J, h, self.dtype, self.device)
 
     def convert_spins(
         self, optimized_spins: torch.Tensor, domain: Union[str, List[str]]
@@ -441,12 +440,12 @@ class QuadraticPolynomial(object):
         """
         variables = self.__get_variables(domain=domain)
         spin_identity_vector = QuadraticPolynomial.__spin_identity_vector(
-            variables=variables, dtype=self._dtype, device=self._device
+            variables=variables, dtype=self.dtype, device=self.device
         )
         spin_weighted_integer_to_binary_matrix = (
             spin_identity_vector + 1
         ) * QuadraticPolynomial.__integer_to_binary_matrix(
-            variables=variables, dtype=self._dtype, device=self._device
+            variables=variables, dtype=self.dtype, device=self.device
         )
         return (
             None
@@ -582,7 +581,7 @@ class QuadraticPolynomial(object):
             timeout=timeout,
         )
         self.sb_result = self.convert_spins(optimized_spins, domain).to(
-            dtype=self._dtype, device=self._device
+            dtype=self.dtype, device=self.device
         )
         result = self.sb_result.t()
         evaluation = self(result)

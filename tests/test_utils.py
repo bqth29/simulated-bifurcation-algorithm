@@ -1,5 +1,7 @@
 import torch
 
+BOOLEANS = [True, False]
+
 DTYPES = [torch.float32, torch.float64]
 
 DEVICES = (

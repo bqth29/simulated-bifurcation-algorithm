@@ -42,8 +42,8 @@ def test_init_ising(
         assert torch.equal(torch.zeros(3, dtype=dtype, device=device), ising._h)
     assert ising._has_linear_term == use_linear_term
     assert ising._dimension == 3
-    assert ising._dtype == torch.float32 if dtype is None else dtype
-    assert ising._device == torch.get_default_device() if device is None else device
+    assert ising.dtype == torch.float32 if dtype is None else dtype
+    assert ising.device == torch.get_default_device() if device is None else device
 
 
 def test_init_ising_with_non_2_dimensional_J():
@@ -131,9 +131,9 @@ def test_negative_ising(
         )
     assert negative_ising._has_linear_term == use_linear_term
     assert negative_ising._dimension == 3
-    assert negative_ising._dtype == torch.float32 if dtype is None else dtype
+    assert negative_ising.dtype == torch.float32 if dtype is None else dtype
     assert (
-        negative_ising._device == torch.get_default_device()
+        negative_ising.device == torch.get_default_device()
         if device is None
         else device
     )

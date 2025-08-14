@@ -3,7 +3,7 @@ from typing import Union
 import numpy as np
 import pytest
 import torch
-from sympy import Poly, poly, symbols
+from sympy import poly, symbols
 
 from src.simulated_bifurcation.core import QuadraticPolynomial
 
@@ -21,8 +21,8 @@ def test_init_from_poly(dtype: torch.dtype, device: torch.device):
     )
     quadratic_polynomial = QuadraticPolynomial(polynomial, dtype=dtype, device=device)
 
-    assert quadratic_polynomial._dtype == dtype
-    assert quadratic_polynomial._device == device
+    assert quadratic_polynomial.dtype == dtype
+    assert quadratic_polynomial.device == device
     assert quadratic_polynomial._dimension == 3
     assert torch.equal(
         torch.tensor(
@@ -55,8 +55,8 @@ def test_init_from_poly_no_bias(dtype: torch.dtype, device: torch.device):
     )
     quadratic_polynomial = QuadraticPolynomial(polynomial, dtype=dtype, device=device)
 
-    assert quadratic_polynomial._dtype == dtype
-    assert quadratic_polynomial._device == device
+    assert quadratic_polynomial.dtype == dtype
+    assert quadratic_polynomial.device == device
     assert quadratic_polynomial._dimension == 3
     assert torch.equal(
         torch.tensor(
@@ -87,8 +87,8 @@ def test_init_from_poly_no_degree_1_monoms(dtype: torch.dtype, device: torch.dev
     polynomial = poly(x**2 + 3 * y**2 - 5 * z**2 + 4 * x * y - 2 * y * z + 6)
     quadratic_polynomial = QuadraticPolynomial(polynomial, dtype=dtype, device=device)
 
-    assert quadratic_polynomial._dtype == dtype
-    assert quadratic_polynomial._device == device
+    assert quadratic_polynomial.dtype == dtype
+    assert quadratic_polynomial.device == device
     assert quadratic_polynomial._dimension == 3
     assert torch.equal(
         torch.tensor(
@@ -119,8 +119,8 @@ def test_init_from_poly_no_degree_2_monoms(dtype: torch.dtype, device: torch.dev
     polynomial = poly(8 * x - 7 * y + z + 6)
     quadratic_polynomial = QuadraticPolynomial(polynomial, dtype=dtype, device=device)
 
-    assert quadratic_polynomial._dtype == dtype
-    assert quadratic_polynomial._device == device
+    assert quadratic_polynomial.dtype == dtype
+    assert quadratic_polynomial.device == device
     assert quadratic_polynomial._dimension == 3
     assert torch.equal(
         torch.tensor(
