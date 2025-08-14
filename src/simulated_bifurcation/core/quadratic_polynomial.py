@@ -195,49 +195,40 @@ class QuadraticPolynomial(TensorBearer):
             self._quadratic_coefficients = None
             self._linear_coefficients = None
             self._bias = None
-            for tensor_like in polynomial_data:
-                if isinstance(tensor_like, np.ndarray):
-                    tensor_like = torch.from_numpy(tensor_like)
-                elif isinstance(tensor_like, (int, float)):
-                    tensor_like = torch.tensor(
-                        tensor_like, dtype=self.dtype, device=self.device
-                    )
-                if isinstance(tensor_like, torch.Tensor):
-                    if tensor_like.ndim == 0:
-                        attribute_to_set = "_bias"
-                    elif tensor_like.ndim == 1:
-                        attribute_to_set = "_linear_coefficients"
-                    elif tensor_like.ndim == 2:
-                        attribute_to_set = "_quadratic_coefficients"
-                        rows, cols = tensor_like.shape
-                        if rows != cols:
-                            raise ValueError(
-                                "Provided quadratic coefficients tensor is not square."
-                            )
-                    else:
+            for polynomial_data_element in polynomial_data:
+                # noinspection PyTypeChecker
+                tensor_like = self._safe_get_tensor(polynomial_data_element)
+                if tensor_like.ndim == 0:
+                    attribute_to_set = "_bias"
+                elif tensor_like.ndim == 1:
+                    attribute_to_set = "_linear_coefficients"
+                elif tensor_like.ndim == 2:
+                    attribute_to_set = "_quadratic_coefficients"
+                    rows, cols = tensor_like.shape
+                    if rows != cols:
                         raise ValueError(
-                            f"Expected a tensor with at most 2 dimensions, got {tensor_like.ndim}."
-                        )
-                    if getattr(self, attribute_to_set) is not None:
-                        raise ValueError(
-                            f"Providing two tensors for the same degree is ambiguous. Got at least two tensors for degree {tensor_like.ndim}."
-                        )
-                    else:
-                        if tensor_like.ndim > 0:
-                            if dimension is None:
-                                dimension = tensor_like.shape[0]
-                            elif dimension != tensor_like.shape[0]:
-                                raise ValueError(
-                                    f"Inconsistant shape among provided tensors. Expected {dimension} but got {tensor_like.shape[0]}."
-                                )
-                        setattr(
-                            self,
-                            attribute_to_set,
-                            tensor_like.to(dtype=self.dtype, device=self.device),
+                            "Provided quadratic coefficients tensor is not square."
                         )
                 else:
                     raise ValueError(
-                        f"Unsupported coefficient tensor type: {type(tensor_like)}. Expected a torch.Tensor or a numpy.ndarray."
+                        f"Expected a tensor with at most 2 dimensions, got {tensor_like.ndim}."
+                    )
+                if getattr(self, attribute_to_set) is not None:
+                    raise ValueError(
+                        f"Providing two tensors for the same degree is ambiguous. Got at least two tensors for degree {tensor_like.ndim}."
+                    )
+                else:
+                    if tensor_like.ndim > 0:
+                        if dimension is None:
+                            dimension = tensor_like.shape[0]
+                        elif dimension != tensor_like.shape[0]:
+                            raise ValueError(
+                                f"Inconsistant shape among provided tensors. Expected {dimension} but got {tensor_like.shape[0]}."
+                            )
+                    setattr(
+                        self,
+                        attribute_to_set,
+                        tensor_like,
                     )
             if self._quadratic_coefficients is None:
                 self._quadratic_coefficients = torch.zeros(
@@ -580,9 +571,8 @@ class QuadraticPolynomial(TensorBearer):
             convergence_threshold=convergence_threshold,
             timeout=timeout,
         )
-        self.sb_result = self.convert_spins(optimized_spins, domain).to(
-            dtype=self.dtype, device=self.device
-        )
+        self.sb_result = self._cast_tensor(self.convert_spins(optimized_spins, domain))
+
         result = self.sb_result.t()
         evaluation = self(result)
         if best_only:

@@ -496,8 +496,8 @@ def test_build_polynomial_from_tensor(
 
 def test_build_polynomial_with_wrong_domain():
     with pytest.raises(
-        ValueError,
-        match="Unsupported coefficient tensor type: <class 'str'>. Expected a torch.Tensor or a numpy.ndarray.",
+        TypeError,
+        match="Tensors can only be interpreted from NumPy arrays or int/float values.",
     ):
         QuadraticPolynomial("Hello world!")
 

@@ -93,11 +93,9 @@ class Ising(TensorBearer):
         device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         super().__init__(dtype=dtype, device=device)
-
-        if isinstance(J, ndarray):
-            J = torch.from_numpy(J)
-        if isinstance(h, ndarray):
-            h = torch.from_numpy(h)
+        J = self._safe_get_tensor(J)
+        if h is not None:
+            h = self._safe_get_tensor(h)
 
         if J.ndim != 2:
             raise ValueError(
@@ -109,7 +107,7 @@ class Ising(TensorBearer):
                 f"Expected J to be square, but got {rows} rows and {cols} columns."
             )
 
-        self._J = J.to(dtype=self.dtype, device=self.device)
+        self._J = J
         self._dimension = rows
 
         if h is None:
@@ -119,7 +117,7 @@ class Ising(TensorBearer):
                 f"Expected the shape of h to be {self._dimension}, but got {tuple(h.shape)}."
             )
         else:
-            self._h = h.to(dtype=self.dtype, device=self.device)
+            self._h = h
 
         self._has_linear_term = not torch.equal(
             self._h,
