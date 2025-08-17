@@ -58,11 +58,10 @@ def test_init_integer_variable_from_string(encoding_bits: int):
 
 def test_init_integer_variable_from_wrong_string_pattern():
     expected_error_message = (
-        r"Domain type must be one of \"spin\" or \"binary\", or be a string starting "
-        r"with \"int\" and followed by a positive integer that represents "
-        r"the number of bits required to encode the values of the domain\. "
-        r"More formally, it should match the following regular expression: "
-        r"\"\^int\[1-9\]\[0-9\]\*\$\" \(ex: \"int7\", \"int42\", \.\.\.\)\."
+        r"Domain type must be one of \"spin\" or \"binary\", or be a string starting with \"int\" and followed by a "
+        r"positive integer that represents the number of bits required to encode the values of the domain\. More "
+        r"formally, it should match the following regular expression: \"\^int\[1-9\]\[0-9\]\*\$\" \(ex: \"int7\", "
+        r"\"int42\", \.\.\.\)\."
     )
     with pytest.raises(ValueError, match=expected_error_message):
         Variable.from_str("int0")

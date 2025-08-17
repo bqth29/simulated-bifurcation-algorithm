@@ -247,7 +247,7 @@ class SimulatedBifurcationOptimizer:
     ) -> torch.Tensor:
         """
         Runs the Simulated Bifurcation (SB) algorithm. Given an input matrix,
-        the SB algorithm aims at finding the groud state of the Ising model
+        the SB algorithm aims at finding the ground state of the Ising model
         defined from this matrix, i.e. the {-1, +1}-vector that minimizes the
         Ising energy defined as `-0.5 * ΣΣ J(i,j)x(i)x(j)`, where `J`
         designates the matrix.

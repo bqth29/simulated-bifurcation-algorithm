@@ -31,15 +31,6 @@ from .ising import Ising
 from .tensor_bearer import TensorBearer
 from .variable import Variable
 
-INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
-DOMAIN_ERROR = ValueError(
-    f'Input type must be one of "spin" or "binary", or be a string starting'
-    f'with "int" and be followed by a positive integer.\n'
-    f"More formally, it should match the following regular expression.\n"
-    f"{INTEGER_REGEX}\n"
-    f'Examples: "int7", "int42", ...'
-)
-
 
 class QuadraticPolynomial(TensorBearer):
     """
@@ -134,7 +125,7 @@ class QuadraticPolynomial(TensorBearer):
     Maximize this polynomial over {0, 1, ..., 14, 15} x {0, 1, ..., 14, 15}
     (outputs are located on the GPU)
 
-      >>> best_vector, best_value = poly.maximize(domain="int4)
+      >>> best_vector, best_value = poly.maximize(domain="int4")
       >>> best_vector
       tensor([ 0., 15.], device='cuda:0')
       >>> best_value
@@ -223,7 +214,7 @@ class QuadraticPolynomial(TensorBearer):
                             dimension = tensor_like.shape[0]
                         elif dimension != tensor_like.shape[0]:
                             raise ValueError(
-                                f"Inconsistant shape among provided tensors. Expected {dimension} but got {tensor_like.shape[0]}."
+                                f"Inconsistent shape among provided tensors. Expected {dimension} but got {tensor_like.shape[0]}."
                             )
                     setattr(
                         self,

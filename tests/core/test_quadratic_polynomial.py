@@ -477,7 +477,7 @@ def test_build_polynomial_from_tensor(
 
     with pytest.raises(
         ValueError,
-        match="Inconsistant shape among provided tensors. Expected 3 but got 2.",
+        match="Inconsistent shape among provided tensors. Expected 3 but got 2.",
     ):
         QuadraticPolynomial(
             torch.zeros(3, 3, dtype=dtype, device=device),
@@ -486,7 +486,7 @@ def test_build_polynomial_from_tensor(
 
     with pytest.raises(
         ValueError,
-        match="Inconsistant shape among provided tensors. Expected 2 but got 3.",
+        match="Inconsistent shape among provided tensors. Expected 2 but got 3.",
     ):
         QuadraticPolynomial(
             torch.zeros(2, dtype=dtype, device=device),

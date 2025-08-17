@@ -13,6 +13,6 @@ def test_simulated_bifurcation_engine():
         "discrete"
     )
     with pytest.raises(
-        ValueError, match="Unknwown Simulated Bifurcation engine: unknown-engine."
+        ValueError, match="Unknown Simulated Bifurcation engine: unknown-engine."
     ):
         SimulatedBifurcationEngine.get_engine("unknown-engine")

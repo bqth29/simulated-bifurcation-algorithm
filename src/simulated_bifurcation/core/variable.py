@@ -4,13 +4,11 @@ from .optimization_domain import OptimizationDomain
 
 
 class Variable:
-    INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
-    DOMAIN_ERROR = ValueError(
-        'Domain type must be one of "spin" or "binary", or be a string starting '
-        'with "int" and followed by a positive integer that represents '
-        "the number of bits required to encode the values of the domain. "
-        "More formally, it should match the following regular expression: "
-        '"^int[1-9][0-9]*$" (ex: "int7", "int42", ...).'
+    __INTEGER_REGEX = re.compile("^int[1-9][0-9]*$")
+    __DOMAIN_ERROR_MESSAGE = (
+        'Domain type must be one of "spin" or "binary", or be a string starting with "int" and followed by a positive '
+        "integer that represents the number of bits required to encode the values of the domain. More formally, it "
+        'should match the following regular expression: "^int[1-9][0-9]*$" (ex: "int7", "int42", ...).'
     )
 
     def __init__(self, domain_type: OptimizationDomain, encoding_bits: int) -> None:
@@ -64,6 +62,6 @@ class Variable:
             return Variable(OptimizationDomain.SPIN, 1)
         if domain == "binary":
             return Variable(OptimizationDomain.BINARY, 1)
-        if Variable.INTEGER_REGEX.match(domain) is None:
-            raise Variable.DOMAIN_ERROR
+        if Variable.__INTEGER_REGEX.match(domain) is None:
+            raise ValueError(Variable.__DOMAIN_ERROR_MESSAGE)
         return Variable(OptimizationDomain.INTEGER, int(domain[3:]))

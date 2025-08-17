@@ -28,4 +28,4 @@ class SimulatedBifurcationEngine(Enum):
         elif engine_name == "discrete":
             return SimulatedBifurcationEngine.dSB
         else:
-            raise ValueError(f"Unknwown Simulated Bifurcation engine: {engine_name}.")
+            raise ValueError(f"Unknown Simulated Bifurcation engine: {engine_name}.")
