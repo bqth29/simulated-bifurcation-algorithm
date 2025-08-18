@@ -3,8 +3,10 @@ from typing import Tuple, Union
 import torch
 from tqdm.auto import tqdm
 
+from ..core.tensor_bearer import TensorBearer
 
-class StopWindow:
+
+class StopWindow(TensorBearer):
     """
     Optimization tool to monitor spins bifurcation and convergence
     for the Simulated Bifurcation (SB) algorithm.
@@ -20,12 +22,11 @@ class StopWindow:
         device: Union[str, torch.device],
         verbose: bool,
     ) -> None:
+        super().__init__(dtype=dtype, device=device)
         self.ising_tensor = ising_tensor
         self.n_spins = self.ising_tensor.shape[0]
         self.n_agents = n_agents
         self.__init_convergence_threshold(convergence_threshold)
-        self.dtype = dtype
-        self.device = device
         self.__init_tensors()
         self.__init_energies()
         self.final_spins = self.__init_spins()
@@ -67,7 +68,9 @@ class StopWindow:
 
     def __init_energies(self) -> None:
         self.energies = torch.tensor(
-            [float("inf") for _ in range(self.n_agents)], device=self.device
+            [float("inf") for _ in range(self.n_agents)],
+            dtype=self.dtype,
+            device=self.device,
         )
 
     def __init_tensors(self) -> None:

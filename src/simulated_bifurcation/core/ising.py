@@ -346,6 +346,8 @@ class Ising(TensorBearer):
             verbose,
             sampling_period,
             convergence_threshold,
+            self.dtype,
+            self.device,
         )
         tensor = self.as_simulated_bifurcation_tensor()
         spins = optimizer.run_integrator(tensor, early_stopping)

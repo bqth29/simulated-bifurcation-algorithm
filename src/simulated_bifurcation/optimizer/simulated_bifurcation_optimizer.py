@@ -1,24 +1,16 @@
-import logging
 import warnings
 from time import time
-from typing import Optional, Tuple
+from typing import Optional, Union
 
 import torch
 from numpy import minimum
 from tqdm.auto import tqdm
 
+from ..core.tensor_bearer import TensorBearer
 from .environment import ENVIRONMENT
 from .simulated_bifurcation_engine import SimulatedBifurcationEngine
 from .stop_window import StopWindow
 from .symplectic_integrator import SymplecticIntegrator
-
-LOGGER = logging.getLogger("simulated_bifurcation_optimizer")
-CONSOLE_HANDLER = logging.StreamHandler()
-CONSOLE_HANDLER.set_name(logging.WARN)
-CONSOLE_HANDLER.setFormatter(
-    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-)
-LOGGER.addHandler(CONSOLE_HANDLER)
 
 
 class ConvergenceWarning(Warning):
@@ -26,7 +18,7 @@ class ConvergenceWarning(Warning):
         return "No agent has converged. Returned signs of final positions instead."
 
 
-class SimulatedBifurcationOptimizer:
+class SimulatedBifurcationOptimizer(TensorBearer):
     """
     The Simulated Bifurcation (SB) algorithm relies on
     Hamiltonian/quantum mechanics to find local minima of
@@ -73,7 +65,10 @@ class SimulatedBifurcationOptimizer:
         verbose: bool,
         sampling_period: int,
         convergence_threshold: int,
+        dtype: torch.dtype,
+        device: Union[str, torch.device],
     ) -> None:
+        super().__init__(dtype=dtype, device=device)
         # Optimizer setting
         self.engine = engine
         self.window = None
@@ -139,7 +134,9 @@ class SimulatedBifurcationOptimizer:
     def __init_symplectic_integrator(self, matrix: torch.Tensor) -> None:
         self.symplectic_integrator = SymplecticIntegrator(
             (matrix.shape[0], self.agents),
+            self.time_step,
             self.engine.activation_function,
+            self.heated,
             matrix.dtype,
             matrix.device,
         )
@@ -149,16 +146,12 @@ class SimulatedBifurcationOptimizer:
         self.iterations_progress.update()
 
     def __check_stop(self, early_stopping: bool) -> None:
-        if early_stopping and self.__do_sampling:
+        if early_stopping and self.__must_sample_spins():
             self.run = self.window.must_continue()
             if not self.run:
-                LOGGER.info("Optimizer stopped. Reason: all agents converged.")
                 return
         if self.step >= self.max_steps:
             self.run = False
-            LOGGER.info(
-                "Optimizer stopped. Reason: maximum number of iterations reached."
-            )
             return
         previous_time = self.simulation_time
         self.simulation_time = time() - self.start_time
@@ -168,11 +161,9 @@ class SimulatedBifurcationOptimizer:
         self.time_progress.update(time_update)
         if self.simulation_time > self.timeout:
             self.run = False
-            LOGGER.info("Optimizer stopped. Reason: computation timeout reached.")
             return
 
-    @property
-    def __do_sampling(self) -> bool:
+    def __must_sample_spins(self) -> bool:
         return self.step % self.sampling_period == 0
 
     def __close_progress_bars(self):
@@ -188,26 +179,15 @@ class SimulatedBifurcationOptimizer:
         self.start_time = time()
         try:
             while self.run:
-                if self.heated:
-                    momentum_copy = self.symplectic_integrator.momentum.clone()
-
-                (
-                    momentum_coefficient,
-                    position_coefficient,
-                    quadratic_coefficient,
-                ) = self.__compute_symplectic_coefficients()
                 self.symplectic_integrator.step(
-                    momentum_coefficient,
-                    position_coefficient,
-                    quadratic_coefficient,
+                    self.__get_current_pressure() - 1.0,
+                    self.quadratic_scale_parameter,
+                    self.heat_coefficient,
                     matrix,
                 )
 
-                if self.heated:
-                    self.__heat(momentum_copy)
-
                 self._step_update()
-                if early_stopping and self.__do_sampling:
+                if early_stopping and self.__must_sample_spins():
                     sampled_spins = self.symplectic_integrator.sample_spins()
                     self.window.update(sampled_spins)
 
@@ -223,23 +203,7 @@ class SimulatedBifurcationOptimizer:
             sampled_spins = self.symplectic_integrator.sample_spins()
             return sampled_spins
 
-    def __heat(self, momentum_copy: torch.Tensor) -> None:
-        torch.add(
-            self.symplectic_integrator.momentum,
-            momentum_copy,
-            alpha=self.time_step * self.heat_coefficient,
-            out=self.symplectic_integrator.momentum,
-        )
-
-    def __compute_symplectic_coefficients(self) -> Tuple[float, float, float]:
-        pressure = self.__pressure
-        position_coefficient = self.time_step
-        momentum_coefficient = self.time_step * (pressure - 1.0)
-        quadratic_coefficient = self.time_step * self.quadratic_scale_parameter
-        return momentum_coefficient, position_coefficient, quadratic_coefficient
-
-    @property
-    def __pressure(self):
+    def __get_current_pressure(self):
         return minimum(self.time_step * self.step * self.pressure_slope, 1.0)
 
     def run_integrator(

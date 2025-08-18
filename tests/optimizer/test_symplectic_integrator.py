@@ -5,7 +5,7 @@ from src.simulated_bifurcation.optimizer import SymplecticIntegrator
 
 def test_init_ballistic_symplectic_integrator():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), torch.nn.Identity(), torch.float32, "cpu"
+        (3, 2), 0.1, torch.nn.Identity(), False, torch.float32, torch.device("cpu")
     )
     symplectic_integrator.position = torch.tensor(
         [
@@ -30,7 +30,7 @@ def test_init_ballistic_symplectic_integrator():
 
 def test_init_discrete_symplectic_integrator():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), torch.sign, torch.float32, "cpu"
+        (3, 2), 0.1, torch.nn.Identity(), False, torch.float32, torch.device("cpu")
     )
     symplectic_integrator.position = torch.tensor(
         [
@@ -55,7 +55,7 @@ def test_init_discrete_symplectic_integrator():
 
 def test_position_update():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), torch.nn.Identity(), torch.float32, "cpu"
+        (3, 2), 0.1, torch.nn.Identity(), False, torch.float32, torch.device("cpu")
     )
     symplectic_integrator.position = torch.tensor(
         [
@@ -73,16 +73,12 @@ def test_position_update():
         ],
         dtype=torch.float32,
     )
-    symplectic_integrator.position_update(0.2)
+    symplectic_integrator.position_update()
     assert torch.all(
         torch.isclose(
             symplectic_integrator.position,
             torch.tensor(
-                [
-                    [-0.8868, -0.3435],
-                    [-0.0580, 0.7719],
-                    [-0.0453, 0.2392],
-                ],
+                [[-0.8381, -0.4023], [-0.1461, 0.8452], [-0.1322, 0.2205]],
                 dtype=torch.float32,
             ),
             atol=1e-4,
@@ -92,7 +88,7 @@ def test_position_update():
 
 def test_momentum_update():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), torch.nn.Identity(), torch.float32, "cpu"
+        (3, 2), 0.1, torch.nn.Identity(), False, torch.float32, torch.device("cpu")
     )
     symplectic_integrator.position = torch.tensor(
         [
@@ -110,7 +106,7 @@ def test_momentum_update():
         ],
         dtype=torch.float32,
     )
-    symplectic_integrator.momentum_update(0.2)
+    symplectic_integrator.momentum_update(2.0)
     assert torch.all(
         torch.isclose(
             symplectic_integrator.momentum,
@@ -129,7 +125,7 @@ def test_momentum_update():
 
 def test_quadratic_position_update():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), torch.nn.Identity(), torch.float32, "cpu"
+        (3, 2), 0.1, torch.nn.Identity(), False, torch.float32, torch.device("cpu")
     )
     symplectic_integrator.position = torch.tensor(
         [
@@ -148,7 +144,7 @@ def test_quadratic_position_update():
         dtype=torch.float32,
     )
     symplectic_integrator.quadratic_momentum_update(
-        0.2,
+        2.0,
         torch.tensor(
             [
                 [0, 0.2, 0.3],
@@ -176,7 +172,7 @@ def test_quadratic_position_update():
 
 def test_inelastic_walls_simulation():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), torch.nn.Identity(), torch.float32, "cpu"
+        (3, 2), 0.1, torch.nn.Identity(), False, torch.float32, torch.device("cpu")
     )
     symplectic_integrator.position = torch.tensor(
         [
@@ -227,7 +223,7 @@ def test_inelastic_walls_simulation():
 
 def test_full_step():
     symplectic_integrator = SymplecticIntegrator(
-        (3, 2), torch.nn.Identity(), torch.float32, "cpu"
+        (3, 2), 0.1, torch.nn.Identity(), False, torch.float32, torch.device("cpu")
     )
     symplectic_integrator.position = torch.tensor(
         [
@@ -246,9 +242,9 @@ def test_full_step():
         dtype=torch.float32,
     )
     symplectic_integrator.step(
-        0.2,
-        0.2,
-        0.2,
+        2.0,
+        2.0,
+        5.0,
         torch.tensor(
             [
                 [0, 0.2, 0.3],
@@ -262,11 +258,7 @@ def test_full_step():
         torch.isclose(
             symplectic_integrator.position,
             torch.tensor(
-                [
-                    [-1, -0.3620],
-                    [-1, 1],
-                    [-0.0540, 0.2473],
-                ],
+                [[-1.0000, -0.4115], [-1.0000, 1.0000], [-0.1366, 0.2246]],
                 dtype=torch.float32,
             ),
             atol=1e-4,
@@ -276,11 +268,62 @@ def test_full_step():
         torch.isclose(
             symplectic_integrator.momentum,
             torch.tensor(
-                [
-                    [0, 0.5839],
-                    [0, 0],
-                    [0.6233, 0.2428],
-                ],
+                [[0.0000, 0.5839], [0.0000, 0.0000], [0.6283, 0.2405]],
+                dtype=torch.float32,
+            ),
+            atol=1e-4,
+        )
+    )
+
+
+def test_full_step_with_heating():
+    symplectic_integrator = SymplecticIntegrator(
+        (3, 2), 0.1, torch.nn.Identity(), True, torch.float32, torch.device("cpu")
+    )
+    symplectic_integrator.position = torch.tensor(
+        [
+            [-2.7894, -0.4610],
+            [-1.2343, 1.9186],
+            [-0.2191, 0.2018],
+        ],
+        dtype=torch.float32,
+    )
+    symplectic_integrator.momentum = torch.tensor(
+        [
+            [-0.4869, 0.5873],
+            [0.8815, -0.7336],
+            [0.8692, 0.1872],
+        ],
+        dtype=torch.float32,
+    )
+    symplectic_integrator.step(
+        2.0,
+        2.0,
+        5.0,
+        torch.tensor(
+            [
+                [0, 0.2, 0.3],
+                [0.2, 0, 0.1],
+                [0.3, 0.1, 0],
+            ],
+            dtype=torch.float32,
+        ),
+    )
+    assert torch.all(
+        torch.isclose(
+            symplectic_integrator.position,
+            torch.tensor(
+                [[-1.0000, -0.4115], [-1.0000, 1.0000], [-0.1366, 0.2246]],
+                dtype=torch.float32,
+            ),
+            atol=1e-4,
+        )
+    )
+    assert torch.all(
+        torch.isclose(
+            symplectic_integrator.momentum,
+            torch.tensor(
+                [[-0.2435, 0.8776], [0.4408, -0.3668], [1.0629, 0.3341]],
                 dtype=torch.float32,
             ),
             atol=1e-4,
