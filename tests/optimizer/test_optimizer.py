@@ -253,7 +253,7 @@ def test_max_steps():
         torch.device("cpu"),
     )
     optimizer.run_integrator(ising.as_simulated_bifurcation_tensor(), False)
-    assert optimizer.step == 10
+    assert optimizer.symplectic_integrator.step == 10
 
 
 def test_no_stop_criterion():
@@ -286,9 +286,9 @@ def test_no_stop_criterion():
 
 def test_keyboard_interrupt():
     class SimulatedBifurcationOptimizerTest(SimulatedBifurcationOptimizer):
-        def _step_update(self) -> None:
-            super()._step_update()
-            if self.step >= 1000:
+        def _check_stop(self, early_stopping: bool) -> None:
+            super()._check_stop(early_stopping)
+            if self.symplectic_integrator.step >= 1000:
                 raise KeyboardInterrupt
 
     torch.manual_seed(42)
@@ -322,4 +322,4 @@ def test_keyboard_interrupt():
         assert isinstance(spins, torch.Tensor)
         assert (4, 20) == tuple(spins.shape)
         assert torch.all(torch.abs(spins) == 1.0)
-        assert optimizer.step < 10000
+        assert optimizer.symplectic_integrator.step < 10000

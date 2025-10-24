@@ -94,7 +94,6 @@ class SimulatedBifurcationOptimizer(TensorBearer):
         self.__init_window(matrix, early_stopping)
         self.__init_quadratic_scale_parameter(matrix)
         self.run = True
-        self.step = 0
         self.start_time = None
         self.simulation_time = 0
 
@@ -133,24 +132,23 @@ class SimulatedBifurcationOptimizer(TensorBearer):
 
     def __init_symplectic_integrator(self, matrix: torch.Tensor) -> None:
         self.symplectic_integrator = SymplecticIntegrator(
-            (matrix.shape[0], self.agents),
+            self.agents,
             self.time_step,
+            self.pressure_slope,
+            self.heat_coefficient,
             self.engine.activation_function,
             self.heated,
-            matrix.dtype,
-            matrix.device,
+            matrix,
+            self.dtype,
+            self.device,
         )
 
-    def _step_update(self) -> None:
-        self.step += 1
-        self.iterations_progress.update()
-
-    def __check_stop(self, early_stopping: bool) -> None:
+    def _check_stop(self, early_stopping: bool) -> None:
         if early_stopping and self.__must_sample_spins():
             self.run = self.window.must_continue()
             if not self.run:
                 return
-        if self.step >= self.max_steps:
+        if self.symplectic_integrator.step >= self.max_steps:
             self.run = False
             return
         previous_time = self.simulation_time
@@ -164,34 +162,24 @@ class SimulatedBifurcationOptimizer(TensorBearer):
             return
 
     def __must_sample_spins(self) -> bool:
-        return self.step % self.sampling_period == 0
+        return self.symplectic_integrator.step % self.sampling_period == 0
 
     def __close_progress_bars(self):
         self.iterations_progress.close()
         self.time_progress.close()
         self.window.progress.close()
 
-    def __symplectic_update(
-        self,
-        matrix: torch.Tensor,
-        early_stopping: bool,
-    ) -> torch.Tensor:
+    def __symplectic_update(self, early_stopping: bool) -> torch.Tensor:
         self.start_time = time()
         try:
             while self.run:
-                self.symplectic_integrator.step(
-                    self.__get_current_pressure() - 1.0,
-                    self.quadratic_scale_parameter,
-                    self.heat_coefficient,
-                    matrix,
-                )
-
-                self._step_update()
+                self.symplectic_integrator.integration_step()
+                self.iterations_progress.update()
                 if early_stopping and self.__must_sample_spins():
                     sampled_spins = self.symplectic_integrator.sample_spins()
                     self.window.update(sampled_spins)
 
-                self.__check_stop(early_stopping)
+                self._check_stop(early_stopping)
         except KeyboardInterrupt:
             warnings.warn(
                 RuntimeWarning(
@@ -202,9 +190,6 @@ class SimulatedBifurcationOptimizer(TensorBearer):
         finally:
             sampled_spins = self.symplectic_integrator.sample_spins()
             return sampled_spins
-
-    def __get_current_pressure(self):
-        return minimum(self.time_step * self.step * self.pressure_slope, 1.0)
 
     def run_integrator(
         self, matrix: torch.Tensor, early_stopping: bool
@@ -240,7 +225,7 @@ class SimulatedBifurcationOptimizer(TensorBearer):
         ):
             raise ValueError("No stopping criterion provided.")
         self.__reset(matrix, early_stopping)
-        spins = self.__symplectic_update(matrix, early_stopping)
+        spins = self.__symplectic_update(early_stopping)
         self.__close_progress_bars()
         return self.get_final_spins(spins, early_stopping)
 
