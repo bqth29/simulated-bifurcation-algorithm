@@ -3,14 +3,13 @@ from time import time
 from typing import Optional, Union
 
 import torch
-from numpy import minimum
 from tqdm.auto import tqdm
 
 from ..core.tensor_bearer import TensorBearer
 from .environment import ENVIRONMENT
+from .integrator import SymplecticIntegrator
 from .simulated_bifurcation_engine import SimulatedBifurcationEngine
 from .stop_window import StopWindow
-from .symplectic_integrator import SymplecticIntegrator
 
 
 class ConvergenceWarning(Warning):

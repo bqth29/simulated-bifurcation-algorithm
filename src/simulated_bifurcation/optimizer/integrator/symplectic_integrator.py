@@ -3,10 +3,10 @@ from typing import Callable, Tuple
 import torch
 from numpy import minimum
 
-from ..core.tensor_bearer import TensorBearer
+from .abc_symplectic_integrator import ABCSymplecticIntegrator
 
 
-class SymplecticIntegrator(TensorBearer):
+class SymplecticIntegrator(ABCSymplecticIntegrator):
     """
     Simulates the evolution of spins' momentum and position following the Hamiltonian quantum mechanics equations that
     drive the Simulated Bifurcation (SB) algorithm.
