@@ -7,7 +7,7 @@ from tqdm.auto import tqdm
 
 from ..core.tensor_bearer import TensorBearer
 from .environment import ENVIRONMENT
-from .integrator import SymplecticIntegrator
+from .integrator import EulerSymplecticIntegrator
 from .simulated_bifurcation_engine import SimulatedBifurcationEngine
 from .stop_window import StopWindow
 
@@ -130,7 +130,7 @@ class SimulatedBifurcationOptimizer(TensorBearer):
         )
 
     def __init_symplectic_integrator(self, matrix: torch.Tensor) -> None:
-        self.symplectic_integrator = SymplecticIntegrator(
+        self.symplectic_integrator = EulerSymplecticIntegrator(
             self.agents,
             self.time_step,
             self.pressure_slope,

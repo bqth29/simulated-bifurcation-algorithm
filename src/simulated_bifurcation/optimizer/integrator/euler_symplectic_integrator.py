@@ -6,7 +6,7 @@ from numpy import minimum
 from .abc_symplectic_integrator import ABCSymplecticIntegrator
 
 
-class SymplecticIntegrator(ABCSymplecticIntegrator):
+class EulerSymplecticIntegrator(ABCSymplecticIntegrator):
     """
     Simulates the evolution of spins' momentum and position following the Hamiltonian quantum mechanics equations that
     drive the Simulated Bifurcation (SB) algorithm.

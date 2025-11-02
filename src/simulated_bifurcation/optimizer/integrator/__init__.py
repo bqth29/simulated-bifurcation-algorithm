@@ -1,1 +1,1 @@
-from .symplectic_integrator import SymplecticIntegrator
+from .euler_symplectic_integrator import EulerSymplecticIntegrator

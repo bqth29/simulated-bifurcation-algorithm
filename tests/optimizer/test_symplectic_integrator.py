@@ -3,7 +3,7 @@ from typing import Callable
 import pytest
 import torch
 
-from src.simulated_bifurcation.optimizer import SymplecticIntegrator
+from src.simulated_bifurcation.optimizer import EulerSymplecticIntegrator
 
 from ..test_utils import DEVICES, DTYPES
 
@@ -17,8 +17,8 @@ def init_integrator(
     device: torch.device,
     activation_function: Callable[[torch.Tensor], torch.Tensor],
     heat: bool,
-) -> SymplecticIntegrator:
-    symplectic_integrator = SymplecticIntegrator(
+) -> EulerSymplecticIntegrator:
+    symplectic_integrator = EulerSymplecticIntegrator(
         2,
         0.1,
         0.01,
