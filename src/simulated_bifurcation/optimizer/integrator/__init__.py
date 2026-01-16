@@ -1,1 +1,2 @@
 from .euler_symplectic_integrator import EulerSymplecticIntegrator
+from .stormer_verlet_symplectic_integrator import StormerVerletSymplecticIntegrator
