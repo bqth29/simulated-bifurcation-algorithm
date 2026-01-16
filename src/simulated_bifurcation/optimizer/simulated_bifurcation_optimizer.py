@@ -3,14 +3,13 @@ from time import time
 from typing import Optional, Union
 
 import torch
-from numpy import minimum
 from tqdm.auto import tqdm
 
 from ..core.tensor_bearer import TensorBearer
 from .environment import ENVIRONMENT
+from .integrator import EulerSymplecticIntegrator, StormerVerletSymplecticIntegrator
 from .simulated_bifurcation_engine import SimulatedBifurcationEngine
 from .stop_window import StopWindow
-from .symplectic_integrator import SymplecticIntegrator
 
 
 class ConvergenceWarning(Warning):
@@ -131,7 +130,7 @@ class SimulatedBifurcationOptimizer(TensorBearer):
         )
 
     def __init_symplectic_integrator(self, matrix: torch.Tensor) -> None:
-        self.symplectic_integrator = SymplecticIntegrator(
+        self.symplectic_integrator = StormerVerletSymplecticIntegrator(
             self.agents,
             self.time_step,
             self.pressure_slope,

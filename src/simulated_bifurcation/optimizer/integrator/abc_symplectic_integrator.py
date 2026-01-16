@@ -1,12 +1,13 @@
+from abc import ABC, abstractmethod
 from typing import Callable, Tuple
 
 import torch
 from numpy import minimum
 
-from ..core.tensor_bearer import TensorBearer
+from ...core.tensor_bearer import TensorBearer
 
 
-class SymplecticIntegrator(TensorBearer):
+class ABCSymplecticIntegrator(ABC, TensorBearer):
     """
     Simulates the evolution of spins' momentum and position following the Hamiltonian quantum mechanics equations that
     drive the Simulated Bifurcation (SB) algorithm.
@@ -42,31 +43,6 @@ class SymplecticIntegrator(TensorBearer):
     def init_oscillator(self, shape: Tuple[int, int]) -> torch.Tensor:
         return 2.0 * torch.rand(size=shape, device=self.device, dtype=self.dtype) - 1.0
 
-    def position_update(self) -> None:
-        torch.add(
-            self.position,
-            self.momentum,
-            alpha=self.time_step,
-            out=self.position,
-        )
-
-    def momentum_update(self) -> None:
-        torch.add(
-            self.momentum,
-            self.position,
-            alpha=self.time_step * (self.get_current_pressure() - 1.0),
-            out=self.momentum,
-        )
-
-    def quadratic_momentum_update(self) -> None:
-        # do not use out=self.position because of side effects
-        self.momentum = torch.addmm(
-            self.momentum,
-            self.quadratic_tensor,
-            self.activation_function(self.position),
-            alpha=self.time_step * self.quadratic_scale_parameter,
-        )
-
     def simulate_inelastic_walls(self) -> None:
         self.momentum[torch.abs(self.position) > 1.0] = 0.0
         torch.clip(self.position, -1.0, 1.0, out=self.position)
@@ -85,9 +61,7 @@ class SymplecticIntegrator(TensorBearer):
     def integration_step(self) -> None:
         if self.heat:
             momentum_copy = self.momentum.clone()
-        self.momentum_update()
-        self.quadratic_momentum_update()
-        self.position_update()
+        self.integrate()
         self.simulate_inelastic_walls()
         if self.heat:
             self.simulate_heating(momentum_copy)
@@ -95,3 +69,7 @@ class SymplecticIntegrator(TensorBearer):
 
     def sample_spins(self) -> torch.Tensor:
         return torch.where(self.position >= 0.0, 1.0, -1.0)
+
+    @abstractmethod
+    def integrate(self):
+        raise NotImplementedError()
